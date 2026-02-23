@@ -1,7 +1,6 @@
 #!/bin/bash
 # Shade Raid — Arch Linux Hyprland Setup
 # Run this on a fresh Arch install with base-devel and git
-
 set -e  # stop on any error
 
 echo "==> Installing yay..."
@@ -55,6 +54,17 @@ yay -S --needed --noconfirm \
     capitaine-cursors \
     ttf-iosevka-nerd \
     otf-bebas-neue
+
+echo "==> Cloning dotfiles..."
+git clone --bare https://github.com/hugo2006alm/dotfiles.git ~/.dotfiles
+
+echo "==> Checking out dotfiles..."
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout 2>&1 | grep -E "\s+\." | awk '{print $1}' | xargs -I{} mv {} {}.bak
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME config status.showUntrackedFiles no
+
+echo "==> Generating Hyprland color config..."
+bash ~/.config/theme/generate-hypr.sh
 
 echo "==> Setting fish as default shell..."
 chsh -s /usr/bin/fish
