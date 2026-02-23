@@ -53,7 +53,8 @@ yay -S --needed --noconfirm \
     phinger-cursors \
     capitaine-cursors \
     ttf-iosevka-nerd \
-    otf-bebas-neue
+    otf-bebas-neue \
+    zen-browser-bin
 
 echo "==> Cloning dotfiles..."
 git clone --bare https://github.com/hugo2006alm/dotfiles.git ~/.dotfiles
