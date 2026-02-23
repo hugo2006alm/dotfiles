@@ -52,6 +52,9 @@ yay -S --needed --noconfirm \
     bibata-cursor-theme \
     phinger-cursors \
     capitaine-cursors \
+    vesktop-bin \
+    heroic-games-launcher-bin \
+    antigravity \
     ttf-iosevka-nerd \
     otf-bebas-neue \
     zen-browser-bin
