@@ -1,23 +1,21 @@
 # === FONTS ===
-# Monospace — uncomment to switch:
-font_mono    = "MonaspaceRadon Nerd Font"
+font_mono    = "Monaspace Radon"
 # font_mono  = "Iosevka Nerd Font"
 # font_mono  = "Departure Mono"
 
-# Display — uncomment to switch:
 font_display = "Bebas Neue"
-# font_display = "Archivo Black"
+# font_display = "Archivo"
 
 font_size_sm = "11"
 font_size_md = "13"
 font_size_lg = "24"
 
 # === CURSOR ===
-# Options:
-# Bibata-Modern-Classic
-# phinger-cursors
-# Capitaine Cursors
 cursor_theme = "Bibata-Modern-Classic"
+# cursor_theme = "Bibata-Modern-Ice"
+# cursor_theme = "capitaine-cursors"
+# cursor_theme = "phinger-cursors-dark"
+
 cursor_size  = "24"
 
 # === BORDERS & SPACING ===
