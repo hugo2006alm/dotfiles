@@ -128,4 +128,8 @@ sudo systemctl enable bluetooth
 sudo systemctl enable sshd
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
 
+echo "==> Cleaning up leftover files..."
+sudo rm -f ~/.bash_history ~/.bash_logout ~/.bash_profile ~/.bashrc
+sudo rm -rf ~/.config/pulse ~/.config/dconf
+
 echo "==> Done. Log out and back in, then run Hyprland."
