@@ -39,7 +39,8 @@ sudo pacman -S --needed --noconfirm \
     imv \
     openssh \
     ttf-liberation \
-    otf-monaspace
+    otf-monaspace \
+    steam
 
 echo "==> Installing AUR packages..."
 yay -S --needed --noconfirm \
@@ -55,9 +56,21 @@ yay -S --needed --noconfirm \
     vesktop-bin \
     heroic-games-launcher-bin \
     antigravity \
+    bitwarden \
+    spotify \
     ttf-iosevka-nerd \
     otf-bebas-neue \
     zen-browser-bin
+
+echo "==> Installing multilib packages..."
+sudo sed -i '/^#\[multilib\]/s/^#//' /etc/pacman.conf
+sudo sed -i '/^\[multilib\]/{n;s/^#//}' /etc/pacman.conf
+sudo pacman -Sy
+sudo pacman -S --needed --noconfirm steam
+
+echo "==> Installing Spicetify..."
+yay -S --needed --noconfirm spicetify-cli
+spicetify backup apply
 
 echo "==> Setting up SSH key for GitHub..."
 read -p "GitHub email: " github_email
