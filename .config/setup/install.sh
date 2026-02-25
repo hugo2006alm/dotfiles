@@ -59,6 +59,11 @@ yay -S --needed --noconfirm \
     antigravity \
     bitwarden \
     spotify \
+    elephant \
+    elephant-desktopapplications \
+    elephant-runner \
+    elephant-clipboard \
+    elephant-calculator \
     ttf-iosevka-nerd \
     otf-bebas-neue \
     zen-browser-bin

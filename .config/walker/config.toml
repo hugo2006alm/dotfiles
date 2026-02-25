@@ -1,0 +1,14 @@
+[search]
+placeholder = "Search..."
+
+[[modules]]
+name = "applications"
+placeholder = "Applications"
+
+[[modules]]
+name = "runner"
+placeholder = "Run"
+
+[[modules]]
+name = "clipboard"
+placeholder = "Clipboard"
