@@ -40,7 +40,8 @@ sudo pacman -S --needed --noconfirm \
     openssh \
     ttf-liberation \
     otf-monaspace \
-    steam
+    steam \
+    unzip
 
 echo "==> Installing AUR packages..."
 yay -S --needed --noconfirm \
@@ -70,7 +71,14 @@ sudo pacman -S --needed --noconfirm steam
 
 echo "==> Installing Spicetify..."
 yay -S --needed --noconfirm spicetify-cli
+sudo chmod a+wr /opt/spotify
+sudo chmod a+wr /opt/spotify/Apps -R
 spicetify backup apply
+curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | sh
+spicetify apply
+
+echo "==> NOTE: Make sure Spotify has been launched at least once before this step"
+read -p "Press Enter to continue with Spicetify install..."
 
 echo "==> Setting up SSH key for GitHub..."
 read -p "GitHub email: " github_email
