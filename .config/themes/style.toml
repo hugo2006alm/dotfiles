@@ -23,4 +23,9 @@ border_size    = "3"
 gaps_inner     = "4"
 gaps_outer     = "8"
 corner_radius  = "0"
-shadow_offset  = "4"
+
+# === SHADOW ===
+shadow_offset_x  = "2"
+shadow_offset_y  = "2"
+shadow_range     = "4"
+shadow_render_power = "4"

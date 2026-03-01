@@ -4,13 +4,8 @@ THEME="${1:-$(cat ~/.config/themes/current)}"
 
 ~/.config/themes/generate.sh "$THEME"
 
-# Reload Hyprland
-hyprctl reload
-
-# Reload Waybar
-pkill waybar && waybar &
-
-# Reload Mako
-pkill mako && mako &
+hyprctl reload >>/dev/null 2>&1
+pkill waybar; waybar >> /dev/null 2>&1 &
+pkill mako; mako >> /dev/null 2>&1 &
 
 echo "Applied theme: $THEME"
