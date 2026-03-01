@@ -22,7 +22,6 @@ cat > ~/.config/mako/config << EOF
 # Position
 anchor=top-right
 margin=12
-offset=0 8
 
 # Size
 width=360
@@ -35,21 +34,23 @@ border-radius=0
 font=$font_mono $font_size_sm
 
 # Colors
-background-color=$notify_bg
-text-color=$notify_fg
-border-color=$notify_border
+background-color=${notify_bg}FF
+text-color=${notify_fg}FF
+border-color=${notify_border}FF
 
 # Timing
 default-timeout=5000
-ignore-timeout=0
+ignore-timeout=1
 max-visible=5
 
 [urgency=low]
-opacity=0.7
+background-color=${notify_bg}AA
+border-color=${notify_border}AA
 
 [urgency=critical]
-border-color=$urgent
-text-color=$urgent
+background-color=${notify_bg}FF
+border-color=${urgent}FF
+text-color=${urgent}FF
 default-timeout=0
 EOF
 
