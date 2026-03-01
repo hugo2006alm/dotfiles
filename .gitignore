@@ -1,8 +1,8 @@
 .config/dconf/
 .config/ghostty/colors.conf
 .config/themes/current
-.config/themes/style.toml
 .config/fish/fish_variables
 .config/waybar/_colors.scss
 .config/waybar/style.css
 .config/hypr/colors.conf
+.config/hypr/style.conf

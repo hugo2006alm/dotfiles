@@ -2,6 +2,7 @@
 
 THEME="${1:-$(cat ~/.config/themes/current)}"
 TOML="$HOME/.config/themes/$THEME/colors.toml"
+STYLE="$HOME/.config/themes/style.toml"
 
 if [[ ! -f "$TOML" ]]; then
   echo "Theme '$THEME' not found at $TOML"
@@ -10,15 +11,18 @@ fi
 
 echo "$THEME" > ~/.config/themes/current
 
-# ── Parse helper ──────────────────────────
+# ── Parse helpers ─────────────────────────
 get() {
   grep "^$1 " "$TOML" | head -1 | sed 's/.*= *"\(.*\)"/\1/'
 }
 
-# strip # from hex
+gets() {
+  grep "^$1 " "$STYLE" | head -1 | sed 's/.*= *"\(.*\)"/\1/'
+}
+
 hex() { echo "${1#\#}"; }
 
-# ── Read all colors ───────────────────────
+# ── Read colors ───────────────────────────
 background=$(get background)
 background2=$(get background2)
 foreground=$(get foreground)
@@ -44,7 +48,21 @@ lock_bg=$(get lock_bg)
 lock_fg=$(get lock_fg)
 lock_input=$(get lock_input)
 
-# Convert shadow alpha (0.0-1.0) to hex
+# ── Read style ────────────────────────────
+font_mono=$(gets font_mono)
+font_display=$(gets font_display)
+font_size_sm=$(gets font_size_sm)
+font_size_md=$(gets font_size_md)
+font_size_lg=$(gets font_size_lg)
+cursor_theme=$(gets cursor_theme)
+cursor_size=$(gets cursor_size)
+border_size=$(gets border_size)
+gaps_inner=$(gets gaps_inner)
+gaps_outer=$(gets gaps_outer)
+corner_radius=$(gets corner_radius)
+shadow_offset=$(gets shadow_offset)
+
+# Convert shadow alpha to hex
 shadow_alpha_hex=$(printf '%02X' $(echo "$shadow_alpha * 255 / 1" | bc))
 shadow_rgba="$(hex $shadow)${shadow_alpha_hex}"
 
@@ -66,6 +84,25 @@ EOF
 
 echo "Generated ~/.config/hypr/colors.conf"
 
+# ── Hyprland style.conf ───────────────────
+cat > ~/.config/hypr/style.conf << EOF
+# Auto-generated from themes/style.toml — do not edit directly
+\$border_size    = $border_size
+\$gaps_inner     = $gaps_inner
+\$gaps_outer     = $gaps_outer
+\$corner_radius  = $corner_radius
+\$shadow_offset  = $shadow_offset
+\$cursor_theme   = $cursor_theme
+\$cursor_size    = $cursor_size
+\$font_mono      = $font_mono
+\$font_display   = $font_display
+\$font_size_sm   = $font_size_sm
+\$font_size_md   = $font_size_md
+\$font_size_lg   = $font_size_lg
+EOF
+
+echo "Generated ~/.config/hypr/style.conf"
+
 # ── Waybar _colors.scss ───────────────────
 cat > ~/.config/waybar/_colors.scss << EOF
 // Auto-generated from themes/$THEME/colors.toml — do not edit directly
@@ -85,6 +122,10 @@ cat > ~/.config/waybar/_colors.scss << EOF
 \$waybar_bg:    $waybar_bg;
 \$waybar_fg:    $waybar_fg;
 \$waybar_acc:   $waybar_acc;
+\$font_mono:    "$font_mono";
+\$font_size_sm: ${font_size_sm}px;
+\$font_size_md: ${font_size_md}px;
+\$font_size_lg: ${font_size_lg}px;
 EOF
 
 echo "Generated ~/.config/waybar/_colors.scss"
@@ -105,9 +146,11 @@ echo "Generated ~/.config/mako/colors.conf"
 
 # ── Ghostty colors ────────────────────────
 cat > ~/.config/ghostty/colors.conf << EOF
-# Auto-generated from themes/$THEME/colors.toml — do not edit directly
+# Auto-generated — do not edit directly
 background = $(hex $background)
 foreground = $(hex $foreground)
+font-family = $font_mono
+font-size = $font_size_md
 EOF
 
 echo "Generated ~/.config/ghostty/colors.conf"
