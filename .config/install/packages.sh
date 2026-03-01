@@ -72,6 +72,7 @@ PACMAN_PKGS=(
     # GTK / Qt theming
     nwg-look
     qt6ct
+    qt5ct
 
     # Polkit
     polkit-gnome
@@ -102,6 +103,7 @@ PACMAN_PKGS=(
     zoxide
     ripgrep
     fd
+    git-delta
 
     # Fonts
     ttf-jetbrains-mono-nerd

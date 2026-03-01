@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if ! command -v spotify &> /dev/null; then
+    echo "Spotify not installed, skipping Spicetify"
+    exit 0
+fi
+
 echo "==> Spicetify setup..."
 echo "  NOTE: Launch Spotify once manually, then re-run this step."
 read -p "  Has Spotify been launched at least once? (y/N): " confirm

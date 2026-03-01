@@ -26,3 +26,7 @@ sudo reflector --country PT,DE --latest 10 --sort rate --save /etc/pacman.d/mirr
 echo "==> Setting up mise..."
 mise install node@lts
 mise install python@latest
+
+echo "==> Creating necessary directories"
+mkdir -p ~/Pictures/Screenshots
+mkdir -p ~/wallpapers/shade-raid

@@ -9,6 +9,7 @@ sudo systemctl enable paccache.timer
 
 echo "==> Enabling user services..."
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
+systemctl --user enable --now swayosd-libinput-backend
 
 echo "==> Setting up firewall..."
 sudo ufw enable
