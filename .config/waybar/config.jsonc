@@ -1,0 +1,92 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 36,
+  "spacing": 0,
+  "exclusive": true,
+  "style": "~/.config/waybar/style.css",
+
+  "modules-left": ["hyprland/workspaces"],
+  "modules-center": ["mpris"],
+  "modules-right": ["group/system", "group/tray-group", "clock"],
+
+  "hyprland/workspaces": {
+    "format": "{name} {icon}",
+    "format-icons": {
+      "active": "■",
+      "default": "□",
+      "empty": "□"
+    },
+    "on-scroll-up": "hyprctl dispatch workspace e+1",
+    "on-scroll-down": "hyprctl dispatch workspace e-1",
+    "sort-by-number": true
+  },
+
+  "mpris": {
+    "format": "{artist} — {title}",
+    "format-paused": "⏸  {artist} — {title}",
+    "format-stopped": "",
+    "max-length": 40,
+    "tooltip": false
+  },
+
+  "group/system": {
+    "orientation": "horizontal",
+    "modules": ["cpu", "memory", "pulseaudio", "network", "bluetooth"]
+  },
+
+  "cpu": {
+    "format": "CPU {usage}%",
+    "on-click": "ghostty --class=btop -e btop"
+  },
+
+  "memory": {
+    "format": "MEM {percentage}%"
+  },
+
+  "pulseaudio": {
+    "format": "VOL {volume}%",
+    "format-muted": "MUTE",
+    "on-click": "pavucontrol",
+    "scroll-step": 5
+  },
+
+  "network": {
+    "format-wifi": "WiFi {signalStrength}%",
+    "format-ethernet": "ETH",
+    "format-disconnected": "NO NET",
+    "on-click": "ghostty --class=nmtui -e nmtui"
+  },
+
+  "bluetooth": {
+    "format": "BT",
+    "format-connected": "BT {device_alias}",
+    "format-disabled": "BT OFF",
+    "on-click": "ghostty --class=bluetui -e bluetui"
+  },
+
+  "group/tray-group": {
+    "orientation": "horizontal",
+    "drawer": {
+      "transition-duration": 300,
+      "transition-left-to-right": false
+    },
+    "modules": ["custom/tray-icon", "tray"]
+  },
+
+  "custom/tray-icon": {
+    "format": "▼",
+    "tooltip": false
+  },
+
+  "tray": {
+    "spacing": 8,
+    "icon-size": 16
+  },
+
+  "clock": {
+    "format": "{:%H:%M}",
+    "format-alt": "{:%A, %d %B %Y}",
+    "tooltip-format": "<tt>{calendar}</tt>"
+  }
+}

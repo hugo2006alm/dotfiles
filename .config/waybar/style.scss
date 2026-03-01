@@ -1,0 +1,124 @@
+@import "colors";
+
+// ── DERIVED VARS ───────────────────────────
+$border-thin: 2px solid $border;
+$border-bar:  3px solid $border;
+
+// ── RESET ──────────────────────────────────
+* {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+// ── BAR ────────────────────────────────────
+window#waybar {
+  background-color: $background;
+  color: $foreground;
+  border-bottom: $border-bar;
+}
+
+// ── WORKSPACES ─────────────────────────────
+#workspaces {
+  background: $waybar_bg;
+  padding: 0 8px;
+
+  button {
+    color: $waybar_fg;
+    padding: 0 6px;
+    background: transparent;
+
+    &.active {
+      color: $waybar_acc;
+      font-weight: 700;
+    }
+
+    &:hover {
+      background: $waybar_acc;
+      color: $waybar_fg;
+    }
+  }
+}
+
+// ── MPRIS ──────────────────────────────────
+#mpris {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 0 20px;
+  color: $foreground;
+
+  &.paused { color: $inactive; }
+
+  &:hover {
+    background: $foreground;
+    color: $background;
+  }
+}
+
+// ── SYSTEM MODULES ─────────────────────────
+#cpu,
+#memory,
+#pulseaudio,
+#network,
+#bluetooth {
+  padding: 0 10px;
+  color: $foreground;
+  border-left: $border-thin;
+  letter-spacing: 0.05em;
+
+  &:hover {
+    background: $foreground;
+    color: $background;
+  }
+}
+
+#pulseaudio.muted  { color: $inactive; }
+#network.disconnected { color: $urgent; }
+
+// ── TRAY GROUP ─────────────────────────────
+#tray-group {
+  border-left: $border-thin;
+  border-bottom: $border-bar;
+}
+
+#custom-tray-icon {
+  padding: 0 10px;
+  font-size: 10px;
+  color: $foreground;
+  background: $background2;
+  border-bottom: $border-bar;
+
+  &:hover {
+    background: $foreground;
+    color: $background;
+  }
+}
+
+#tray {
+  padding: 0 8px;
+  background: $background2;
+  border-bottom: $border-bar;
+
+  > .passive { -gtk-icon-effect: dim; }
+
+  > .needs-attention {
+    -gtk-icon-effect: highlight;
+    color: $urgent;
+  }
+}
+
+// ── CLOCK ──────────────────────────────────
+#clock {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  padding: 0 16px;
+  color: $waybar_fg;
+  background: $waybar_bg;
+  border-left: $border-thin;
+  border-bottom: 3px solid $waybar_acc;
+
+  &:hover { background: $accent; }
+}

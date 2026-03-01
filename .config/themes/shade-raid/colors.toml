@@ -1,0 +1,51 @@
+# === COLOR PALETTE ===
+
+# Base
+background   = "#F4EFE4"
+background2  = "#EDE7D3"
+foreground   = "#0D0D0D"
+foreground2  = "#3A3A3A"
+border       = "#0D0D0D"
+
+# Accent
+accent       = "#D94F2B"
+accent2      = "#B33E20"
+accent_fg    = "#F4EFE4"
+
+# Semantic
+active       = "#0D0D0D"
+inactive     = "#C8C2B4"
+urgent       = "#D94F2B"
+selection    = "#0D0D0D"
+selection_fg = "#F4EFE4"
+
+# Terminal ANSI 16
+color0  = "#0D0D0D"
+color1  = "#D94F2B"
+color2  = "#5C7A3E"
+color3  = "#A67C2E"
+color4  = "#3A5F8A"
+color5  = "#7A3F6E"
+color6  = "#3A7A6E"
+color7  = "#C8C2B4"
+color8  = "#3A3A3A"
+color9  = "#E8623E"
+color10 = "#6E9449"
+color11 = "#C49A3A"
+color12 = "#4A72A0"
+color13 = "#9A5090"
+color14 = "#4A9A8A"
+color15 = "#F4EFE4"
+
+# UI Specific
+waybar_bg     = "#0D0D0D"
+waybar_fg     = "#F4EFE4"
+waybar_acc    = "#D94F2B"
+shadow        = "#0D0D0D"
+shadow_alpha  = "0.4"
+notify_bg     = "#F4EFE4"
+notify_fg     = "#0D0D0D"
+notify_border = "#0D0D0D"
+lock_bg       = "#F4EFE4"
+lock_fg       = "#0D0D0D"
+lock_input    = "#0D0D0D"
