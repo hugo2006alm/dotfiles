@@ -23,10 +23,10 @@ Built on Arch Linux. Uses [Omarchy](https://omarchy.org) as a reference point bu
 | Notifications | Mako |
 | Wallpaper | swww |
 | Lock screen | Hyprlock |
-| Editor | Neovim + Antigravity |
+| Editor | Neovim |
 | Browser | Zen |
 | Audio | PipeWire + WirePlumber |
-| Theme source | `~/.config/theme/colors.toml` |
+| Theme source | `~/.config/themes/shade-raid/colors.toml` |
 
 ---
 
@@ -40,7 +40,7 @@ Foreground2  #3A3A3A   ink faint
 Accent       #D94F2B   red-orange
 ```
 
-All colors live in `~/.config/theme/colors.toml`. Config files for Hyprland, Waybar, Mako, Hyprlock and others are generated from this single source of truth.
+All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for Hyprland, Waybar, Mako, Hyprlock, Ghostty and others are generated from this single source of truth via `generate.sh`.
 
 ---
 
@@ -49,19 +49,20 @@ All colors live in `~/.config/theme/colors.toml`. Config files for Hyprland, Way
 On a fresh Arch install with `base-devel` and `git`:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/YOURUSER/dotfiles/main/.config/setup/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/hugo2006alm/dotfiles/main/.config/install/install.sh)
 ```
 
 The script will:
-1. Install `yay` (AUR helper)
-2. Install all pacman and AUR packages
-3. Clone this repo as a bare git repo into `~/.dotfiles`
-4. Check out all dotfiles into `$HOME`
-5. Generate Hyprland color config from `colors.toml`
-6. Enable system services
-7. Set fish as default shell
 
-Log out and back in, then start Hyprland.
+1. Install `yay` (AUR helper)
+2. Enable multilib and install all pacman + AUR packages
+3. Set up SSH key and clone this repo as a bare git repo into `~/.dotfiles`
+4. Check out all dotfiles into `$HOME`
+5. Enable system services (NetworkManager, bluetooth, pipewire, ufw, autologin)
+6. Set fish as default shell, configure git, refresh mirrors and fonts
+7. Generate and apply the Shade Raid theme
+
+Log out and back in — Hyprland starts automatically on TTY1.
 
 ---
 
@@ -86,21 +87,31 @@ dots push
 
 ```
 ~/.config/
-├── theme/
-│   ├── colors.toml          # single source of truth for all colors
-│   └── generate-hypr.sh     # generates ~/.config/hypr/colors.conf
+├── themes/
+│   ├── generate.sh              # generates all color configs from colors.toml
+│   ├── apply.sh                 # generate + reload everything
+│   └── shade-raid/
+│       └── colors.toml          # single source of truth for all colors
 ├── hypr/
-│   ├── hyprland.conf        # main config (sources the files below)
-│   ├── colors.conf          # generated — do not edit manually
-│   ├── keybinds.conf        # all keybindings
-│   ├── windowrules.conf     # float, workspace, opacity, size rules
-│   └── autostart.conf       # exec-once entries
+│   ├── hyprland.conf            # main config
+│   ├── colors.conf              # generated — do not edit manually
+│   ├── keybinds.conf            # all keybindings
+│   ├── windowrules.conf         # float, workspace, opacity, size rules
+│   └── autostart.conf           # exec-once entries
 ├── waybar/
+│   ├── config.jsonc             # module layout
+│   └── style.scss               # styles (compiled to style.css on apply)
 ├── mako/
 ├── ghostty/
 ├── starship.toml
-└── setup/
-    └── install.sh           # bootstrap script
+└── install/
+    ├── install.sh               # orchestrator
+    ├── packages.sh              # pacman + AUR
+    ├── dotfiles.sh              # SSH, clone, checkout
+    ├── services.sh              # systemctl + autologin
+    ├── user.sh                  # shell, git, fonts, mirrors
+    ├── theme.sh                 # generate theme
+    └── extras.sh                # spicetify, optional stuff
 ```
 
 ---
@@ -134,7 +145,7 @@ dots push
 | 1 | Zen (browser) |
 | 2 | Ghostty (terminal) |
 | 3 | Vesktop (Discord) |
-| 4 | Antigravity (editor) |
+| 4 | Neovim |
 | 9 | Spotify |
 | 10 | Steam / Heroic |
 
@@ -148,7 +159,7 @@ Once in Hyprland, run:
 hyprctl clients
 ```
 
-Check that window classes match what's in `windowrules.conf`. Key ones to verify: `zen-browser`, `antigravity`, `com.mitchellh.ghostty`.
+Check that window classes match what's in `windowrules.conf`. Key ones to verify: `zen-browser`, `com.mitchellh.ghostty`, `vesktop`.
 
 ---
 
@@ -157,8 +168,14 @@ Check that window classes match what's in `windowrules.conf`. Key ones to verify
 If you update `colors.toml`:
 
 ```bash
-bash ~/.config/theme/generate-hypr.sh
-hyprctl reload
+~/.config/themes/apply.sh shade-raid
 ```
 
----
+This regenerates all color configs and reloads Hyprland, Waybar and Mako automatically.
+```
+
+Then commit:
+```bash
+dots add README.md
+dots commit -m "docs: update README for new theme system and install structure"
+dots push
