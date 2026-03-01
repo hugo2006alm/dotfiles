@@ -13,6 +13,7 @@ end
 
 # ── Aliases ───────────────────────────────────────────
 alias dots='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
+alias theme='~/.config/themes/apply.sh'
 alias ll='eza -la --icons --git'
 alias la='eza -a --icons'
 alias ls='eza --icons'
