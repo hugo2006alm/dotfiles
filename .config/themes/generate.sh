@@ -140,15 +140,47 @@ echo "Generated ~/.config/waybar/_colors.scss"
 sassc ~/.config/waybar/style.scss ~/.config/waybar/style.css
 echo "Compiled style.scss → style.css"
 
-# ── Mako colors.conf ──────────────────────
-cat > ~/.config/mako/colors.conf << EOF
-# Auto-generated from themes/$THEME/colors.toml — do not edit directly
+# ── Mako full config ──────────────────────
+cat > ~/.config/mako/config << EOF
+# Auto-generated — do not edit directly
+
+# Position
+anchor=top-right
+margin=12
+offset=0,8
+
+# Size
+width=360
+height=120
+padding=12
+
+# Style
+border-size=3
+border-radius=0
+font=Monaspace Radon 11
+
+# Colors
 background-color=$notify_bg
 text-color=$notify_fg
 border-color=$notify_border
+
+# Timing
+default-timeout=5000
+ignore-timeout=0
+max-visible=5
+
+# Urgency — low
+[urgency=low]
+opacity=0.7
+
+# Urgency — critical
+[urgency=critical]
+border-color=$urgent
+text-color=$urgent
+default-timeout=0
 EOF
 
-echo "Generated ~/.config/mako/colors.conf"
+echo "Generated ~/.config/mako/config"
 
 # ── Ghostty colors ────────────────────────
 cat > ~/.config/ghostty/colors.conf << EOF
