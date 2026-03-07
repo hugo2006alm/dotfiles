@@ -3,6 +3,7 @@
 THEME="${1:-$(cat ~/.config/themes/current)}"
 
 ~/.config/themes/generate.sh "$THEME"
+~/.config/hypr/scripts/gen-drawers.sh
 
 hyprctl reload >>/dev/null 2>&1
 pkill waybar; waybar >> /dev/null 2>&1 &

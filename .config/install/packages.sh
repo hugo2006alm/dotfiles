@@ -23,6 +23,7 @@ PACMAN_PKGS=(
     # Bar
     waybar
     sassc
+    jq
 
     # Audio
     pipewire
