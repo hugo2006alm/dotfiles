@@ -1,5 +1,6 @@
 .config/dconf/
 .config/ghostty/colors.conf
+.config/ghostty/drawers.conf
 .config/themes/current
 .config/fish/fish_variables
 .config/waybar/_colors.scss
