@@ -37,17 +37,18 @@
 
   "cpu": {
     "format": "CPU {usage}%",
-    "on-click": "ghostty --class=btop -e btop"
+    "on-click": "hyprctl dispatch togglespecialworkspace btop"
   },
 
   "memory": {
-    "format": "MEM {percentage}%"
+    "format": "MEM {percentage}%",
+    "on-click": "hyprctl dispatch togglespecialworkspace btop"
   },
 
   "pulseaudio": {
     "format": "VOL {volume}%",
     "format-muted": "MUTE",
-    "on-click": "pavucontrol",
+    "on-click": "hyprctl dispatch togglespecialworkspace pavucontrol",
     "scroll-step": 5
   },
 
@@ -55,14 +56,14 @@
     "format-wifi": "WiFi {signalStrength}%",
     "format-ethernet": "ETH",
     "format-disconnected": "NO NET",
-    "on-click": "ghostty --class=nmtui -e nmtui"
+    "on-click": "hyprctl dispatch togglespecialworkspace nmtui"
   },
 
   "bluetooth": {
     "format": "BT",
     "format-connected": "BT {device_alias}",
     "format-disabled": "BT OFF",
-    "on-click": "ghostty --class=bluetui -e bluetui"
+    "on-click": "hyprctl dispatch togglespecialworkspace bluetui"
   },
 
   "group/tray-group": {
