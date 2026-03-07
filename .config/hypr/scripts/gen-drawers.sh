@@ -38,14 +38,18 @@ workspace = special:bluetui,  on-created-empty:ghostty --title=bluetui -e bluetu
 windowrule = float on,             match:title btop
 windowrule = float on,             match:title nmtui
 windowrule = float on,             match:title bluetui
+windowrule = float on,             match:class org.pulseaudio.pavucontrol
 
 windowrule = size $BTOP_W $BTOP_H, match:title btop
 windowrule = size $NM_W   $NM_H,   match:title nmtui
 windowrule = size $BT_W   $BT_H,   match:title bluetui
+windowrule = size $PAVU_W $PAVU_H, match:class org.pulseaudio.pavucontrol
 
 windowrule = move $BTOP_X $BAR_Y,  match:title btop
 windowrule = move $NM_X   $BAR_Y,  match:title nmtui
 windowrule = move $BT_X   $BAR_Y,  match:title bluetui
+windowrule = move $PAVU_X $BAR_Y,  match:class org.pulseaudio.pavucontrol
+
 EOF
 
 echo "Generated $CONF (logical ${LOG_W}px wide @ scale ${SCALE})"
