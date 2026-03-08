@@ -30,3 +30,6 @@ mise install python@latest
 echo "==> Creating necessary directories"
 mkdir -p ~/Pictures/Screenshots
 mkdir -p ~/wallpapers/shade-raid
+
+echo "==> Installing Fisher and fish plugins..."
+fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher && fisher update"
