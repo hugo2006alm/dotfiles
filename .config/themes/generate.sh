@@ -13,9 +13,9 @@ echo "$THEME" > ~/.config/themes/current
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-bash "$DIR/generators/hypr.sh"    "$THEME"
-bash "$DIR/generators/waybar.sh"  "$THEME"
-bash "$DIR/generators/mako.sh"    "$THEME"
-bash "$DIR/generators/ghostty.sh" "$THEME"
+chmod +x "$DIR/generators/"*.sh
+for generator in "$DIR/generators/"*.sh; do
+  bash "$generator" "$THEME"
+done
 
 echo "Done — theme: $THEME"

@@ -1,10 +1,13 @@
 .config/dconf/
 .config/ghostty/colors.conf
-.config/ghostty/drawers.conf
 .config/themes/current
 .config/fish/fish_variables
 .config/waybar/_colors.scss
 .config/waybar/style.css
 .config/hypr/colors.conf
 .config/hypr/style.conf
+.config/hypr/drawers.conf
 .config/mako/config
+.config/walker/themes/*/_colors.scss
+.config/walker/themes/*/style.css
+

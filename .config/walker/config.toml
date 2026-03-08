@@ -1,14 +1,27 @@
 [search]
-placeholder = "Search..."
+placeholder = "/ search"
+
+[ui]
+width = 700
+max_entries = 8
+icons = true
 
 [[modules]]
 name = "applications"
-placeholder = "Applications"
+placeholder = "apps"
 
 [[modules]]
 name = "runner"
-placeholder = "Run"
+placeholder = "run"
 
 [[modules]]
 name = "clipboard"
-placeholder = "Clipboard"
+placeholder = "clipboard"
+
+[[modules]]
+name = "emojis"
+placeholder = "emoji"
+
+[[modules]]
+name = "calc"
+placeholder = "calc"
