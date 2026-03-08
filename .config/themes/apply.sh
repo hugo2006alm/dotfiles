@@ -8,5 +8,6 @@ THEME="${1:-$(cat ~/.config/themes/current)}"
 hyprctl reload >>/dev/null 2>&1
 pkill waybar; waybar >> /dev/null 2>&1 &
 pkill mako; mako >> /dev/null 2>&1 &
+pkill -USR2 ghostty 2>/dev/null || true
 
 echo "Applied theme: $THEME"

@@ -1,0 +1,51 @@
+# === COLOR PALETTE — SHADE RAID DARK ===
+
+# Base
+background   = "#16130F"
+background2  = "#201C17"
+foreground   = "#F4EFE4"
+foreground2  = "#C8C2B4"
+border       = "#F4EFE4"
+
+# Accent
+accent       = "#E8623E"
+accent2      = "#D94F2B"
+accent_fg    = "#16130F"
+
+# Semantic
+active       = "#F4EFE4"
+inactive     = "#4A4540"
+urgent       = "#E8623E"
+selection    = "#F4EFE4"
+selection_fg = "#16130F"
+
+# Terminal ANSI 16
+color0  = "#16130F"
+color1  = "#E8623E"
+color2  = "#6E9449"
+color3  = "#C49A3A"
+color4  = "#4A72A0"
+color5  = "#9A5090"
+color6  = "#4A9A8A"
+color7  = "#C8C2B4"
+color8  = "#4A4540"
+color9  = "#F07050"
+color10 = "#7EA852"
+color11 = "#D4AA44"
+color12 = "#5A82B0"
+color13 = "#AA60A0"
+color14 = "#5AAAA0"
+color15 = "#F4EFE4"
+
+# UI Specific
+waybar_bg     = "#F4EFE4"
+waybar_fg     = "#16130F"
+waybar_acc    = "#E8623E"
+shadow        = "#000000"
+shadow_alpha  = "0.6"
+notify_bg     = "#201C17"
+notify_fg     = "#F4EFE4"
+notify_border = "#F4EFE4"
+lock_bg       = "#16130F"
+lock_fg       = "#F4EFE4"
+lock_input    = "#F4EFE4"

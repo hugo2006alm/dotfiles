@@ -26,5 +26,8 @@ zoxide init fish | source
 # ── Starship prompt ───────────────────────────────────
 starship init fish | source
 
+# ── Fzf Fish Config ───────────────────────────────────
+set fzf_fd_opts --hidden
+
 if status is-interactive
 end
