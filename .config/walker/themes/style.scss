@@ -15,8 +15,8 @@
 }
 
 popover {
-  background: lighter(@window_bg_color);
-  border: 1px solid darker(@accent_bg_color);
+  background: lighten($background, 5%);
+  border: 1px solid darken($accent, 5%);
   border-radius: 18px;
   padding: 10px;
 }
@@ -34,16 +34,16 @@ scrollbar {
 }
 
 .box-wrapper {
-  background: @window_bg_color;
+  background: $background;
   padding: 20px;
   border-radius: 20px;
-  border: 1px solid darker(@accent_bg_color);
+  border: 1px solid darken($accent, 5%);
 }
 
 .preview-box,
 .elephant-hint,
 .placeholder {
-  color: @theme_fg_color;
+  color: $foreground;
 }
 
 .box {
@@ -55,15 +55,15 @@ scrollbar {
 
 .input placeholder {
   opacity: 0.5;
-  color: @theme_fg_color_alt;
+  color: $foreground2;
 }
 
 .input {
-  caret-color: @accent_bg_color;
-  background: @window_bg_color_alt;
+  caret-color: $accent;
+  background: $background2;
   padding: 10px;
-  color: @theme_fg_color;
-  border-bottom: 2px solid @accent_bg_color;
+  color: $foreground;
+  border-bottom: 2px solid $accent;
   border-radius: 0;
 }
 
@@ -81,7 +81,7 @@ scrollbar {
 }
 
 .list {
-  color: @theme_fg_color;
+  color: $foreground;
 }
 
 child {
@@ -93,19 +93,19 @@ child {
 }
 
 .item-quick-activation {
-  background: alpha(@accent_bg_color, 0.25);
+  background: rgba($accent, 0.25);
   border-radius: 5px;
   padding: 10px;
 }
 
 child:selected .item-box,
 row:selected .item-box {
-  background: @window_bg_color_alt;
+  background: $background2;
 }
 
 child:selected .item-text,
 row:selected .item-text {
-  color: @theme_fg_color;
+  color: $foreground;
 }
 
 .item-text-box {
@@ -114,7 +114,7 @@ row:selected .item-text {
 .item-subtext {
   font-size: 12px;
   opacity: 0.5;
-  color: @theme_fg_color_alt;
+  color: $foreground2;
 }
 
 .providerlist .item-subtext {
@@ -127,9 +127,9 @@ row:selected .item-text {
 }
 
 .preview {
-  border: 1px solid alpha(@accent_bg_color, 0.25);
+  border: 1px solid rgba($accent, 0.25);
   border-radius: 10px;
-  color: @theme_fg_color;
+  color: $foreground;
 }
 
 .calc .item-text {
@@ -165,9 +165,9 @@ row:selected .item-text {
 
 .keybinds {
   padding-top: 10px;
-  border-top: 1px solid lighter(@window_bg_color);
+  border-top: 1px solid lighten($background, 5%);
   font-size: 12px;
-  color: @theme_fg_color;
+  color: $foreground;
 }
 
 .global-keybinds {
@@ -195,13 +195,13 @@ row:selected .item-text {
 .keybind-label {
   padding: 2px 4px;
   border-radius: 4px;
-  border: 1px solid @theme_fg_color;
+  border: 1px solid $foreground;
 }
 
 .error {
   padding: 10px;
-  background: @error_bg_color;
-  color: @error_fg_color;
+  background: $accent;
+  color: $background;
 }
 
 :not(.calc).current {
