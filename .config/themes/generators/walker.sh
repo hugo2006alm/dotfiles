@@ -36,9 +36,12 @@ EOF
 
 echo "Generated ~/.config/walker/themes/$THEME/_colors.scss"
 
-sassc -I ~/.config/walker/themes/$THEME \
-  ~/.config/walker/themes/style.scss \
-  ~/.config/walker/themes/$THEME/style.css
+cp ~/.config/walker/themes/$THEME/_colors.scss ~/.config/walker/themes/_colors.scss
+
+cd ~/.config/walker/themes
+sassc -I $THEME \
+  style.scss \
+  $THEME/style.css
 echo "Compiled walker style.scss → style.css"
 
 cat > ~/.config/walker/config.toml << EOF
