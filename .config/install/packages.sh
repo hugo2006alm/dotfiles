@@ -107,6 +107,9 @@ PACMAN_PKGS=(
     fd
     git-delta
 
+    # Python
+    python-pip
+
     # Fonts
     ttf-jetbrains-mono-nerd
     ttf-liberation
