@@ -96,7 +96,7 @@ PACMAN_PKGS=(
     # Editors
     neovim
     lazygit
-    gh
+    github-cli
 
     # CLI tools
     bat
