@@ -40,3 +40,25 @@ sassc -I ~/.config/walker/themes/$THEME \
   ~/.config/walker/themes/style.scss \
   ~/.config/walker/themes/$THEME/style.css
 echo "Compiled walker style.scss → style.css"
+
+cat > ~/.config/walker/config.toml << EOF
+theme = "$THEME"
+
+[search]
+placeholder = "Search..."
+
+[[modules]]
+name = "applications"
+placeholder = "Applications"
+
+[[modules]]
+name = "runner"
+placeholder = "Run"
+
+[[modules]]
+name = "clipboard"
+placeholder = "Clipboard"
+EOF
+
+echo "Generated ~/.config/walker/config.toml"
+echo "Added correct theme to config.toml"

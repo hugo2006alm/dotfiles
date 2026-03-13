@@ -17,7 +17,7 @@ BAR_Y=39   # bar height (36) + bar border (3)
 
 # Drawer sizes — edit these freely
 BTOP_W=1400; BTOP_H=600
-PAVU_W=800;  PAVU_H=520
+PAVU_W=800;  PAVU_H=600
 NM_W=700;    NM_H=420
 BT_W=700;    BT_H=520
 
@@ -34,6 +34,7 @@ cat > "$CONF" << EOF
 workspace = special:btop,     on-created-empty:ghostty --title=btop -e btop
 workspace = special:nmtui,    on-created-empty:ghostty --title=nmtui -e nmtui
 workspace = special:bluetui,  on-created-empty:ghostty --title=bluetui -e bluetui
+workspace = special:pavucontrol,  on-created-empty:pavucontrol
 
 windowrule = float on,             match:title btop
 windowrule = float on,             match:title nmtui

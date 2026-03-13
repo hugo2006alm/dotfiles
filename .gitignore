@@ -10,4 +10,4 @@
 .config/mako/config
 .config/walker/themes/*/_colors.scss
 .config/walker/themes/*/style.css
-
+.config/walker/config.toml
