@@ -13,6 +13,16 @@ end
 
 # ── Aliases ───────────────────────────────────────────
 alias dots='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
+function dots_commit_push
+    set -l message $argv[1]
+    if test -z "$message"
+        echo "Usage: dots_commit_push \"commit message\""
+        return 1
+    end
+    dots add -A
+    dots commit -m "$message"
+    dots push
+end
 alias theme='~/.config/themes/apply.sh'
 alias ll='eza -la --icons --git'
 alias la='eza -a --icons'
