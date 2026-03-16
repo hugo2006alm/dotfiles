@@ -117,6 +117,7 @@ PACMAN_PKGS=(
 
     # Misc
     unzip
+    zip
 
     # Gaming (GPU — swap for nvidia if needed)
     mesa
