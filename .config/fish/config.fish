@@ -29,6 +29,12 @@ alias la='eza -a --icons'
 alias ls='eza --icons'
 alias cat='bat'
 alias g='git'
+alias reload-waybar='pkill waybar; hyprctl dispatch exec waybar'
+alias reload-mako='pkill mako; hyprctl dispatch exec mako'
+alias reload-walker='pkill walker; hyprctl dispatch exec "walker --gapplication-service"'
+alias reload-hyprsunset='pkill hyprsunset; hyprctl dispatch exec hyprsunset'
+alias reload-theme='~/.config/themes/apply.sh shade-raid'
+alias reload-hyprland='hyprctl reload'
 
 # ── Zoxide init ───────────────────────────────────────
 zoxide init fish | source
