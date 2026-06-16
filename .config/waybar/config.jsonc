@@ -17,8 +17,8 @@
       "default": "□",
       "empty": "□"
     },
-    "on-scroll-up": "hyprctl dispatch workspace e+1",
-    "on-scroll-down": "hyprctl dispatch workspace e-1",
+    "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e+1\" })'",
+    "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e-1\" })'",
     "sort-by-number": true
   },
 
@@ -37,18 +37,18 @@
 
   "cpu": {
     "format": "CPU {usage}%",
-    "on-click": "hyprctl dispatch togglespecialworkspace btop"
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
   },
 
   "memory": {
     "format": "MEM {percentage}%",
-    "on-click": "hyprctl dispatch togglespecialworkspace btop"
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
   },
 
   "pulseaudio": {
     "format": "VOL {volume}%",
     "format-muted": "MUTE",
-    "on-click": "hyprctl dispatch togglespecialworkspace pavucontrol",
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"pavucontrol\")'",
     "scroll-step": 5
   },
 
@@ -56,14 +56,14 @@
     "format-wifi": "WiFi {signalStrength}%",
     "format-ethernet": "ETH",
     "format-disconnected": "NO NET",
-    "on-click": "hyprctl dispatch togglespecialworkspace nmtui"
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"nmtui\")'"
   },
 
   "bluetooth": {
     "format": "BT",
     "format-connected": "BT {device_alias}",
     "format-disabled": "BT OFF",
-    "on-click": "hyprctl dispatch togglespecialworkspace bluetui"
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"bluetui\")'"
   },
 
   "group/tray-group": {
