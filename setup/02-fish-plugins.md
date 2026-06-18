@@ -2,22 +2,32 @@
 
 ## Changes to `.config/fish/fish_plugins`
 
-### Added: `reitzig/sdkman-for-fish@v2.1.0`
+### Plugins (managed by Fisher)
 
-Adds SDKMAN support to Fish shell for managing multiple versions of JDK and other Java ecosystem tools.
+The following plugins are installed and managed via Fisher:
 
-**File:** `.config/fish/fish_plugins`
+| Plugin | Author | Purpose |
+|--------|--------|---------|
+| `fisher` | jorgebucaran | Plugin manager for Fish |
+| `fzf.fish` | patrickf1 | FZF integration for Fish |
+| `autopair.fish` | jorgebucaran | Auto-pair brackets, quotes, etc. |
+| `nvm.fish` | jorgebucaran | Node Version Manager integration |
+| `sdkman-for-fish` | reitzig | SDKMAN integration for Java/JVM tools |
 
-**Plugin Details:**
-- **Name:** sdkman-for-fish
-- **Author:** reitzig
-- **Version:** v2.1.0
-- **Purpose:** Provides Fish shell integration for SDKMAN (Software Development Kit Manager)
+### Installation
 
-**Installation:**
-The plugin is managed by Fisher (Fish plugin manager). After adding to `fish_plugins`, run:
+After updating `fish_plugins`, run:
 ```bash
 fisher update
+```
+
+### File: `.config/fish/fish_plugins`
+```
+jorgebucaran/fisher
+patrickf1/fzf.fish
+jorgebucaran/autopair.fish
+jorgebucaran/nvm.fish
+reitzig/sdkman-for-fish
 ```
 
 **Related Files:**

@@ -1,12 +1,28 @@
 # Fish Config Setup
 
-## Changes to `.config/fish/config.fish`
+## Changes to .config/fish/config.fish
 
-### Added: `dots_commit_push` function
-
-Adds a convenient function to commit and push dotfiles changes in one command:
-
+### Auto-start Hyprland on TTY1
 ```fish
+if status is-login
+    if test -z "$DISPLAY" && test "$XDG_VTNR" = 1
+        exec start-hyprland
+    end
+end
+```
+
+### SSH Agent Auto-start
+```fish
+if test -z "$SSH_AUTH_SOCK"
+    eval (ssh-agent -c) 2>/dev/null
+    ssh-add ~/.ssh/github-ssh
+end
+```
+
+### Aliases
+```fish
+# Dotfiles management
+alias dots='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 function dots_commit_push
     set -l message $argv[1]
     if test -z "$message"
@@ -17,17 +33,31 @@ function dots_commit_push
     dots commit -m "$message"
     dots push
 end
-```
 
-**Usage:**
-```bash
-dots_commit_push "update fish config"
-```
+# Theme & Config Reload
+alias theme='~/.config/themes/apply.sh'
+alias reload-waybar='pkill waybar; hyprctl dispatch exec waybar'
+alias reload-mako='pkill mako; hyprctl dispatch exec mako'
+alias reload-walker='pkill walker; hyprctl dispatch exec "walker --gapplication-service"'
+alias reload-hyprsunset='pkill hyprsunset; hyprctl dispatch exec hyprsunset'
+alias reload-theme='~/.config/themes/apply.sh shade-raid'
+alias reload-hyprland='hyprctl reload'
 
-This function:
-1. Stages all changes (`dots add -A`)
-2. Creates a commit with the provided message
-3. Pushes to remote repository
+# Modern CLI Replacements
+alias ll='eza -la --icons --git'
+alias la='eza -a --icons'
+alias ls='eza --icons'
+alias cat='bat'
+alias g='git'
+
+# Tools
+zoxide init fish | source
+starship init fish | source
+set fzf_fd_opts --hidden
+
+# Hermes Agent — ensure ~/.local/bin is on PATH
+fish_add_path "$HOME/.local/bin"
+```
 
 **Related Files:**
-- `.config/fish/config.fish` - Main fish shell configuration
+- .config/fish/config.fish - Main fish shell configuration

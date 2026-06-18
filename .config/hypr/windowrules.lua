@@ -14,6 +14,7 @@ hl.window_rule({ match = { class = "mpv" }, float = true })
 hl.window_rule({ match = { title = "btop" }, float = true })
 hl.window_rule({ match = { title = "nmtui" }, float = true })
 hl.window_rule({ match = { title = "bluetui" }, float = true })
+hl.window_rule({ match = { class = "zen", title = "^Extensão:" }, float = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { 900, 600 } })
