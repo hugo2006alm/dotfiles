@@ -34,6 +34,8 @@ PACMAN_PKGS=(
     # Network
     networkmanager
     network-manager-applet
+    openvpn
+    network-manager-openvpn
 
     # Bluetooth
     bluez
