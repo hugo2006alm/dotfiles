@@ -11,3 +11,4 @@
 .config/walker/themes/*/_colors.scss
 .config/walker/themes/*/style.css
 .config/walker/config.toml
+.config/hypr/hyprlock.conf
