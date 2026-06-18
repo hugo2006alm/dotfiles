@@ -33,6 +33,7 @@ PACMAN_PKGS=(
 
     # Network
     networkmanager
+    network-manager-applet
 
     # Bluetooth
     bluez
