@@ -12,16 +12,18 @@ if test -z "$SSH_AUTH_SOCK"
 end
 
 # ── Aliases ───────────────────────────────────────────
-alias dots='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
-function dots_commit_push
+function dotfiles_push
     set -l message $argv[1]
     if test -z "$message"
-        echo "Usage: dots_commit_push \"commit message\""
+        echo "Usage: dotfiles_push \"commit message\""
         return 1
     end
-    dots add -A
-    dots commit -m "$message"
-    dots push
+    set -l old_pwd $PWD
+    cd ~/dotfiles
+    git add -A
+    git commit -m "$message"
+    git push
+    cd $old_pwd
 end
 alias theme='~/.config/themes/apply.sh'
 alias ll='eza -la --icons --git'

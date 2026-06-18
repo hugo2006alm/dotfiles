@@ -88,6 +88,7 @@ PACMAN_PKGS=(
     file-roller
 
     # System tools
+    stow
     btop
     bc
     ufw
