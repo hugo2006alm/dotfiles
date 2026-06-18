@@ -130,6 +130,10 @@ PACMAN_PKGS=(
 
     # Steam
     steam
+
+    # Keyring
+    gnome-keyring
+    seahorse
 )
 
 echo "==> Installing pacman packages..."

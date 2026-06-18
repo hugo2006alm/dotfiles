@@ -20,6 +20,9 @@ hl.on("hyprland.start", function()
     
     -- Generate drawers config and reload
     hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh && hyprctl reload")
+
+    -- Keyring (auto-unlocks on autologin sessions)
+    hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
     
     -- Applications
     hl.exec_cmd("vesktop")
