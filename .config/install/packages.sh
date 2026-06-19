@@ -154,7 +154,7 @@ AUR_PKGS=(
 
     # Login manager
     greetd
-    greetd-tuigreet
+    greetd-regreet
 
     # Launcher
     walker-bin

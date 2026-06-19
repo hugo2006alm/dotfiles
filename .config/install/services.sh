@@ -18,17 +18,20 @@ sudo ufw default allow outgoing
 
 echo "==> Configuring greetd login manager..."
 sudo mkdir -p /etc/greetd
-sudo touch /etc/greetd/tuigreet-theme.args
-sudo chmod 666 /etc/greetd/tuigreet-theme.args
+sudo cp ~/.config/greetd/hyprland-greet.conf /etc/greetd/
+sudo touch /etc/greetd/regreet.toml
+sudo chmod 666 /etc/greetd/regreet.toml
+sudo touch /etc/greetd/regreet-background.jpg
+sudo chmod 666 /etc/greetd/regreet-background.jpg
 
 sudo tee /etc/greetd/config.toml > /dev/null << 'EOF'
 [terminal]
 vt = 1
 
 [default_session]
-command = "sh -c 'tuigreet --cmd start-hyprland --time --greeting \"Welcome to Shade Raid\" --remember --remember-session --asterisks $(cat /etc/greetd/tuigreet-theme.args 2>/dev/null)'"
+command = "Hyprland --config /etc/greetd/hyprland-greet.conf"
 user = "greeter"
 EOF
 
 sudo systemctl enable greetd
-echo "==> Greetd configured on tty1"
+echo "==> Greetd configured for ReGreet on tty1"

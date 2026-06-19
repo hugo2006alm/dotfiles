@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Reads the global colors.toml and generates tuigreet arguments
-# Writes to /etc/greetd/tuigreet-theme.args if writable
+# Reads the global colors.toml and generates regreet configuration
+# Writes to /etc/greetd/regreet.toml and copies wallpaper to /etc/greetd/regreet-background.jpg
 
 THEME="$1"
 if [ -z "$THEME" ]; then
@@ -14,28 +14,39 @@ if [ ! -f "$TOML" ]; then
   exit 1
 fi
 
-# Simple TOML parser function
-get_color() {
-  grep -E "^$1\s*=" "$TOML" | cut -d'"' -f2
-}
+# Pick a random wallpaper
+BASE_THEME="${THEME%-*}"
+if [ -d "$HOME/wallpapers/$THEME" ]; then
+    WALLPAPERS_DIR="$HOME/wallpapers/$THEME"
+elif [ -d "$HOME/wallpapers/$BASE_THEME" ]; then
+    WALLPAPERS_DIR="$HOME/wallpapers/$BASE_THEME"
+fi
 
-# Extract colors
-bg=$(get_color "background")
-fg=$(get_color "foreground")
-accent=$(get_color "accent")
-inactive=$(get_color "inactive")
-border=$(get_color "border")
-urgent=$(get_color "urgent")
+CONFIG_FILE="/etc/greetd/regreet.toml"
+BG_FILE="/etc/greetd/regreet-background.jpg"
 
-# Ensure /etc/greetd/tuigreet-theme.args exists and is writable
-ARGS_FILE="/etc/greetd/tuigreet-theme.args"
-
-if [ -w "$ARGS_FILE" ]; then
-  # tuigreet theme format:
-  # --theme "border=COLOR;text=COLOR;prompt=COLOR;time=COLOR;action=COLOR;button=COLOR;container=COLOR;input=COLOR"
-  # Colors must be hex or basic color names
+if [ -w "$CONFIG_FILE" ]; then
   
-  THEME_STR="border=$accent;text=$fg;prompt=$accent;time=$inactive;action=$accent;button=$accent;container=$bg;input=$fg"
-  
-  echo "--theme \"$THEME_STR\"" > "$ARGS_FILE"
+  if [ -n "$WALLPAPERS_DIR" ]; then
+    RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | shuf -n 1)
+    if [ -n "$RANDOM_WALL" ]; then
+      cp "$(readlink -f "$RANDOM_WALL")" "$BG_FILE"
+      chmod 666 "$BG_FILE"
+    fi
+  fi
+
+  IS_DARK=true
+  if [[ "$THEME" == *"-light"* ]]; then
+      IS_DARK=false
+  fi
+
+  cat > "$CONFIG_FILE" << EOF
+[background]
+path = "$BG_FILE"
+fit = "Cover"
+
+[GTK]
+application_prefer_dark_theme = $IS_DARK
+EOF
+
 fi
