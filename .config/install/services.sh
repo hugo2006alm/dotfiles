@@ -26,7 +26,7 @@ sudo tee /etc/greetd/config.toml > /dev/null << 'EOF'
 vt = 1
 
 [default_session]
-command = "sh -c 'tuigreet --cmd start-hyprland --time --greeting \"Welcome to Shade Raid\" --remember --remember-session --asterisks \$(cat /etc/greetd/tuigreet-theme.args 2>/dev/null)'"
+command = "sh -c 'tuigreet --cmd start-hyprland --time --greeting \"Welcome to Shade Raid\" --remember --remember-session --asterisks $(cat /etc/greetd/tuigreet-theme.args 2>/dev/null)'"
 user = "greeter"
 EOF
 
