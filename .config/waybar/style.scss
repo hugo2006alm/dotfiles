@@ -80,6 +80,7 @@ window#waybar {
 // ── TRAY GROUP ─────────────────────────────
 #tray-group {
   border-left: $border-bar;
+  border-bottom: $border-bar;
 }
 
 #custom-tray-icon {
@@ -111,12 +112,12 @@ window#waybar {
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.1em;
-  padding: 0 16px 0 19px;
+  padding: 0 16px;
   color: $waybar_fg;
   background: $waybar_bg;
-  border-left: none;
-  border-bottom: none;
-  box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
+  border-left: 3px solid $waybar_acc;
+  border-bottom: 3px solid $waybar_acc;
+  box-shadow: none;
 
   &:hover { background: $accent; }
 }
@@ -125,16 +126,15 @@ window#waybar {
 #custom-power {
   font-size: 16px;
   font-weight: 700;
-  padding: 0 16px 0 19px;
+  padding: 0 16px;
   color: $waybar_fg;
   background: $waybar_bg;
-  border-left: none;
-  border-bottom: none;
-  box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
+  border-left: 3px solid $waybar_acc;
+  border-bottom: 3px solid $waybar_acc;
+  box-shadow: none;
 
   &:hover {
     background: $waybar_acc;
     color: $waybar_bg;
-    box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
   }
 }
