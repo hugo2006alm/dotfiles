@@ -8,7 +8,7 @@
 
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["mpris"],
-  "modules-right": ["group/system", "group/tray-group", "clock"],
+  "modules-right": ["group/system", "group/tray-group", "custom/power", "clock"],
 
   "hyprland/workspaces": {
     "format": "{name} {icon}",
@@ -89,5 +89,11 @@
     "format": "{:%H:%M}",
     "format-alt": "{:%A, %d %B %Y}",
     "tooltip-format": "<tt>{calendar}</tt>"
+  },
+
+  "custom/power": {
+    "format": "⏻",
+    "tooltip": "Power menu",
+    "on-click": "~/.local/bin/power-menu"
   }
 }
