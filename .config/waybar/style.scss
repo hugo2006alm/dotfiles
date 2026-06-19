@@ -79,7 +79,7 @@ window#waybar {
 
 // ── TRAY GROUP ─────────────────────────────
 #tray-group {
-  border-left: $border-bar;
+  border-left: 6px solid $border;
   border-bottom: $border-bar;
 }
 
@@ -88,6 +88,7 @@ window#waybar {
   font-size: 10px;
   color: $foreground;
   background: $background2;
+  border-bottom: $border-bar;
 
   &:hover {
     background: $foreground;
@@ -98,6 +99,7 @@ window#waybar {
 #tray {
   padding: 0 8px;
   background: $background2;
+  border-bottom: $border-bar;
 
   > .passive { -gtk-icon-effect: dim; }
 
