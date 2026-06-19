@@ -80,7 +80,6 @@ window#waybar {
 // ── TRAY GROUP ─────────────────────────────
 #tray-group {
   border-left: $border-bar;
-  border-bottom: $border-bar;
 }
 
 #custom-tray-icon {
@@ -88,7 +87,6 @@ window#waybar {
   font-size: 10px;
   color: $foreground;
   background: $background2;
-  border-bottom: $border-bar;
 
   &:hover {
     background: $foreground;
@@ -99,7 +97,6 @@ window#waybar {
 #tray {
   padding: 0 8px;
   background: $background2;
-  border-bottom: $border-bar;
 
   > .passive { -gtk-icon-effect: dim; }
 
@@ -114,12 +111,12 @@ window#waybar {
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.1em;
-  padding: 0 16px 0 18px;
+  padding: 0 16px 0 19px;
   color: $waybar_fg;
   background: $waybar_bg;
   border-left: none;
   border-bottom: none;
-  box-shadow: inset 2px 0 0 0 $border, inset 0 -3px 0 0 $waybar_acc;
+  box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
 
   &:hover { background: $accent; }
 }
@@ -128,16 +125,16 @@ window#waybar {
 #custom-power {
   font-size: 16px;
   font-weight: 700;
-  padding: 0 16px 0 18px;
+  padding: 0 16px 0 19px;
   color: $waybar_fg;
   background: $waybar_bg;
   border-left: none;
   border-bottom: none;
-  box-shadow: inset 2px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
+  box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
 
   &:hover {
     background: $waybar_acc;
     color: $waybar_bg;
-    box-shadow: inset 2px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
+    box-shadow: inset 3px 0 0 0 $waybar_acc, inset 0 -3px 0 0 $waybar_acc;
   }
 }
