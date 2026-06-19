@@ -152,6 +152,10 @@ AUR_PKGS=(
     hyprpicker
     hyprshot
 
+    # Login manager
+    greetd
+    greetd-tuigreet
+
     # Launcher
     walker-bin
 

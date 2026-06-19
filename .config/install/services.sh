@@ -16,16 +16,19 @@ sudo ufw enable
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
-echo "==> Setting up autologin..."
-CURRENT_USER=$(whoami)
-sudo mkdir -p /etc/systemd/system/getty@tty1.service.d/
-sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf > /dev/null << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $CURRENT_USER --noclear %I \$TERM
-Type=simple
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable getty@tty1.service
+echo "==> Configuring greetd login manager..."
+sudo mkdir -p /etc/greetd
+sudo touch /etc/greetd/tuigreet-theme.args
+sudo chmod 666 /etc/greetd/tuigreet-theme.args
 
-echo "==> Autologin configured for user: $CURRENT_USER on tty1"
+sudo tee /etc/greetd/config.toml > /dev/null << 'EOF'
+[terminal]
+vt = 1
+
+[default_session]
+command = "sh -c 'tuigreet --cmd start-hyprland --time --greeting \"Welcome to Shade Raid\" --remember --remember-session --asterisks \$(cat /etc/greetd/tuigreet-theme.args 2>/dev/null)'"
+user = "greeter"
+EOF
+
+sudo systemctl enable greetd
+echo "==> Greetd configured on tty1"
