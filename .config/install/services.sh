@@ -23,15 +23,20 @@ sudo touch /etc/greetd/regreet.toml
 sudo chmod 666 /etc/greetd/regreet.toml
 sudo touch /etc/greetd/regreet-background.jpg
 sudo chmod 666 /etc/greetd/regreet-background.jpg
+sudo touch /etc/greetd/regreet.css
+sudo chmod 666 /etc/greetd/regreet.css
 
 sudo tee /etc/greetd/config.toml > /dev/null << 'EOF'
 [terminal]
 vt = 1
 
 [default_session]
-command = "Hyprland --config /etc/greetd/hyprland-greet.conf"
+command = "sh -c 'Hyprland --config /etc/greetd/hyprland-greet.conf > /dev/null 2>&1'"
 user = "greeter"
 EOF
 
 sudo systemctl enable greetd
 echo "==> Greetd configured for ReGreet on tty1"
+
+echo "==> Suppressing Hyprland terminal logs on logout..."
+sudo sed -i 's|^Exec=.*|Exec=/bin/sh -c "/usr/bin/start-hyprland > /dev/null 2>\&1"|' /usr/share/wayland-sessions/hyprland.desktop || true

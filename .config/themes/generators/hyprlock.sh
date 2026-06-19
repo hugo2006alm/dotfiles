@@ -67,7 +67,7 @@ input-field {
     outline_thickness = 3
     dots_size = 0.25
     dots_spacing = 0.35
-    dots_center = true
+    dots_center = false
     outer_color = rgb($(hex $lock_input))
     inner_color = rgb($(hex $lock_bg))
     font_color = rgb($(hex $lock_fg))

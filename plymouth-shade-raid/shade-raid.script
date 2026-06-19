@@ -12,9 +12,10 @@ box_sprite.SetX(Window.GetWidth() / 2 - box_image.GetWidth() / 2);
 box_sprite.SetY(Window.GetHeight() / 2 - box_image.GetHeight() / 2);
 
 // Simple dot progress
+max_progress_text = Image.Text("....", 0.851, 0.310, 0.169, 1, "Monospace 36");
 progress_text = Image.Text(".", 0.851, 0.310, 0.169, 1, "Monospace 36");
 progress_sprite = Sprite(progress_text);
-progress_sprite.SetX(Window.GetWidth() / 2 - progress_text.GetWidth() / 2);
+progress_sprite.SetX(Window.GetWidth() / 2 - max_progress_text.GetWidth() / 2);
 progress_sprite.SetY(Window.GetHeight() / 2 + box_image.GetHeight());
 
 progress = 0;
