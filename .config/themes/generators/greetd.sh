@@ -31,7 +31,6 @@ if [ -w "$CONFIG_FILE" ]; then
     RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | shuf -n 1)
     if [ -n "$RANDOM_WALL" ]; then
       cp "$(readlink -f "$RANDOM_WALL")" "$BG_FILE"
-      chmod 666 "$BG_FILE"
     fi
   fi
 
