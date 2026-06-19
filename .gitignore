@@ -12,3 +12,4 @@
 .config/walker/themes/*/style.css
 .config/walker/config.toml
 .config/hypr/hyprlock.conf
+.config/vesktop/themes/shade-raid.theme.css

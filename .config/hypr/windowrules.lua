@@ -44,7 +44,7 @@ hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, workspace = "
 hl.window_rule({ match = { class = "com.mitchellh.ghostty" }, opacity = "1.0 override" })
 hl.window_rule({ match = { class = "antigravity" }, opacity = "0.92 override" })
 hl.window_rule({ match = { class = "antigravity-ide" }, opacity = "0.92 override" })
-hl.window_rule({ match = { class = "zen" }, opacity = "0.92 override" })
+hl.window_rule({ match = { class = "zen" }, opacity = "1.0 override 1.0 override" })
 hl.window_rule({ match = { class = "vesktop" }, opacity = "0.95 override" })
 hl.window_rule({ match = { class = "Bitwarden" }, opacity = "1.0 override" })
 

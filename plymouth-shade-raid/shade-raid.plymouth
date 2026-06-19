@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Shade Raid
+Description=Ink on paper geometric boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/shade-raid
+ScriptFile=/usr/share/plymouth/themes/shade-raid/shade-raid.script

@@ -1,0 +1,36 @@
+// Background: #F4EFE4 (paper) -> R: 0.957, G: 0.937, B: 0.894
+Window.SetBackgroundTopColor(0.957, 0.937, 0.894);
+Window.SetBackgroundBottomColor(0.957, 0.937, 0.894);
+
+// Text styling: Ink #0D0D0D -> R: 0.051, G: 0.051, B: 0.051
+// Accent styling: #D94F2B -> R: 0.851, G: 0.310, B: 0.169
+
+// Hard geometric text
+box_image = Image.Text("SHADE RAID", 0.051, 0.051, 0.051, 1, "Monospace 36");
+box_sprite = Sprite(box_image);
+box_sprite.SetX(Window.GetWidth() / 2 - box_image.GetWidth() / 2);
+box_sprite.SetY(Window.GetHeight() / 2 - box_image.GetHeight() / 2);
+
+// Simple dot progress
+progress_text = Image.Text(".", 0.851, 0.310, 0.169, 1, "Monospace 36");
+progress_sprite = Sprite(progress_text);
+progress_sprite.SetX(Window.GetWidth() / 2 - progress_text.GetWidth() / 2);
+progress_sprite.SetY(Window.GetHeight() / 2 + box_image.GetHeight());
+
+progress = 0;
+
+fun refresh_callback () {
+    progress++;
+    if (progress % 100 < 25) {
+        progress_text = Image.Text(".", 0.851, 0.310, 0.169, 1, "Monospace 36");
+    } else if (progress % 100 < 50) {
+        progress_text = Image.Text("..", 0.851, 0.310, 0.169, 1, "Monospace 36");
+    } else if (progress % 100 < 75) {
+        progress_text = Image.Text("...", 0.851, 0.310, 0.169, 1, "Monospace 36");
+    } else {
+        progress_text = Image.Text("....", 0.851, 0.310, 0.169, 1, "Monospace 36");
+    }
+    progress_sprite.SetImage(progress_text);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
