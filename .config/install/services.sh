@@ -8,8 +8,8 @@ sudo systemctl enable sshd
 sudo systemctl enable paccache.timer || true
 
 echo "==> Enabling user services..."
-systemctl --user enable --now pipewire pipewire-pulse wireplumber
-systemctl --user enable --now swayosd-libinput-backend
+systemctl --user enable --now pipewire pipewire-pulse wireplumber || true
+sudo systemctl enable swayosd-libinput-backend || true
 
 echo "==> Setting up firewall..."
 sudo ufw enable
