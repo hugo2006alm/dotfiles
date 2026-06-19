@@ -5,7 +5,7 @@ echo "==> Enabling system services..."
 sudo systemctl enable NetworkManager
 sudo systemctl enable bluetooth
 sudo systemctl enable sshd
-sudo systemctl enable paccache.timer
+sudo systemctl enable paccache.timer || true
 
 echo "==> Enabling user services..."
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
