@@ -1,0 +1,50 @@
+* {
+  font-family: "Space Mono", monospace;
+  font-size: 12px;
+}
+
+window {
+  background-color: rgba(22, 19, 15, 0.9);
+  color: #F4EFE4;
+}
+
+button {
+  background-color: #201C17;
+  color: #F4EFE4;
+  border-radius: 12px;
+  border: 2px solid #201C17;
+  margin: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: #E8623E;
+  color: #16130F;
+  border: 2px solid #E8623E;
+  box-shadow: 0 8px 16px rgba(232, 98, 62, 0.3);
+  transform: scale(1.03);
+}
+
+#lock,
+#logout,
+#suspend,
+#hibernate,
+#shutdown,
+#reboot {
+  background-size: 64px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#lock      { background-image: url("/usr/share/wlogout/icons/lock.png"); }
+#logout    { background-image: url("/usr/share/wlogout/icons/logout.png"); }
+#suspend   { background-image: url("/usr/share/wlogout/icons/suspend.png"); }
+#hibernate { background-image: url("/usr/share/wlogout/icons/hibernate.png"); }
+#shutdown  { background-image: url("/usr/share/wlogout/icons/shutdown.png"); }
+#reboot    { background-image: url("/usr/share/wlogout/icons/reboot.png"); }
+
+label {
+  font-size: 14px;
+}

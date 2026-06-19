@@ -18,7 +18,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
     
     -- Wallpaper
-    hl.exec_cmd([[swww img $HOME/wallpapers/shade-raid/wallpaper_0.jpg --transition-type wipe --transition-angle 30]])
+    hl.exec_cmd([[sleep 1 && swww img $HOME/wallpapers/shade-raid/wallpaper_0.jpg --transition-type wipe --transition-angle 30]])
     
     -- Generate drawers config and reload
     hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh && hyprctl reload")

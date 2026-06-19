@@ -122,3 +122,21 @@ window#waybar {
 
   &:hover { background: $accent; }
 }
+
+// ── POWER BUTTON ───────────────────────────
+#custom-power {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 14px;
+  margin: 4px 6px;
+  color: $waybar_fg;
+  background: $waybar_bg;
+  border: $border-thin;
+  border-bottom: 3px solid $waybar_acc;
+  border-radius: 0;
+
+  &:hover {
+    background: $waybar_acc;
+    color: $waybar_bg;
+  }
+}
