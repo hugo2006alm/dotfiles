@@ -114,11 +114,12 @@ window#waybar {
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.1em;
-  padding: 0 16px;
+  padding: 0 16px 0 18px;
   color: $waybar_fg;
   background: $waybar_bg;
-  border-left: $border-thin;
-  border-bottom: 3px solid $waybar_acc;
+  border-left: none;
+  border-bottom: none;
+  box-shadow: inset 0 -3px 0 0 $waybar_acc, inset 2px 0 0 0 $border;
 
   &:hover { background: $accent; }
 }
@@ -127,14 +128,16 @@ window#waybar {
 #custom-power {
   font-size: 16px;
   font-weight: 700;
-  padding: 0 16px;
+  padding: 0 16px 0 18px;
   color: $waybar_fg;
   background: $waybar_bg;
-  border-left: $border-thin;
-  border-bottom: 3px solid $waybar_acc;
+  border-left: none;
+  border-bottom: none;
+  box-shadow: inset 0 -3px 0 0 $waybar_acc, inset 2px 0 0 0 $border;
 
   &:hover {
     background: $waybar_acc;
     color: $waybar_bg;
+    box-shadow: inset 0 -3px 0 0 $waybar_bg, inset 2px 0 0 0 $border;
   }
 }
