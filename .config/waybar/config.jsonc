@@ -8,7 +8,7 @@
 
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["mpris"],
-  "modules-right": ["group/system", "group/tray-group", "custom/power", "clock"],
+  "modules-right": ["group/system", "group/tray-group", "clock", "custom/power"],
 
   "hyprland/workspaces": {
     "format": "{name} {icon}",
