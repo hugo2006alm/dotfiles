@@ -62,6 +62,7 @@ PACMAN_PKGS=(
     slurp
     wl-clipboard
     cliphist
+    pacman-contrib
     wf-recorder
 
     # Brightness
@@ -167,6 +168,7 @@ AUR_PKGS=(
 
     # Power menu
     wlogout
+    swayosd-git
 
     # Runtime manager
     mise-bin

@@ -5,11 +5,11 @@ echo "==> Enabling system services..."
 sudo systemctl enable NetworkManager
 sudo systemctl enable bluetooth
 sudo systemctl enable sshd
-sudo systemctl enable paccache.timer || true
+sudo systemctl enable paccache.timer
 
 echo "==> Enabling user services..."
-systemctl --user enable --now pipewire pipewire-pulse wireplumber || true
-sudo systemctl enable swayosd-libinput-backend || true
+systemctl --user enable --now pipewire pipewire-pulse wireplumber
+sudo systemctl enable swayosd-libinput-backend
 
 echo "==> Setting up firewall..."
 sudo ufw enable
