@@ -11,4 +11,9 @@ pkill mako; mako >> /dev/null 2>&1 &
 pkill -USR2 ghostty 2>/dev/null || true
 pkill walker 2>/dev/null; sleep 0.2; walker --gapplication-service >> /dev/null 2>&1 &
 
+if pgrep -x wlogout > /dev/null; then
+    pkill -x wlogout
+    wlogout >> /dev/null 2>&1 &
+fi
+
 echo "Applied theme: $THEME"
