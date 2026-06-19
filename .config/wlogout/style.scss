@@ -1,3 +1,5 @@
+@import "colors";
+
 * {
   background-image: none;
   box-shadow: none;
@@ -6,26 +8,26 @@
 }
 
 window {
-  background-color: rgba(22, 19, 15, 0.9);
-  color: #F4EFE4;
+  background-color: rgba($background, 0.9);
+  color: $foreground;
 }
 
 button {
-  background-color: #201C17;
-  color: #F4EFE4;
+  background-color: $background2;
+  color: $foreground;
   border-radius: 12px;
-  border: 2px solid #201C17;
+  border: 2px solid $background2;
   margin: 10px;
   padding: 16px 18px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 8px rgba($shadow, 0.4);
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 button:hover {
-  background-color: #E8623E;
-  color: #16130F;
-  border: 2px solid #E8623E;
-  box-shadow: 0 8px 16px rgba(232, 98, 62, 0.3);
+  background-color: $accent;
+  color: $accent_fg;
+  border: 2px solid $accent;
+  box-shadow: 0 8px 16px rgba($accent, 0.3);
 }
 
 #lock,
