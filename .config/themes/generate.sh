@@ -42,7 +42,12 @@ echo "  --background-secondary-alt: $(get inactive);" >> ~/.config/vesktop/theme
 echo "  --background-tertiary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --background-floating: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --background-nested-floating: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-message-hover: rgba(0, 0, 0, 0.05);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-overlay-chat: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-overlay-app-frame: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-primary: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-secondary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-tertiary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-message-hover: rgba(127, 127, 127, 0.05);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --channeltextarea-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --info-positive-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --info-warning-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
