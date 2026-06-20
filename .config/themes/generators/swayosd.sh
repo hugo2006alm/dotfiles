@@ -37,6 +37,9 @@ echo "Generated ~/.config/swayosd/style.css"
 # Reload swayosd-server if running (picks up new stylesheet)
 if pgrep -x swayosd-server > /dev/null; then
     pkill -x swayosd-server
-    swayosd-server --style ~/.config/swayosd/style.css &
+    # Wait a tiny bit for it to shutdown
+    sleep 0.2
+    hyprctl dispatch 'hl.dsp.exec_cmd("swayosd-server --style $HOME/.config/swayosd/style.css")' > /dev/null
     echo "Reloaded swayosd-server"
 fi
+

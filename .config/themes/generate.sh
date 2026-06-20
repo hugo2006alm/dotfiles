@@ -15,13 +15,23 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 chmod +x "$DIR/generators/"*.sh
 for generator in "$DIR/generators/"*.sh; do
-  bash "$generator" "$THEME"
+  bash "$generator" "$THEME" &
 done
+wait
 
+# Load colors from TOML in a single pass into a bash associative array (0ms, 0 processes)
+declare -A colors
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*\"([^\"]+)\" ]]; then
+    colors["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  elif [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*([0-9.]+) ]]; then
+    colors["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  fi
+done < "$TOML"
 
-
-get() { grep "^$1 " "$TOML" | head -1 | sed 's/.*= *"\(.*\)"/\1/'; }
+get() { echo "${colors[$1]}"; }
 hex() { echo "${1#\#}"; }
+
 
 # Vesktop Generator Block
 echo "Generating Vesktop Theme..."

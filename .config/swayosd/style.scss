@@ -14,15 +14,21 @@ window#osd {
 }
 
 window#osd #container {
-  margin: 14px 20px;
+  margin: 8px 14px;
 }
 
-window#osd image,
+window#osd image {
+  color: $foreground;
+  min-width: 18px;
+  min-height: 18px;
+  -gtk-icon-transform: scale(0.75);
+}
+
 window#osd label {
   color: $foreground;
-  min-width: 24px;
-  min-height: 24px;
+  font-size: 13px;
 }
+
 
 window#osd image:disabled,
 window#osd progressbar:disabled {
@@ -31,12 +37,13 @@ window#osd progressbar:disabled {
 
 window#osd progressbar,
 window#osd segmentedprogress {
-  min-height: 6px;
-  min-width: 160px;
+  min-height: 4px;
+  min-width: 110px;
   border-radius: 999px;
   background: transparent;
   border: none;
 }
+
 
 window#osd trough,
 window#osd segment {
