@@ -34,54 +34,57 @@ cat << 'EOF' > ~/.config/vesktop/themes/shade-raid.theme.css
  * @version 1.0.0
  * @description Ink on paper theme
  */
-.theme-dark, .theme-light, :root {
+#app-mount .theme-light, #app-mount .theme-dark, .theme-dark, .theme-light, :root {
 EOF
-echo "  --background-primary: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-secondary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-secondary-alt: $(get inactive);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-tertiary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-floating: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-nested-floating: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --bg-overlay-chat: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --bg-overlay-app-frame: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --bg-base-primary: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --bg-base-secondary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --bg-base-tertiary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-message-hover: rgba(127, 127, 127, 0.05);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --channeltextarea-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --info-positive-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --info-warning-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --info-danger-background: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-primary: $(get background) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-secondary: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-secondary-alt: $(get inactive) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-tertiary: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-floating: $(get background) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-nested-floating: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-overlay-chat: $(get background) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-overlay-app-frame: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-primary: $(get background) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-secondary: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --bg-base-tertiary: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-message-hover: rgba(127, 127, 127, 0.05) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --channeltextarea-background: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --info-positive-background: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --info-warning-background: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --info-danger-background: $(get background2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --text-normal: $(get foreground);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --text-muted: $(get foreground2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --text-link: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --header-primary: $(get foreground);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --header-secondary: $(get foreground2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --interactive-normal: $(get foreground);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --interactive-hover: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --interactive-active: $(get accent_fg);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --interactive-muted: $(get inactive);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --text-normal: $(get foreground) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --text-muted: $(get foreground2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --text-link: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --header-primary: $(get foreground) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --header-secondary: $(get foreground2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --interactive-normal: $(get foreground) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --interactive-hover: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --interactive-active: $(get accent_fg) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --interactive-muted: $(get inactive) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --brand-experiment: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --brand-experiment-500: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --brand-experiment-560: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --brand-experiment-600: $(get accent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --brand-experiment: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --brand-experiment-500: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --brand-experiment-560: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --brand-experiment-600: $(get accent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --button-danger-background: $(get urgent);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --button-danger-background: $(get urgent) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --background-modifier-selected: $(get selection);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-modifier-hover: rgba(127, 127, 127, 0.1);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-modifier-active: rgba(127, 127, 127, 0.2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --background-modifier-accent: rgba(127, 127, 127, 0.1);" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-modifier-selected: $(get selection) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-modifier-hover: rgba(127, 127, 127, 0.1) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-modifier-active: rgba(127, 127, 127, 0.2) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --background-modifier-accent: rgba(127, 127, 127, 0.1) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --scrollbar-auto-thumb: $(get foreground);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --scrollbar-auto-track: transparent;" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --scrollbar-thin-thumb: $(get foreground);" >> ~/.config/vesktop/themes/shade-raid.theme.css
-echo "  --scrollbar-thin-track: transparent;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --scrollbar-auto-thumb: $(get foreground) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --scrollbar-auto-track: transparent !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --scrollbar-thin-thumb: $(get foreground) !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --scrollbar-thin-track: transparent !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
-echo "  --border-radius: 0px;" >> ~/.config/vesktop/themes/shade-raid.theme.css
+echo "  --border-radius: 0px !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 cat << 'EOF' >> ~/.config/vesktop/themes/shade-raid.theme.css
+}
+body, #app-mount, .appMount_ea7e65, .app_bd26cc, .bg_d4b6c5 {
+    background-color: var(--background-primary) !important;
 }
 * {
     border-radius: 0 !important;
