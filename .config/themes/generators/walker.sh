@@ -4,19 +4,35 @@ THEME="$1"
 TOML="$HOME/.config/themes/$THEME/colors.toml"
 STYLE="$HOME/.config/themes/style.toml"
 
-get()  { grep "^$1 " "$TOML"  | head -1 | sed 's/.*= *"\(.*\)"/\1/'; }
-gets() { grep "^$1 " "$STYLE" | head -1 | sed 's/.*= *"\(.*\)"/\1/'; }
+# Load colors and styles in a single pass (0ms overhead)
+declare -A colors
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*\"([^\"]+)\" ]]; then
+    colors["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  elif [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*([0-9.]+) ]]; then
+    colors["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  fi
+done < "$TOML"
 
-background=$(get background)
-background2=$(get background2)
-foreground=$(get foreground)
-foreground2=$(get foreground2)
-border=$(get border)
-accent=$(get accent)
-inactive=$(get inactive)
-font_mono=$(gets font_mono)
-font_size_sm=$(gets font_size_sm)
-font_size_md=$(gets font_size_md)
+declare -A style
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*\"([^\"]+)\" ]]; then
+    style["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  elif [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*([0-9.]+) ]]; then
+    style["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+  fi
+done < "$STYLE"
+
+background="${colors[background]}"
+background2="${colors[background2]}"
+foreground="${colors[foreground]}"
+foreground2="${colors[foreground2]}"
+border="${colors[border]}"
+accent="${colors[accent]}"
+inactive="${colors[inactive]}"
+font_mono="${style[font_mono]}"
+font_size_sm="${style[font_size_sm]}"
+font_size_md="${style[font_size_md]}"
 
 mkdir -p ~/.config/walker/themes/$THEME
 
@@ -61,7 +77,16 @@ placeholder = "Run"
 [[modules]]
 name = "clipboard"
 placeholder = "Clipboard"
+
+[[modules]]
+name = "calculator"
+placeholder = "Calculator"
+
+[[modules]]
+name = "emojis"
+placeholder = "Emojis"
 EOF
 
 echo "Generated ~/.config/walker/config.toml"
 echo "Added correct theme to config.toml"
+

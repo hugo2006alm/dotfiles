@@ -8,10 +8,13 @@ if ! command -v yay &> /dev/null; then
     cd ~ && rm -rf /tmp/yay
 fi
 
-echo "==> Enabling multilib..."
+echo "==> Optimizing pacman configuration..."
 sudo sed -i '/^#\[multilib\]/s/^#//' /etc/pacman.conf
 sudo sed -i '/^\[multilib\]/{n;s/^#//}' /etc/pacman.conf
+sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
+sudo sed -i 's/^#ParallelDownloads = 5$/ParallelDownloads = 5/' /etc/pacman.conf
 sudo pacman -Sy
+
 
 # ── Pacman packages ───────────────────────
 PACMAN_PKGS=(
@@ -78,6 +81,8 @@ PACMAN_PKGS=(
     nwg-look
     qt6ct
     qt5ct
+    papirus-icon-theme
+
 
     # Polkit
     polkit-gnome

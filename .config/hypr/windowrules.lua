@@ -56,3 +56,8 @@ hl.window_rule({ match = { class = "vesktop" }, suppress_event = "maximize" })
 -- No initial focus
 hl.window_rule({ match = { class = "vesktop" }, no_initial_focus = true })
 hl.window_rule({ match = { class = "steam" }, no_initial_focus = true })
+
+-- Idle inhibit rules
+hl.window_rule({ match = { class = "mpv" }, idle_inhibit = "focus" })
+hl.window_rule({ match = { class = "zen" }, idle_inhibit = "fullscreen" })
+

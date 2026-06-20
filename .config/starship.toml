@@ -1,0 +1,33 @@
+# Shade Raid starship prompt
+format = """
+[░▒▓](fg:#0D0D0D)\
+[  ](fg:#F4EFE4 bg:#0D0D0D)\
+[░▒▓](fg:#0D0D0D bg:#3A3A3A)\
+$directory\
+[▓▒░](fg:#3A3A3A bg:#EDE7D3)\
+$git_branch\
+$git_status\
+[▓▒░](fg:#EDE7D3)\
+$character"""
+
+# Disable the blank line at the start of the prompt
+add_newline = false
+
+[directory]
+style = "fg:#F4EFE4 bg:#3A3A3A"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[git_branch]
+symbol = " "
+style = "fg:#0D0D0D bg:#EDE7D3"
+format = "[ $symbol$branch ]($style)"
+
+[git_status]
+style = "fg:#D94F2B bg:#EDE7D3"
+format = "[($all_status$ahead_behind )]($style)"
+
+[character]
+success_symbol = "[ 󰄬 ](bold fg:#D94F2B)"
+error_symbol = "[ 󰅖 ](bold fg:#3A3A3A)"

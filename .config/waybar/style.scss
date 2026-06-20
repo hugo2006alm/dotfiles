@@ -42,6 +42,21 @@ window#waybar {
   }
 }
 
+// ── UPDATES ────────────────────────────────
+#custom-updates {
+  padding: 0 12px;
+  background: $background2;
+  color: $foreground;
+  border-right: 3px solid $border;
+  font-weight: bold;
+
+  &:hover {
+    background: $foreground;
+    color: $background;
+  }
+}
+
+
 // ── MPRIS ──────────────────────────────────
 #mpris {
   font-size: 11px;
@@ -77,7 +92,22 @@ window#waybar {
 #pulseaudio.muted  { color: $inactive; }
 #network.disconnected { color: $urgent; }
 
+// ── RECORDER ───────────────────────────────
+#custom-recorder {
+  padding: 0 10px;
+  color: $urgent;
+  background: transparent;
+  border-left: $border-thin;
+  font-weight: bold;
+  animation: blinker 1.5s linear infinite;
+}
+
+@keyframes blinker {
+  50% { opacity: 0.3; }
+}
+
 // ── TRAY GROUP ─────────────────────────────
+
 #tray-group {
   border-left: 3px solid $border;
   border-bottom: 3px solid $border;

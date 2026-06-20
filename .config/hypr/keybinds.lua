@@ -14,7 +14,8 @@ bind("SUPER + Return", hl.dsp.exec_cmd("GTK_IM_MODULE=simple " .. terminal))
 bind("ALT + F4", hl.dsp.window.close())
 bind("SUPER + Q", hl.dsp.window.close())
 bind("SUPER + SHIFT + Q", hl.dsp.exit())
-bind("SUPER + E", hl.dsp.exec_cmd("nautilus"))
+bind("SUPER + N", hl.dsp.exec_cmd("nautilus"))
+bind("SUPER + E", hl.dsp.exec_cmd("walker --modules emojis"))
 bind("SUPER + B", hl.dsp.exec_cmd(browser))
 bind("SUPER + M", hl.dsp.exec_cmd("spotify"))
 bind("SUPER + S", hl.dsp.exec_cmd("steam"))
@@ -27,6 +28,7 @@ bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
 bind("SUPER + Space", hl.dsp.exec_cmd(launcher))
 bind("SUPER + ALT + Space", hl.dsp.exec_cmd(launcher))
 bind("SUPER + R", hl.dsp.exec_cmd(launcher .. " --modules runner"))
+bind("SUPER + C", hl.dsp.exec_cmd(launcher .. " --modules calculator"))
 
 -- Fullscreen
 bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
@@ -34,8 +36,10 @@ bind("ALT + Return", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "t
 bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 
 -- Window management
-bind("SUPER + V", hl.dsp.window.float({ action = "toggle" }))
+bind("SUPER + V", hl.dsp.exec_cmd(launcher .. " --modules clipboard"))
+bind("SUPER + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + P", hl.dsp.window.pseudo({ action = "toggle" }))
+
 
 -- Focus movement
 bind("SUPER + left",  hl.dsp.focus({ direction = "l" }))
@@ -108,6 +112,10 @@ bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK
 bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set 5%+ && swayosd-client --brightness raise"))
 bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%- && swayosd-client --brightness lower"))
 
+-- Mako notifications
+bind("SUPER + D", hl.dsp.exec_cmd("makoctl dismiss"))
+bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("makoctl dismiss -a"))
+
 -- Mouse bindings
 bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
@@ -116,4 +124,4 @@ bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("$HOME/.config/themes/toggle.sh"))
 
 -- Wallpaper changer
-bind("SUPER + W", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/wallpaper_changer.sh"))
+bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/wallpaper_changer.sh"))

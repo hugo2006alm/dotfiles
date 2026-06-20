@@ -68,18 +68,15 @@ Log out and back in — Hyprland starts automatically on TTY1.
 
 ## DOTFILES MANAGEMENT
 
-This repo uses the **bare git repo** method. No symlinks, no stow.
+This repo uses **GNU Stow** to manage dotfiles. All configuration files are tracked inside the `~/dotfiles/` directory and symlinked into your `$HOME`.
+
+To make changes, edit the files inside `~/dotfiles/` and run the custom Fish helper to commit, push, and re-apply:
 
 ```bash
-# The alias (already in your fish config after install)
-alias dots='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
-
-# Common commands
-dots status
-dots add .config/hypr/hyprland.conf
-dots commit -m "feat: ..."
-dots push
+# Commit, push to origin/main, and run stow automatically
+dotfiles_push "commit message"
 ```
+
 
 ---
 
@@ -90,14 +87,19 @@ dots push
 ├── themes/
 │   ├── generate.sh              # generates all color configs from colors.toml
 │   ├── apply.sh                 # generate + reload everything
+│   ├── generators/              # app-specific generators (Ghostty, Walker, waybar, etc.)
 │   └── shade-raid/
 │       └── colors.toml          # single source of truth for all colors
 ├── hypr/
-│   ├── hyprland.conf            # main config
-│   ├── colors.conf              # generated — do not edit manually
-│   ├── keybinds.conf            # all keybindings
-│   ├── windowrules.conf         # float, workspace, opacity, size rules
-│   └── autostart.conf           # exec-once entries
+│   ├── hyprland.lua             # main config (loads submodules)
+│   ├── colors.conf              # generated color variables (used by style.conf)
+│   ├── style.conf               # generated style metrics (margins, radius)
+│   ├── keybinds.lua             # keybindings
+│   ├── windowrules.lua          # window rules
+│   ├── autostart.lua            # autostart processes
+│   ├── monitor.lua              # monitors config
+│   ├── input.lua                # keyboard/mouse input settings
+│   └── look_and_feel.lua        # core theme variables, animations, decoration rules
 ├── waybar/
 │   ├── config.jsonc             # module layout
 │   └── style.scss               # styles (compiled to style.css on apply)
@@ -113,6 +115,7 @@ dots push
     ├── theme.sh                 # generate theme
     └── extras.sh                # spicetify, optional stuff
 ```
+
 
 ---
 
