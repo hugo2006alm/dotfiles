@@ -34,7 +34,7 @@ cat << 'EOF' > ~/.config/vesktop/themes/shade-raid.theme.css
  * @version 1.0.0
  * @description Ink on paper theme
  */
-:root {
+.theme-dark, .theme-light, :root {
 EOF
 echo "  --background-primary: $(get background);" >> ~/.config/vesktop/themes/shade-raid.theme.css
 echo "  --background-secondary: $(get background2);" >> ~/.config/vesktop/themes/shade-raid.theme.css
@@ -88,12 +88,6 @@ cat << 'EOF' >> ~/.config/vesktop/themes/shade-raid.theme.css
 ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-auto-thumb) !important;
     border-radius: 0 !important;
-}
-.theme-dark, .theme-light {
-    --background-primary: var(--background-primary);
-    --background-secondary: var(--background-secondary);
-    --background-secondary-alt: var(--background-secondary-alt);
-    --background-tertiary: var(--background-tertiary);
 }
 EOF
 

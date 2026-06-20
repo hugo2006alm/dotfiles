@@ -1,29 +1,29 @@
 window {
-    background-color: #16130F;
-    color: #F4EFE4;
+    background-color: #F4EFE4;
+    color: #0D0D0D;
 }
 .login-box {
-    background-color: #201C17;
-    border: 2px solid #E8623E;
+    background-color: #EDE7D3;
+    border: 2px solid #D94F2B;
     border-radius: 0;
     padding: 24px;
 }
 button {
-    background-color: #16130F;
-    color: #F4EFE4;
-    border: 1px solid #4A4540;
+    background-color: #F4EFE4;
+    color: #0D0D0D;
+    border: 1px solid #C8C2B4;
     border-radius: 0;
 }
 button:hover, button:active {
-    background-color: #E8623E;
-    color: #16130F;
+    background-color: #D94F2B;
+    color: #F4EFE4;
 }
 entry {
-    background-color: #16130F;
-    color: #F4EFE4;
-    border: 1px solid #4A4540;
+    background-color: #F4EFE4;
+    color: #0D0D0D;
+    border: 1px solid #C8C2B4;
     border-radius: 0;
 }
 entry:focus {
-    border-color: #E8623E;
+    border-color: #D94F2B;
 }
