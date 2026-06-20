@@ -1,5 +1,5 @@
 /* ── Shade Raid — ReGreet Login Theme ── */
-/* Generated from: shade-raid */
+/* Generated from: shade-raid-dark */
 
 @keyframes card-appear {
     from {
@@ -28,23 +28,23 @@ window {
 
 /* ── Login card ── */
 .login-box {
-    background-color: rgba(244, 239, 228, 0.84);
-    border: 1px solid rgba(217, 79, 43, 0.35);
+    background-color: rgba(13, 13, 13, 0.78);
+    border: 1px solid rgba(217, 79, 43, 0.40);
     border-radius: 4px;
     padding: 40px 48px;
     min-width: 380px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.25);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.6);
     animation: card-appear 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ── Typography ── */
 * {
     font-family: "SpaceMono Nerd Font", "Space Mono", monospace;
-    color: #0D0D0D;
+    color: #F4EFE4;
 }
 
 label {
-    color: #0D0D0D;
+    color: #F4EFE4;
     font-size: 13px;
     letter-spacing: 0.04em;
 }
@@ -52,7 +52,7 @@ label {
 /* Username / session labels */
 label.subtitle,
 label:not(.title) {
-    color: #3A3A3A;
+    color: #C8C2B4;
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -60,10 +60,10 @@ label:not(.title) {
 
 /* ── Text entries (username, password) ── */
 entry {
-    background-color: rgba(244, 239, 228, 0.5);
-    color: #0D0D0D;
+    background-color: rgba(13, 13, 13, 0.55);
+    color: #F4EFE4;
     border: none;
-    border-bottom: 2px solid rgba(217, 79, 43, 0.35);
+    border-bottom: 2px solid rgba(217, 79, 43, 0.40);
     border-radius: 2px 2px 0 0;
     padding: 10px 12px;
     font-family: "SpaceMono Nerd Font", "Space Mono", monospace;
@@ -73,21 +73,21 @@ entry {
 }
 
 entry:focus {
-    border-bottom-color: #D94F2B;
-    background-color: rgba(244, 239, 228, 0.5);
+    border-bottom-color: #E8623E;
+    background-color: rgba(13, 13, 13, 0.55);
     outline: none;
 }
 
 entry placeholder {
-    color: #3A3A3A;
+    color: #C8C2B4;
     opacity: 0.6;
 }
 
 /* ── Buttons ── */
 button {
     background-color: transparent;
-    color: #0D0D0D;
-    border: 1px solid rgba(217, 79, 43, 0.35);
+    color: #F4EFE4;
+    border: 1px solid rgba(217, 79, 43, 0.40);
     border-radius: 2px;
     padding: 8px 20px;
     font-family: "SpaceMono Nerd Font", "Space Mono", monospace;
@@ -99,34 +99,34 @@ button {
 }
 
 button:hover {
-    background-color: #D94F2B;
-    color: #F4EFE4;
-    border-color: #D94F2B;
+    background-color: #E8623E;
+    color: #16130F;
+    border-color: #E8623E;
 }
 
 button:active {
-    background-color: #D94F2B;
-    color: #F4EFE4;
+    background-color: #E8623E;
+    color: #16130F;
 }
 
 /* Primary login button — filled accent */
 button.suggested-action {
-    background-color: #D94F2B;
-    color: #F4EFE4;
-    border-color: #D94F2B;
+    background-color: #E8623E;
+    color: #16130F;
+    border-color: #E8623E;
 }
 
 button.suggested-action:hover {
-    background-color: #D94F2B;
+    background-color: #E8623E;
     filter: brightness(1.08);
 }
 
 /* ── Dropdowns (session selector) ── */
 comboboxtext,
 combobox {
-    background-color: rgba(244, 239, 228, 0.5);
-    color: #0D0D0D;
-    border: 1px solid rgba(217, 79, 43, 0.35);
+    background-color: rgba(13, 13, 13, 0.55);
+    color: #F4EFE4;
+    border: 1px solid rgba(217, 79, 43, 0.40);
     border-radius: 2px;
     padding: 6px 10px;
     font-family: "SpaceMono Nerd Font", "Space Mono", monospace;
@@ -135,19 +135,19 @@ combobox {
 
 comboboxtext:hover,
 combobox:hover {
-    border-color: #D94F2B;
+    border-color: #E8623E;
 }
 
 /* Dropdown popover */
 .popup {
     background-color: #1A1512;
-    border: 1px solid rgba(217, 79, 43, 0.35);
+    border: 1px solid rgba(217, 79, 43, 0.40);
     border-radius: 2px;
 }
 
 /* ── Error messages ── */
 label.error {
-    color: #D94F2B;
+    color: #E8623E;
     font-size: 11px;
     font-weight: 700;
 }
@@ -160,7 +160,7 @@ scrollbar {
 }
 
 scrollbar slider {
-    background-color: #3A3A3A;
+    background-color: #C8C2B4;
     border-radius: 2px;
     min-width: 4px;
     min-height: 20px;

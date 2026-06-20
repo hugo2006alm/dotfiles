@@ -43,22 +43,25 @@ fi
 
 # ── Apply gaussian blur with ImageMagick and copy to /etc/greetd/ ────────────
 if [ -n "$SRC_WALL" ] && [ -f "$SRC_WALL" ]; then
-    TMPFILE=$(mktemp /tmp/greetd-bg-XXXXXX.jpg)
-    convert "$(readlink -f "$SRC_WALL")" \
-        -filter Gaussian \
-        -blur 0x20 \
-        -modulate 70 \
-        "$TMPFILE" 2>/dev/null
+    (
+        TMPFILE=$(mktemp /tmp/greetd-bg-XXXXXX.jpg)
+        convert "$(readlink -f "$SRC_WALL")" \
+            -filter Gaussian \
+            -blur 0x20 \
+            -modulate 70 \
+            "$TMPFILE" 2>/dev/null
 
-    if [ $? -eq 0 ]; then
-        cp "$TMPFILE" "$BG_FILE"
-        echo "greetd.sh: blurred background updated → $BG_FILE"
-    else
-        echo "greetd.sh: ImageMagick blur failed, using source as-is" >&2
-        cp "$(readlink -f "$SRC_WALL")" "$BG_FILE"
-    fi
-    rm -f "$TMPFILE"
+        if [ $? -eq 0 ]; then
+            cp "$TMPFILE" "$BG_FILE"
+            echo "greetd.sh: blurred background updated → $BG_FILE"
+        else
+            echo "greetd.sh: ImageMagick blur failed, using source as-is" >&2
+            cp "$(readlink -f "$SRC_WALL")" "$BG_FILE"
+        fi
+        rm -f "$TMPFILE"
+    ) &
 fi
+
 
 # ── Write regreet.toml ───────────────────────────────────────────────────────
 IS_DARK=false
