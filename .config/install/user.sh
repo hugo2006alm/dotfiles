@@ -27,11 +27,12 @@ echo "==> Setting up mise..."
 mise install python@latest
 
 echo "==> Creating necessary directories"
-mkdir -p ~/Pictures/Screenshots
+mkdir -p ~/Imagens/Screenshots
+mkdir -p ~/Videos/Recordings
 mkdir -p ~/wallpapers/shade-raid
 
 echo "==> Installing Fisher and fish plugins..."
-fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher && fisher install edc/bass && fisher install jorgebucaran/nvm.fish && fisher update"
+fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher && fisher update"
 
 echo "==> Authenticating GitHub CLI..."
 gh auth login

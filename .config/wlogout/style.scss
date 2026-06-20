@@ -3,51 +3,60 @@
 * {
   background-image: none;
   box-shadow: none;
-  font-family: "Space Mono", monospace;
-  font-size: 12px;
+  border-radius: 0;
 }
 
 window {
-  background-color: rgba($background, 0.9);
-  color: $foreground;
+  background-color: rgba($background, 0.88);
+  font-family: "Bebas Neue", "Space Mono", monospace;
+}
+
+// Full-screen button grid
+box {
+  background: transparent;
 }
 
 button {
-  background-color: $background2;
+  background-color: transparent;
   color: $foreground;
-  border-radius: 12px;
-  border: 2px solid $background2;
-  margin: 10px;
-  padding: 16px 18px;
-  box-shadow: 0 4px 8px rgba($shadow, 0.4);
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border: none;
+  border-top: 3px solid transparent;
+  margin: 0;
+  padding: 0;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 button:hover {
   background-color: $accent;
   color: $accent_fg;
-  border: 2px solid $accent;
-  box-shadow: 0 8px 16px rgba($accent, 0.3);
+  border-top: 3px solid $accent;
 }
 
+button:focus {
+  outline: none;
+}
+
+// Icon sizing (centred in the button area)
 #lock,
-#logout,
 #suspend,
-#hibernate,
-#shutdown,
-#reboot {
-  background-size: 64px;
+#reboot,
+#shutdown {
+  background-size: 52px;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: center 38%;
 }
 
-#lock      { background-image: url("/usr/share/wlogout/icons/lock.png"); }
-#logout    { background-image: url("/usr/share/wlogout/icons/logout.png"); }
-#suspend   { background-image: url("/usr/share/wlogout/icons/suspend.png"); }
-#hibernate { background-image: url("/usr/share/wlogout/icons/hibernate.png"); }
-#shutdown  { background-image: url("/usr/share/wlogout/icons/shutdown.png"); }
-#reboot    { background-image: url("/usr/share/wlogout/icons/reboot.png"); }
+#lock     { background-image: url("/usr/share/wlogout/icons/lock.png"); }
+#suspend  { background-image: url("/usr/share/wlogout/icons/suspend.png"); }
+#reboot   { background-image: url("/usr/share/wlogout/icons/reboot.png"); }
+#shutdown { background-image: url("/usr/share/wlogout/icons/shutdown.png"); }
 
 label {
-  font-size: 14px;
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  margin-top: 6px;
+  color: inherit;
 }

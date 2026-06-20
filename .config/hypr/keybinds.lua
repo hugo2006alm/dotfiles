@@ -4,19 +4,6 @@ local terminal = "ghostty"
 local launcher = "walker"
 local browser = "zen-browser"
 
--- Legacy dispatcher for Waybar hyprland/workspaces module
--- Waybar calls: hyprctl dispatch 'workspace <num>'
--- This defines a global `workspace` function that returns a dispatcher
-function workspace(arg)
-    local ws = tonumber(arg)
-    if ws then
-        return hl.dsp.focus({ workspace = ws })
-    else
-        -- Handle relative workspace syntax like "+1", "-1"
-        return hl.dsp.focus({ workspace = arg })
-    end
-end
-
 -- Helper function for keybinds
 local function bind(keys, dispatcher, flags)
     hl.bind(keys, dispatcher, flags or {})

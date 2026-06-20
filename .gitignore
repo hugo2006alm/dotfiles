@@ -13,3 +13,8 @@
 .config/walker/config.toml
 .config/hypr/hyprlock.conf
 .config/vesktop/themes/shade-raid.theme.css
+.config/swayosd/_colors.scss
+.config/swayosd/style.css
+.config/wlogout/_colors.scss
+.config/wlogout/style.css
+

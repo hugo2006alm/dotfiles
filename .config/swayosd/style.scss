@@ -1,0 +1,63 @@
+@import "colors";
+
+* {
+  background-image: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+window#osd {
+  border-radius: 999px;
+  border: 1px solid $inactive;
+  background: rgba($background, 0.92);
+  box-shadow: 0 4px 16px rgba($shadow, 0.35);
+}
+
+window#osd #container {
+  margin: 14px 20px;
+}
+
+window#osd image,
+window#osd label {
+  color: $foreground;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+window#osd image:disabled,
+window#osd progressbar:disabled {
+  opacity: 0.4;
+}
+
+window#osd progressbar,
+window#osd segmentedprogress {
+  min-height: 6px;
+  min-width: 160px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+}
+
+window#osd trough,
+window#osd segment {
+  min-height: inherit;
+  border-radius: inherit;
+  border: none;
+  background: $inactive;
+}
+
+window#osd progress,
+window#osd segment.active {
+  min-height: inherit;
+  border-radius: inherit;
+  border: none;
+  background: $accent;
+}
+
+window#osd segment {
+  margin-left: 6px;
+}
+
+window#osd segment:first-child {
+  margin-left: 0;
+}

@@ -94,7 +94,6 @@ PACMAN_PKGS=(
     bc
     ufw
     reflector
-    pacman-contrib
     xdg-user-dirs
     openssh
 
@@ -168,7 +167,6 @@ AUR_PKGS=(
 
     # Power menu
     wlogout
-    swayosd-git
 
     # Runtime manager
     mise-bin
