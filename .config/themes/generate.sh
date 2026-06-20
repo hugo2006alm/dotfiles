@@ -62,5 +62,6 @@ echo "/**
 
 echo "Done — theme: $THEME"
 
-# Trigger Plymouth sync asynchronously
+# Trigger Plymouth sync asynchronously safely using a pending flag
+touch /tmp/plymouth_sync_pending
 sudo /home/hugo2006alm/dotfiles/.config/themes/sync-plymouth.sh > /dev/null 2>&1 &
