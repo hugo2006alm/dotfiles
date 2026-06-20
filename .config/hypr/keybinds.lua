@@ -15,7 +15,7 @@ bind("ALT + F4", hl.dsp.window.close())
 bind("SUPER + Q", hl.dsp.window.close())
 bind("SUPER + SHIFT + Q", hl.dsp.exit())
 bind("SUPER + N", hl.dsp.exec_cmd("nautilus"))
-bind("SUPER + E", hl.dsp.exec_cmd("walker --modules emojis"))
+bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("walker --provider emojis"))
 bind("SUPER + B", hl.dsp.exec_cmd(browser))
 bind("SUPER + M", hl.dsp.exec_cmd("spotify"))
 bind("SUPER + S", hl.dsp.exec_cmd("steam"))
@@ -27,8 +27,8 @@ bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
 -- Launchers
 bind("SUPER + Space", hl.dsp.exec_cmd(launcher))
 bind("SUPER + ALT + Space", hl.dsp.exec_cmd(launcher))
-bind("SUPER + R", hl.dsp.exec_cmd(launcher .. " --modules runner"))
-bind("SUPER + C", hl.dsp.exec_cmd(launcher .. " --modules calculator"))
+bind("SUPER + R", hl.dsp.exec_cmd(launcher .. " --provider runner"))
+bind("SUPER + C", hl.dsp.exec_cmd(launcher .. " --provider calculator"))
 
 -- Fullscreen
 bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
@@ -36,7 +36,7 @@ bind("ALT + Return", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "t
 bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 
 -- Window management
-bind("SUPER + V", hl.dsp.exec_cmd(launcher .. " --modules clipboard"))
+bind("SUPER + V", hl.dsp.exec_cmd(launcher .. " --provider clipboard"))
 bind("SUPER + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + P", hl.dsp.window.pseudo({ action = "toggle" }))
 

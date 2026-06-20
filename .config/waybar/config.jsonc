@@ -34,7 +34,7 @@
 
   "group/system": {
     "orientation": "horizontal",
-    "modules": ["cpu", "memory", "pulseaudio", "custom/recorder", "network", "bluetooth"]
+    "modules": ["cpu", "memory", "pulseaudio", "custom/recorder", "custom/network", "bluetooth"]
   },
 
   "cpu": {
@@ -54,12 +54,11 @@
     "scroll-step": 5
   },
 
-  "network": {
-    "format-wifi": "WiFi {signalStrength}%",
-    "format-ethernet": "ETH",
-    "format-disconnected": "NO NET",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"nmtui\")'",
-    "tooltip-format": "{ifname} via {gwaddr}\nIP: {ipaddr}/{cidr}"
+  "custom/network": {
+    "exec": "~/.config/waybar/scripts/network.sh",
+    "interval": 10,
+    "return-type": "json",
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"nmtui\")'"
   },
 
   "bluetooth": {
@@ -99,21 +98,21 @@
 
   "custom/power": {
     "format": "⏻",
-    "tooltip": "Power menu",
+    "tooltip-format": "Power",
     "on-click": "~/.local/bin/power-menu"
   },
 
   "custom/updates": {
-    "format": "UPD {}",
+    "format": "↓ {}",
     "interval": 1800,
-    "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); if [ \"$up\" -gt 0 ]; then echo \"$up\"; else echo \"\"; fi",
+    "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); [ \"$up\" -gt 0 ] && echo \"$up\" || exit 1",
     "tooltip": false
   },
 
   "custom/recorder": {
     "format": "● REC",
     "interval": 2,
-    "exec": "if pgrep -x wf-recorder >/dev/null; then echo \"● REC\"; else echo \"\"; fi",
+    "exec": "pgrep -x wf-recorder > /dev/null && echo ''",
     "tooltip": false
   }
 }
