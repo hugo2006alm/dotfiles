@@ -83,16 +83,22 @@ echo "  --scrollbar-thin-track: transparent !important;" >> ~/.config/vesktop/th
 echo "  --border-radius: 0px !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 cat << EOF >> ~/.config/vesktop/themes/shade-raid.theme.css
 }
-body, #app-mount, .appMount_ea7e65 {
+
+/* Base backgrounds */
+body, #app-mount, [class^="appMount_"], [class^="app_"], [class^="bg_"] {
     background-color: $(get background) !important;
 }
-.app_a3002d, .bg_d4b6c5, .chat_f75fb0, .wrapper_fc8177 {
+
+/* Main chat area */
+[class^="chat_"], [class^="chatContent_"], main {
+    background-color: $(get background) !important;
     background: $(get background) !important;
-    background-color: $(get background) !important;
 }
-.users__260e1, .sidebar__5e434, .panels_a4d4d9, .container__2637a, .wrapper_bd2abe {
-    background: $(get background2) !important;
+
+/* Sidebars and panels */
+[class^="sidebar_"], [class^="panels_"], [class^="members_"], [class^="membersWrap_"], [class^="users_"], [class^="container_"] {
     background-color: $(get background2) !important;
+    background: $(get background2) !important;
 }
 * {
     border-radius: 0 !important;
