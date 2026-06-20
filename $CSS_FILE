@@ -1,0 +1,31 @@
+* {
+    font-family: "JetBrains Mono Nerd Font", "Inter", sans-serif;
+}
+
+window {
+    background-color: transparent;
+}
+
+box.login-box {
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+entry {
+    background-color: $(get background);
+    color: $(get foreground);
+    border: 2px solid $(get accent);
+    border-radius: 6px;
+}
+
+button {
+    background-color: $(get accent);
+    color: $(get background);
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: shade($(get accent), 1.2);
+}

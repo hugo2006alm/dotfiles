@@ -1,9 +1,9 @@
-// Background: #16130F (ink) -> R: 0.086, G: 0.075, B: 0.059
+// Background: #16130F
 Window.SetBackgroundTopColor(0.086, 0.075, 0.059);
 Window.SetBackgroundBottomColor(0.086, 0.075, 0.059);
 
-// Text styling: Foreground #F4EFE4 -> R: 0.957, G: 0.937, B: 0.894
-// Accent styling: #E8623E -> R: 0.910, G: 0.384, B: 0.243
+// Text styling: Foreground #F4EFE4
+// Accent styling: #E8623E
 
 // Hard geometric text
 box_image = Image.Text("SHADE RAID", 0.957, 0.937, 0.894, 1, "Monospace 36");
@@ -12,10 +12,8 @@ box_sprite.SetX(Window.GetWidth() / 2 - box_image.GetWidth() / 2);
 box_sprite.SetY(Window.GetHeight() / 2 - box_image.GetHeight() / 2);
 
 // Simple dot progress
-max_progress_text = Image.Text("....", 0.910, 0.384, 0.243, 1, "Monospace 36");
 progress_text = Image.Text(".", 0.910, 0.384, 0.243, 1, "Monospace 36");
 progress_sprite = Sprite(progress_text);
-progress_sprite.SetX(Window.GetWidth() / 2 - max_progress_text.GetWidth() / 2);
 progress_sprite.SetY(Window.GetHeight() / 2 + box_image.GetHeight());
 
 progress = 0;
@@ -32,6 +30,7 @@ fun refresh_callback () {
         progress_text = Image.Text("....", 0.910, 0.384, 0.243, 1, "Monospace 36");
     }
     progress_sprite.SetImage(progress_text);
+    progress_sprite.SetX(Window.GetWidth() / 2 - progress_text.GetWidth() / 2);
 }
 
 Plymouth.SetRefreshFunction(refresh_callback);

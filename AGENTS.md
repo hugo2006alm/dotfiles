@@ -36,3 +36,6 @@ Themes for individual apps are generated using `~/.config/themes/generate.sh`.
 
 ## Hardware Setup
 Desktop system (no battery, no touchpad). Monitor is 2560×1440 @ 144Hz with scaling set to 1.6. Keyboard layout is PT.
+
+## CRITICAL SECURITY RULE: FAILLOCK PREVENTION
+- **NEVER** run commands containing `sudo`, `yay`, or `su` in background tasks or non-interactive shells. This instantly triggers Arch Linux's `pam_faillock` module because it cannot prompt for a password, permanently locking the user out of their own system for 10 minutes after 3 failed attempts. Always ask the user to run `sudo` commands themselves.

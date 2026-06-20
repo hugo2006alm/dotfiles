@@ -34,9 +34,9 @@ if [ -w "$CONFIG_FILE" ]; then
     fi
   fi
 
-  IS_DARK=true
-  if [[ "$THEME" == *"-light"* ]]; then
-      IS_DARK=false
+  IS_DARK=false
+  if [[ "$THEME" == *"-dark"* ]]; then
+      IS_DARK=true
   fi
 
   cat > "$CONFIG_FILE" << EOF
@@ -46,49 +46,6 @@ fit = "Cover"
 
 [GTK]
 application_prefer_dark_theme = $IS_DARK
-EOF
-
-  # Generate regreet CSS
-  CSS_FILE="/etc/greetd/regreet.css"
-  
-  # Fetch theme colors
-  get() { grep "^\$1 " "$TOML" | head -1 | sed 's/.*= *"\(.*\)"/\1/'; }
-  bg="\$(get background)"
-  fg="\$(get foreground)"
-  accent="\$(get accent)"
-
-  cat > "\$CSS_FILE" << EOF
-* {
-    font-family: "JetBrains Mono Nerd Font", "Inter", sans-serif;
-}
-
-window {
-    background-color: transparent;
-}
-
-box.login-box {
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    padding: 24px;
-}
-
-entry {
-    background-color: $bg;
-    color: $fg;
-    border: 2px solid $accent;
-    border-radius: 6px;
-}
-
-button {
-    background-color: $accent;
-    color: $bg;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
-button:hover {
-    background-color: shade($accent, 1.2);
-}
 EOF
 
 fi

@@ -1,0 +1,29 @@
+window {
+    background-color: #16130F;
+    color: #F4EFE4;
+}
+.login-box {
+    background-color: #201C17;
+    border: 2px solid #E8623E;
+    border-radius: 0;
+    padding: 24px;
+}
+button {
+    background-color: #16130F;
+    color: #F4EFE4;
+    border: 1px solid #4A4540;
+    border-radius: 0;
+}
+button:hover, button:active {
+    background-color: #E8623E;
+    color: #16130F;
+}
+entry {
+    background-color: #16130F;
+    color: #F4EFE4;
+    border: 1px solid #4A4540;
+    border-radius: 0;
+}
+entry:focus {
+    border-color: #E8623E;
+}

@@ -14,6 +14,7 @@ while [ -f /tmp/plymouth_sync_pending ]; do
     rm -f /tmp/plymouth_sync_pending
     
     cp /home/hugo2006alm/dotfiles/plymouth-shade-raid/* /usr/share/plymouth/themes/shade-raid/
+    plymouth-set-default-theme shade-raid
     mkinitcpio -P
     
     # Wait a moment before checking the flag again
