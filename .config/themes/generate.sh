@@ -81,14 +81,18 @@ echo "  --scrollbar-thin-thumb: $(get foreground) !important;" >> ~/.config/vesk
 echo "  --scrollbar-thin-track: transparent !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
 
 echo "  --border-radius: 0px !important;" >> ~/.config/vesktop/themes/shade-raid.theme.css
-cat << 'EOF' >> ~/.config/vesktop/themes/shade-raid.theme.css
+cat << EOF >> ~/.config/vesktop/themes/shade-raid.theme.css
 }
 body, #app-mount, .appMount_ea7e65 {
-    background-color: var(--background-primary) !important;
+    background-color: $(get background) !important;
 }
-.app_a3002d, .bg_d4b6c5, .chat_f75fb0, .wrapper_fc8177, .users__260e1, .sidebar__5e434, .panels_a4d4d9, .container__2637a, .wrapper_bd2abe {
-    background: transparent !important;
-    background-color: transparent !important;
+.app_a3002d, .bg_d4b6c5, .chat_f75fb0, .wrapper_fc8177 {
+    background: $(get background) !important;
+    background-color: $(get background) !important;
+}
+.users__260e1, .sidebar__5e434, .panels_a4d4d9, .container__2637a, .wrapper_bd2abe {
+    background: $(get background2) !important;
+    background-color: $(get background2) !important;
 }
 * {
     border-radius: 0 !important;
