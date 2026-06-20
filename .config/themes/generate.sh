@@ -61,3 +61,6 @@ echo "/**
 " > ~/.config/vesktop/themes/shade-raid.theme.css
 
 echo "Done — theme: $THEME"
+
+# Trigger Plymouth sync asynchronously
+sudo /home/hugo2006alm/dotfiles/.config/themes/sync-plymouth.sh > /dev/null 2>&1 &
