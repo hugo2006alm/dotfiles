@@ -17,8 +17,15 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
     
-    -- Wallpaper
-    hl.exec_cmd([[sleep 1 && awww img $HOME/wallpapers/shade-raid/wallpaper_0.jpg --transition-type wipe --transition-angle 30]])
+    -- Wallpaper: poll socket until daemon is ready, then restore last wallpaper
+    hl.exec_cmd([[sh -c '
+        SOCK="$XDG_RUNTIME_DIR/wayland-1-awww-daemon.sock"
+        for i in $(seq 1 10); do
+            [ -S "$SOCK" ] && break
+            sleep 0.2
+        done
+        awww restore 2>/dev/null || awww img "$HOME/wallpapers/shade-raid/wallpaper_0.jpg" --transition-type wipe --transition-angle 30
+    ']])
     
     -- Generate drawers config and reload
     hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh && hyprctl reload")
