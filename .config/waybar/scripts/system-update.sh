@@ -33,13 +33,13 @@ if [ "$total" -eq 0 ]; then
 fi
 
 echo "Pending updates ($total):"
-if [ $arch_count -gt 0 ]; then
+if [ "$arch_count" -gt 0 ]; then
     echo ""
     echo "[Pacman]"
     echo "$arch_updates"
 fi
 
-if [ $aur_count -gt 0 ]; then
+if [ "$aur_count" -gt 0 ]; then
     echo ""
     echo "[AUR]"
     echo "$aur_updates"

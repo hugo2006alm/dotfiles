@@ -34,9 +34,9 @@ font_mono="${style[font_mono]}"
 font_size_sm="${style[font_size_sm]}"
 font_size_md="${style[font_size_md]}"
 
-mkdir -p ~/.config/walker/themes/$THEME
+mkdir -p ~/.config/walker/themes/"$THEME"
 
-cat > ~/.config/walker/themes/$THEME/_colors.scss << EOF
+cat > ~/.config/walker/themes/"$THEME"/_colors.scss << EOF
 // Auto-generated from themes/$THEME/colors.toml — do not edit directly
 \$background:   $background;
 \$background2:  $background2;
@@ -52,12 +52,12 @@ EOF
 
 echo "Generated ~/.config/walker/themes/$THEME/_colors.scss"
 
-cp ~/.config/walker/themes/$THEME/_colors.scss ~/.config/walker/themes/_colors.scss
+cp ~/.config/walker/themes/"$THEME"/_colors.scss ~/.config/walker/themes/_colors.scss
 
-cd ~/.config/walker/themes
-sassc -I $THEME \
+cd "$HOME/.config/walker/themes" || exit 1
+sassc -I "$THEME" \
   style.scss \
-  $THEME/style.css
+  "$THEME"/style.css
 echo "Compiled walker style.scss → style.css"
 
 # Generate ~/.config/walker/config.toml based on the system default config.toml

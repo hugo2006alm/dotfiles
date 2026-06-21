@@ -44,34 +44,34 @@ shadow_range=$(gets shadow_range)
 shadow_render_power=$(gets shadow_render_power)
 
 # Convert shadow alpha to hex
-shadow_alpha_hex=$(printf '%02X' $(awk "BEGIN {printf \"%d\", $shadow_alpha * 255}"))
-shadow_rgba="$(hex $shadow)${shadow_alpha_hex}"
+shadow_alpha_hex=$(printf '%02X' "$(awk "BEGIN {printf \"%d\", $shadow_alpha * 255}")")
+shadow_rgba="$(hex "$shadow")${shadow_alpha_hex}"
 
 # Convert colors to Lua hex format
-background_lua=$(to_lua_hex $background)
-background2_lua=$(to_lua_hex $background2)
-foreground_lua=$(to_lua_hex $foreground)
-foreground2_lua=$(to_lua_hex $foreground2)
-border_lua=$(to_lua_hex $border)
-accent_lua=$(to_lua_hex $accent)
-accent2_lua=$(to_lua_hex $accent2)
-active_lua=$(to_lua_hex $active)
-inactive_lua=$(to_lua_hex $inactive)
-urgent_lua=$(to_lua_hex $urgent)
+background_lua=$(to_lua_hex "$background")
+background2_lua=$(to_lua_hex "$background2")
+foreground_lua=$(to_lua_hex "$foreground")
+foreground2_lua=$(to_lua_hex "$foreground2")
+border_lua=$(to_lua_hex "$border")
+accent_lua=$(to_lua_hex "$accent")
+accent2_lua=$(to_lua_hex "$accent2")
+active_lua=$(to_lua_hex "$active")
+inactive_lua=$(to_lua_hex "$inactive")
+urgent_lua=$(to_lua_hex "$urgent")
 shadow_lua="0x${shadow_rgba^^}"
 
 cat > ~/.config/hypr/colors.conf << EOF
 # Auto-generated from themes/$THEME/colors.toml — do not edit directly
-\$background  = rgb($(hex $background))
-\$background2 = rgb($(hex $background2))
-\$foreground  = rgb($(hex $foreground))
-\$foreground2 = rgb($(hex $foreground2))
-\$border      = rgb($(hex $border))
-\$accent      = rgb($(hex $accent))
-\$accent2     = rgb($(hex $accent2))
-\$active      = rgb($(hex $active))
-\$inactive    = rgb($(hex $inactive))
-\$urgent      = rgb($(hex $urgent))
+\$background  = rgb($(hex "$background"))
+\$background2 = rgb($(hex "$background2"))
+\$foreground  = rgb($(hex "$foreground"))
+\$foreground2 = rgb($(hex "$foreground2"))
+\$border      = rgb($(hex "$border"))
+\$accent      = rgb($(hex "$accent"))
+\$accent2     = rgb($(hex "$accent2"))
+\$active      = rgb($(hex "$active"))
+\$inactive    = rgb($(hex "$inactive"))
+\$urgent      = rgb($(hex "$urgent"))
 \$shadow      = rgba($shadow_rgba)
 EOF
 

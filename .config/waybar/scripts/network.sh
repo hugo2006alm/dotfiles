@@ -3,7 +3,6 @@
 
 # Primary interface (default route)
 IFACE=$(ip route show default 2>/dev/null | awk 'NR==1{print $5}')
-IP=$(ip addr show "$IFACE" 2>/dev/null | awk '/inet /{print $2; exit}')
 
 # Determine label
 if [ -z "$IFACE" ]; then

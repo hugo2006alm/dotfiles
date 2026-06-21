@@ -13,13 +13,8 @@ IS_DARK=false
 [[ "$THEME" == *"-dark"* ]] && IS_DARK=true
 
 # Pull colors
-BG=$(get background)
-BG2=$(get background2)
-FG=$(get foreground)
-FG2=$(get foreground2)
 ACCENT=$(get accent)
 ACCENT_FG=$(get accent_fg)
-INACTIVE=$(get inactive)
 
 # For dark themes: invert the card to dark-on-blurred-background
 if $IS_DARK; then
@@ -28,7 +23,6 @@ if $IS_DARK; then
     CARD_FG="#F4EFE4"
     CARD_FG2="#C8C2B4"
     ENTRY_BG="rgba(13, 13, 13, 0.55)"
-    BTN_BG="rgba(217, 79, 43, 0.0)"
     BTN_HOVER_BG="$ACCENT"
     BTN_HOVER_FG="$ACCENT_FG"
     SHADOW="rgba(0,0,0,0.6)"
@@ -38,7 +32,6 @@ else
     CARD_FG="#0D0D0D"
     CARD_FG2="#3A3A3A"
     ENTRY_BG="rgba(244, 239, 228, 0.5)"
-    BTN_BG="rgba(217, 79, 43, 0.0)"
     BTN_HOVER_BG="$ACCENT"
     BTN_HOVER_FG="$ACCENT_FG"
     SHADOW="rgba(0,0,0,0.25)"

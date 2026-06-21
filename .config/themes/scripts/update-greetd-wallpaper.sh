@@ -14,13 +14,11 @@ fi
 
 # Blur with ImageMagick: gaussian blur radius 0x20, also slightly darken
 TMPFILE=$(mktemp /tmp/greetd-bg-XXXXXX.jpg)
-convert "$SRC" \
+if convert "$SRC" \
     -filter Gaussian \
     -blur 0x20 \
     -modulate 70 \
-    "$TMPFILE"
-
-if [ $? -eq 0 ]; then
+    "$TMPFILE"; then
     # Copy to /etc/greetd — this requires write permission.
     # Run this script via sudoers or chown /etc/greetd/regreet-background.jpg to the user.
     cp "$TMPFILE" "$DEST" 2>/dev/null || {

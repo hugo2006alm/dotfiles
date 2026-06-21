@@ -45,13 +45,11 @@ fi
 if [ -n "$SRC_WALL" ] && [ -f "$SRC_WALL" ]; then
     (
         TMPFILE=$(mktemp /tmp/greetd-bg-XXXXXX.jpg)
-        convert "$(readlink -f "$SRC_WALL")" \
+        if convert "$(readlink -f "$SRC_WALL")" \
             -filter Gaussian \
             -blur 0x20 \
             -modulate 70 \
-            "$TMPFILE" 2>/dev/null
-
-        if [ $? -eq 0 ]; then
+            "$TMPFILE" 2>/dev/null; then
             cp "$TMPFILE" "$BG_FILE"
             echo "greetd.sh: blurred background updated → $BG_FILE"
         else

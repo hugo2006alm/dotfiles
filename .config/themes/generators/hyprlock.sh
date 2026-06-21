@@ -2,7 +2,6 @@
 
 THEME="$1"
 TOML="$HOME/.config/themes/$THEME/colors.toml"
-STYLE="$HOME/.config/themes/style.toml"
 
 get()  { grep "^$1 " "$TOML"  | head -1 | sed 's/.*= *"\(.*\)"/\1/'; }
 hex()  { echo "${1#\#}"; }
@@ -24,14 +23,14 @@ cat > ~/.config/hypr/hyprlock.conf << CONF
 
 background {
     monitor =
-    color = rgb($(hex $lock_bg))
+    color = rgb($(hex "$lock_bg"))
     blur_passes = 0
 }
 
 label {
     monitor =
     text = \$TIME
-    color = rgb($(hex $lock_fg))
+    color = rgb($(hex "$lock_fg"))
     font_size = 128
     font_family = Bebas Neue
     position = 0, 160
@@ -42,7 +41,7 @@ label {
 label {
     monitor =
     text = cmd[update:60000] date +'%A, %d %B %Y' | tr '[:lower:]' '[:upper:]'
-    color = rgb($(hex $lock_fg))
+    color = rgb($(hex "$lock_fg"))
     font_size = 14
     font_family = JetBrains Mono Nerd Font
     position = 0, 60
@@ -53,7 +52,7 @@ label {
 label {
     monitor =
     text = // LOCKED
-    color = rgb($(hex $accent))
+    color = rgb($(hex "$accent"))
     font_size = 11
     font_family = JetBrains Mono Nerd Font
     position = 0, -40
@@ -68,9 +67,9 @@ input-field {
     dots_size = 0.25
     dots_spacing = 0.35
     dots_center = false
-    outer_color = rgb($(hex $lock_input))
-    inner_color = rgb($(hex $lock_bg))
-    font_color = rgb($(hex $lock_fg))
+    outer_color = rgb($(hex "$lock_input"))
+    inner_color = rgb($(hex "$lock_bg"))
+    font_color = rgb($(hex "$lock_fg"))
     fade_on_empty = true
     placeholder_text = <span font_family="JetBrains Mono Nerd Font" font_size="13">PASSWORD</span>
     rounding = 0

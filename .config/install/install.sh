@@ -8,7 +8,7 @@ echo "╚═══════════════════════�
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ask the user if they want to configure GitHub SSH and CLI
-read -p "Do you want to set up a new SSH key and authenticate GitHub CLI? (y/N): " setup_github
+read -r -p "Do you want to set up a new SSH key and authenticate GitHub CLI? (y/N): " setup_github
 if [[ "$setup_github" =~ ^[Yy]$ ]]; then
     export SETUP_GITHUB="y"
 else

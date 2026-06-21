@@ -9,8 +9,8 @@ if [ -n "$EXISTING_NAME" ] && [ -n "$EXISTING_EMAIL" ]; then
     echo "==> Git is already configured (Name: $EXISTING_NAME, Email: $EXISTING_EMAIL). Skipping git config..."
 else
     echo "==> Setting up git..."
-    read -p "Git name [Press Enter to skip]: " git_name
-    read -p "Git email [Press Enter to skip]: " git_email
+    read -r -p "Git name [Press Enter to skip]: " git_name
+    read -r -p "Git email [Press Enter to skip]: " git_email
     [ -n "$git_name" ] && git config --global user.name "$git_name"
     [ -n "$git_email" ] && git config --global user.email "$git_email"
 fi

@@ -15,8 +15,8 @@ font_size_md=$(gets font_size_md)
 
 cat > ~/.config/ghostty/colors.conf << EOF
 # Auto-generated — do not edit directly
-background = $(hex $background)
-foreground = $(hex $foreground)
+background = $(hex "$background")
+foreground = $(hex "$foreground")
 font-family = $font_mono
 font-size = $font_size_md
 EOF

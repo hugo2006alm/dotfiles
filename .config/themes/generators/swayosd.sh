@@ -39,7 +39,7 @@ if pgrep -x swayosd-server > /dev/null; then
     pkill -x swayosd-server
     # Wait a tiny bit for it to shutdown
     sleep 0.2
-    hyprctl dispatch 'hl.dsp.exec_cmd("swayosd-server --style $HOME/.config/swayosd/style.css")' > /dev/null
+    hyprctl dispatch "hl.dsp.exec_cmd('swayosd-server --style $HOME/.config/swayosd/style.css')" > /dev/null
     echo "Reloaded swayosd-server"
 fi
 

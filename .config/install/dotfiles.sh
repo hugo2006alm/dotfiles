@@ -3,7 +3,7 @@ set -e
 
 if [ "$SETUP_GITHUB" = "y" ]; then
     echo "==> Setting up SSH key for GitHub..."
-    read -p "GitHub email: " github_email
+    read -r -p "GitHub email: " github_email
     ssh-keygen -t ed25519 -C "$github_email" -f ~/.ssh/github -N ""
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/github
@@ -13,7 +13,7 @@ if [ "$SETUP_GITHUB" = "y" ]; then
     echo ""
     cat ~/.ssh/github.pub
     echo ""
-    read -p "Press Enter once you've added the key to GitHub..."
+    read -r -p "Press Enter once you've added the key to GitHub..."
     ssh -T git@github.com || true
 else
     echo "==> Skipping GitHub SSH setup."
@@ -36,6 +36,6 @@ else
 fi
 
 echo "==> Linking dotfiles with GNU Stow..."
-cd "$HOME/dotfiles"
+cd "$HOME/dotfiles" || exit 1
 stow . -t ~
 git config --global push.autoSetupRemote true

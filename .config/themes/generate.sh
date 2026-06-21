@@ -1,8 +1,8 @@
 #!/bin/bash
+# shellcheck disable=SC2129
 
 THEME="${1:-$(cat ~/.config/themes/current)}"
 TOML="$HOME/.config/themes/$THEME/colors.toml"
-STYLE="$HOME/.config/themes/style.toml"
 
 if [[ ! -f "$TOML" ]]; then
   echo "Theme '$THEME' not found at $TOML"
