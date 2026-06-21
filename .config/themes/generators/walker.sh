@@ -67,6 +67,10 @@ if [ -f "$CONF_SOURCE" ]; then
     cp "$CONF_SOURCE" "$CONF_DEST"
     # Replace theme
     sed -i "s/^theme[[:space:]]*=.*/theme = \"$THEME\"/" "$CONF_DEST"
+    # Remove prefix requirement for calculator provider
+    sed -i -e '/\[\[providers.prefixes\]\]/{N;N;/\nprefix = "="\nprovider = "calc"/d}' "$CONF_DEST"
+    # Insert custom placeholders after the default placeholder
+    sed -i '/"default" = {/a "calc" = { input = "Calculator", list = "Enter math equation..." }\n"symbols" = { input = "Symbols", list = "No symbols found" }' "$CONF_DEST"
     # Append custom provider overrides
     cat >> "$CONF_DEST" << 'EOF'
 
@@ -81,6 +85,11 @@ theme = "$THEME"
 [search]
 placeholder = "Search..."
 
+[placeholders]
+"default" = { input = "Search", list = "No Results" }
+"calc" = { input = "Calculator", list = "Enter math equation..." }
+"symbols" = { input = "Symbols", list = "No symbols found" }
+
 [providers]
 default = ["desktopapplications", "calc", "websearch"]
 empty = ["desktopapplications"]
@@ -88,10 +97,6 @@ empty = ["desktopapplications"]
 [[providers.prefixes]]
 prefix = "."
 provider = "symbols"
-
-[[providers.prefixes]]
-prefix = "="
-provider = "calc"
 
 [[providers.prefixes]]
 prefix = ":"
