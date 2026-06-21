@@ -1,0 +1,5 @@
+from dotfiles_api.domain.capabilities.desktop_capability import DesktopCapability
+from dotfiles_api.domain.capabilities.launcher import Launcher
+from dotfiles_api.domain.capabilities.status_bar import StatusBar
+from dotfiles_api.domain.capabilities.notification_center import NotificationCenter
+from dotfiles_api.domain.capabilities.compositor import Compositor

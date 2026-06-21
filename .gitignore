@@ -24,3 +24,8 @@
 .config/hypr/style.lua
 .config/hypr/autostart-personal.lua
 
+# Python caches
+__pycache__/
+*.pyc
+
+

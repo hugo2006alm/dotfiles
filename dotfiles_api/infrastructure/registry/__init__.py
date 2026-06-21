@@ -1,0 +1,2 @@
+from dotfiles_api.infrastructure.registry.generators import GeneratorRegistry
+from dotfiles_api.infrastructure.registry.capabilities import CapabilityRegistry
