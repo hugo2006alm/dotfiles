@@ -56,7 +56,11 @@ hl.config({
             active_border   = colors.active,
             inactive_border = colors.inactive,
         },
-        layout = "master",
+        layout = "dwindle",
+    },
+    dwindle = {
+        pseudotile = true,
+        preserve_split = true,
     },
 })
 

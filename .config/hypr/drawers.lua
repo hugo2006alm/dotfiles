@@ -18,9 +18,11 @@ hl.window_rule({ match = { title = "btop" }, size = { 1400, 600 } })
 hl.window_rule({ match = { title = "nmtui" }, size = { 700, 420 } })
 hl.window_rule({ match = { title = "bluetui" }, size = { 700, 520 } })
 hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, size = { 800, 600 } })
+hl.window_rule({ match = { class = "com.system.editor" }, size = { 700, 600 } })
 
 -- Position rules
 hl.window_rule({ match = { title = "btop" }, move = { 100, 39 } })
 hl.window_rule({ match = { title = "nmtui" }, move = { 450, 39 } })
 hl.window_rule({ match = { title = "bluetui" }, move = { 450, 39 } })
 hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, move = { 400, 39 } })
+hl.window_rule({ match = { class = "com.system.editor" }, move = { 890, 150 } })

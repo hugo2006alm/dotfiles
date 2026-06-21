@@ -15,7 +15,7 @@ while [ -f /tmp/plymouth_sync_pending ]; do
     
     cp /home/hugo2006alm/dotfiles/plymouth-shade-raid/* /usr/share/plymouth/themes/shade-raid/
     plymouth-set-default-theme shade-raid
-    mkinitcpio -P
+    nice -n 19 ionice -c 3 mkinitcpio -P
     
     # Wait a moment before checking the flag again
     sleep 2

@@ -12,7 +12,15 @@ else
     exit 1
 fi
 
-RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | shuf -n 1)
+CURRENT_WALL=$(cat "$HOME/.cache/shade-raid/last_wallpaper" 2>/dev/null)
+if [ -n "$CURRENT_WALL" ]; then
+    RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | grep -v -F "$CURRENT_WALL" | shuf -n 1)
+    if [ -z "$RANDOM_WALL" ]; then
+        RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | shuf -n 1)
+    fi
+else
+    RANDOM_WALL=$(find -L "$WALLPAPERS_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" \) | shuf -n 1)
+fi
 
 if [ -n "$RANDOM_WALL" ]; then
     REAL_WALL=$(readlink -f "$RANDOM_WALL")
