@@ -59,7 +59,6 @@ hl.config({
         layout = "dwindle",
     },
     dwindle = {
-        pseudotile = true,
         preserve_split = true,
     },
 })
