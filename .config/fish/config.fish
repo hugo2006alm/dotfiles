@@ -1,3 +1,6 @@
+# ── Shell Greeting ────────────────────────────────────
+set -g fish_greeting
+
 # ── Auto-start Hyprland on TTY1 ───────────────────────
 if status is-login
     if test -z "$DISPLAY" && test "$XDG_VTNR" = 1
@@ -7,8 +10,8 @@ end
 
 # ── SSH Agent ─────────────────────────────────────────
 if test -z "$SSH_AUTH_SOCK"
-    eval (ssh-agent -c) 2>/dev/null
-    ssh-add ~/.ssh/github-ssh
+    eval (ssh-agent -c) >/dev/null
+    ssh-add -q ~/.ssh/github-ssh
 end
 
 # ── Aliases ───────────────────────────────────────────

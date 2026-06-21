@@ -2,6 +2,11 @@
 
 ## Changes to .config/fish/config.fish
 
+### Shell Greeting
+```fish
+set -g fish_greeting
+```
+
 ### Auto-start Hyprland on TTY1
 ```fish
 if status is-login
@@ -14,8 +19,8 @@ end
 ### SSH Agent Auto-start
 ```fish
 if test -z "$SSH_AUTH_SOCK"
-    eval (ssh-agent -c) 2>/dev/null
-    ssh-add ~/.ssh/github-ssh
+    eval (ssh-agent -c) >/dev/null
+    ssh-add -q ~/.ssh/github-ssh
 end
 ```
 
