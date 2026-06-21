@@ -64,6 +64,7 @@ PACMAN_PKGS=(
     grim
     slurp
     wl-clipboard
+    libnotify
     cliphist
     pacman-contrib
     wf-recorder

@@ -49,20 +49,21 @@ All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for H
 On a fresh Arch install with `base-devel` and `git`:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/hugo2006alm/dotfiles/main/.config/install/install.sh)
+git clone https://github.com/hugo2006alm/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+bash .config/install/install.sh
 ```
 
 The script will:
 
 1. Install `yay` (AUR helper)
 2. Enable multilib and install all pacman + AUR packages
-3. Set up SSH key and clone this repo into `~/dotfiles`
-4. Symlink all dotfiles into `$HOME` using GNU Stow
-5. Enable system services (NetworkManager, bluetooth, pipewire, ufw, autologin)
-6. Set fish as default shell, configure git, refresh mirrors and fonts
-7. Generate and apply the Shade Raid theme
+3. Configure GNU Stow to symlink all configuration directories
+4. Enable system services (NetworkManager, bluetooth, pipewire, ufw, greetd)
+5. Set fish as default shell, configure git, refresh mirrors and fonts
+6. Generate and apply the Shade Raid theme
 
-Log out and back in — Hyprland starts automatically on TTY1.
+After installation, reboot your system. The `greetd` login manager will start automatically on TTY1, allowing you to log in to Hyprland.
 
 ---
 

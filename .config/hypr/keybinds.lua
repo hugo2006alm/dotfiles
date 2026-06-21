@@ -90,9 +90,9 @@ for kp_key, ws_num in pairs(keypad_map) do
 end
 
 -- Screenshots
-bind("Print", hl.dsp.exec_cmd([[bash -c 'f=$HOME/Imagens/Screenshots/$(date +%Y%m%d_%H%M%S).png; grim "$f" && wl-copy < "$f" && notify-send "Screenshot copied"']]))
-bind("SHIFT + Print", hl.dsp.exec_cmd([[bash -c 'grim -g "$(slurp)" - | tee $HOME/Imagens/Screenshots/$(date +%Y%m%d_%H%M%S).png | wl-copy && notify-send "Screenshot copied"']]))
-bind("SUPER + SHIFT + S", hl.dsp.exec_cmd([[bash -c 'grim -g "$(slurp)" - | tee $HOME/Imagens/Screenshots/$(date +%Y%m%d_%H%M%S).png | wl-copy && notify-send "Screenshot copied"']]))
+bind("Print", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; f="$dir/$(date +%Y%m%d_%H%M%S).png"; grim "$f" && wl-copy < "$f" && notify-send "Screenshot copied"']]))
+bind("SHIFT + Print", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; grim -g "$(slurp)" - | tee "$dir/$(date +%Y%m%d_%H%M%S).png" | wl-copy && notify-send "Screenshot copied"']]))
+bind("SUPER + SHIFT + S", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; grim -g "$(slurp)" - | tee "$dir/$(date +%Y%m%d_%H%M%S).png" | wl-copy && notify-send "Screenshot copied"']]))
 
 -- Screen recording
 bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/toggle-record.sh"))

@@ -42,19 +42,20 @@ hl.on("hyprland.start", function()
         awww restore 2>/dev/null || awww img "$HOME/wallpapers/shade-raid/wallpaper_0.jpg" --transition-type wipe --transition-angle 30
     ']])
     
-    -- Generate drawers config and reload
-    hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh && hyprctl reload")
+    -- Generate drawers config (reload logic is handled inside gen-drawers.sh on change)
+    hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh")
 
     -- Keyring (auto-unlocks on autologin sessions)
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
     
-    -- Applications
-    hl.exec_cmd("vesktop")
-    hl.exec_cmd("spotify")
-    hl.exec_cmd("steam -silent")
-    hl.exec_cmd("heroic --no-gui")
-    hl.exec_cmd("bitwarden")
+    -- Start xdg-desktop-portal (must run in Hyprland session context via dedicated script)
+    hl.exec_cmd("$HOME/.config/hypr/scripts/portal.sh &")
 
-    -- Start xdg-desktop-portal (must run in Hyprland session context)
-    hl.exec_cmd("systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland 2>/dev/null; /usr/lib/xdg-desktop-portal --replace &")
+    -- Load personal autostart if present
+    local personal_path = os.getenv("HOME") .. "/.config/hypr/autostart-personal.lua"
+    local pf = io.open(personal_path, "r")
+    if pf then
+        pf:close()
+        dofile(personal_path)
+    end
 end)

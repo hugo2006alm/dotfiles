@@ -1,5 +1,6 @@
 #!/bin/bash
 
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEME="${1:-$(cat ~/.config/themes/current)}"
 
 # Update gsettings to match theme dark/light variant
@@ -13,8 +14,8 @@ else
     gsettings set org.gnome.desktop.interface icon-theme "Papirus-Light" 2>/dev/null || true
 fi
 
-~/.config/themes/generate.sh "$THEME"
-~/.config/hypr/scripts/gen-drawers.sh
+"$DIR/generate.sh" "$THEME"
+"$DIR/../hypr/scripts/gen-drawers.sh"
 
 hyprctl reload >>/dev/null 2>&1
 pkill waybar; waybar >> /dev/null 2>&1 &

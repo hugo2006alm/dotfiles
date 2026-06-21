@@ -43,10 +43,10 @@ echo "==> Suppressing Hyprland terminal logs on logout..."
 sudo sed -i 's|^Exec=.*|Exec=/bin/sh -c "/usr/bin/start-hyprland > /dev/null 2>\&1"|' /usr/share/wayland-sessions/hyprland.desktop || true
 
 echo "==> Configuring sudoers exceptions..."
-sudo tee /etc/sudoers.d/shade-raid > /dev/null << 'EOF'
-hugo2006alm ALL=(root) NOPASSWD: /home/hugo2006alm/dotfiles/.config/themes/sync-plymouth.sh
-hugo2006alm ALL=(ALL) NOPASSWD: /usr/bin/cp /home/hugo2006alm/.config/greetd/regreet.css /etc/greetd/regreet.css
-hugo2006alm ALL=(ALL) NOPASSWD: /usr/bin/cp /home/hugo2006alm/dotfiles/.config/greetd/hyprland-greet.conf /etc/greetd/hyprland-greet.conf
+sudo tee /etc/sudoers.d/shade-raid > /dev/null << EOF
+$USER ALL=(root) NOPASSWD: $HOME/dotfiles/.config/themes/sync-plymouth.sh
+$USER ALL=(ALL) NOPASSWD: /usr/bin/cp $HOME/.config/greetd/regreet.css /etc/greetd/regreet.css
+$USER ALL=(ALL) NOPASSWD: /usr/bin/cp $HOME/dotfiles/.config/greetd/hyprland-greet.conf /etc/greetd/hyprland-greet.conf
 EOF
 sudo chmod 0440 /etc/sudoers.d/shade-raid
 sudo rm -f /etc/sudoers.d/plymouth_sync

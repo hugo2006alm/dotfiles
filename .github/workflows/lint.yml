@@ -1,0 +1,27 @@
+name: Lint & Syntax Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck & Lua
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck lua5.4
+
+      - name: Check Shell Script Syntax & Lint
+        run: |
+          find . -name "*.sh" -print0 | xargs -0 -r shellcheck
+
+      - name: Check Lua Syntax
+        run: |
+          find . -name "*.lua" -exec luac -p {} +

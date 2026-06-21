@@ -14,7 +14,8 @@ else
     icon_theme="Papirus-Dark"
 fi
 
-~/.config/themes/apply.sh "$next"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$DIR/apply.sh" "$next"
 gsettings set org.gnome.desktop.interface color-scheme "$scheme"
 gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"
 gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"

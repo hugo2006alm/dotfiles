@@ -1,0 +1,8 @@
+-- Personal Applications to autostart
+-- Copy this file to autostart-personal.lua to customize it.
+
+hl.exec_cmd("vesktop")
+hl.exec_cmd("spotify")
+hl.exec_cmd("steam -silent")
+hl.exec_cmd("heroic --no-gui")
+hl.exec_cmd("bitwarden")
