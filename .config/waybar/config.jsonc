@@ -1,125 +1,132 @@
-{
-  "layer": "top",
-  "position": "top",
-  "height": 36,
-  "spacing": 0,
-  "exclusive": true,
-  "style": "~/.config/waybar/style.css",
+[
+  {
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "spacing": 0,
+    "exclusive": true,
+    "style": "~/.config/waybar/style.css",
 
-  "modules-left": ["hyprland/workspaces", "custom/updates"],
-  "modules-center": ["mpris"],
-  "modules-right": ["group/system", "group/tray-group", "clock", "group/power-group"],
+    "modules-left": ["hyprland/workspaces", "custom/updates"],
+    "modules-center": ["mpris"],
+    "modules-right": ["group/system", "group/tray-group", "clock", "custom/power"],
 
-  "hyprland/workspaces": {
-    "format": "{name} {icon}",
-    "format-icons": {
-      "active": "■",
-      "default": "□",
-      "empty": "□"
+    "hyprland/workspaces": {
+      "format": "{name} {icon}",
+      "format-icons": {
+        "active": "■",
+        "default": "□",
+        "empty": "□"
+      },
+      "on-click": "activate",
+      "on-scroll-up": "hyprctl dispatch workspace e-1",
+      "on-scroll-down": "hyprctl dispatch workspace e+1",
+      "sort-by-number": true
     },
-    "on-click": "activate",
-    "on-scroll-up": "hyprctl dispatch workspace e-1",
-    "on-scroll-down": "hyprctl dispatch workspace e+1",
-    "sort-by-number": true
-  },
 
-
-  "mpris": {
-    "format": "{artist} — {title}",
-    "format-paused": "⏸  {artist} — {title}",
-    "format-stopped": "",
-    "max-length": 40,
-    "tooltip": false
-  },
-
-  "group/system": {
-    "orientation": "horizontal",
-    "modules": ["cpu", "memory", "pulseaudio", "custom/network", "bluetooth"]
-  },
-
-  "group/power-group": {
-    "orientation": "vertical",
-    "modules": ["custom/power", "custom/recorder"]
-  },
-
-  "cpu": {
-    "format": "CPU {usage}%",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
-  },
-
-  "memory": {
-    "format": "MEM {percentage}%",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
-  },
-
-  "pulseaudio": {
-    "format": "VOL {volume}%",
-    "format-muted": "MUTE",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"pavucontrol\")'",
-    "scroll-step": 5
-  },
-
-  "custom/network": {
-    "exec": "~/.config/waybar/scripts/network.sh",
-    "interval": 10,
-    "return-type": "json",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"nmtui\")'"
-  },
-
-  "bluetooth": {
-    "format": "BT",
-    "format-connected": "BT {device_alias}",
-    "format-disabled": "BT OFF",
-    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"bluetui\")'",
-    "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
-    "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}"
-  },
-
-
-  "group/tray-group": {
-    "orientation": "horizontal",
-    "drawer": {
-      "transition-duration": 300,
-      "transition-left-to-right": false
+    "mpris": {
+      "format": "{artist} — {title}",
+      "format-paused": "⏸  {artist} — {title}",
+      "format-stopped": "",
+      "max-length": 40,
+      "tooltip": false
     },
-    "modules": ["custom/tray-icon", "tray"]
-  },
 
-  "custom/tray-icon": {
-    "format": "▼",
-    "tooltip": false
-  },
+    "group/system": {
+      "orientation": "horizontal",
+      "modules": ["cpu", "memory", "pulseaudio", "custom/network", "bluetooth"]
+    },
 
-  "tray": {
-    "spacing": 8,
-    "icon-size": 16
-  },
+    "cpu": {
+      "format": "CPU {usage}%",
+      "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
+    },
 
-  "clock": {
-    "format": "{:%H:%M}",
-    "format-alt": "{:%A, %d %B %Y}",
-    "tooltip-format": "<tt>{calendar}</tt>"
-  },
+    "memory": {
+      "format": "MEM {percentage}%",
+      "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
+    },
 
-  "custom/power": {
-    "format": "⏻",
-    "tooltip-format": "Power",
-    "on-click": "~/.local/bin/power-menu"
-  },
+    "pulseaudio": {
+      "format": "VOL {volume}%",
+      "format-muted": "MUTE",
+      "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"pavucontrol\")'",
+      "scroll-step": 5
+    },
 
-  "custom/updates": {
-    "format": "↓ {}",
-    "interval": 1800,
-    "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); [ \"$up\" -gt 0 ] && echo \"$up\" || exit 1",
-    "on-click": "ghostty --class=\"system-update\" --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh",
-    "signal": 8,
-    "tooltip": false
-  },
+    "custom/network": {
+      "exec": "~/.config/waybar/scripts/network.sh",
+      "interval": 10,
+      "return-type": "json",
+      "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"nmtui\")'"
+    },
 
-  "custom/recorder": {
-    "format": "{}",
-    "interval": 1,
-    "exec": "[ -f /tmp/wf-recorder.pid ] && kill -0 $(cat /tmp/wf-recorder.pid) 2>/dev/null && echo '● REC' || echo ''",
-    "tooltip": false
+    "bluetooth": {
+      "format": "BT",
+      "format-connected": "BT {device_alias}",
+      "format-disabled": "BT OFF",
+      "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"bluetui\")'",
+      "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+      "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}"
+    },
+
+    "group/tray-group": {
+      "orientation": "horizontal",
+      "drawer": {
+        "transition-duration": 300,
+        "transition-left-to-right": false
+      },
+      "modules": ["custom/tray-icon", "tray"]
+    },
+
+    "custom/tray-icon": {
+      "format": "▼",
+      "tooltip": false
+    },
+
+    "tray": {
+      "spacing": 8,
+      "icon-size": 16
+    },
+
+    "clock": {
+      "format": "{:%H:%M}",
+      "format-alt": "{:%A, %d %B %Y}",
+      "tooltip-format": "<tt>{calendar}</tt>"
+    },
+
+    "custom/power": {
+      "format": "⏻",
+      "tooltip-format": "Power",
+      "on-click": "~/.local/bin/power-menu"
+    },
+
+    "custom/updates": {
+      "format": "↓ {}",
+      "interval": 1800,
+      "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); [ \"$up\" -gt 0 ] && echo \"$up\" || exit 1",
+      "on-click": "ghostty --class=\"com.system.update\" --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh",
+      "signal": 8,
+      "tooltip": false
+    }
+  },
+  {
+    "name": "recorder-osd",
+    "layer": "top",
+    "position": "top",
+    "height": 24,
+    "margin-top": 42,
+    "margin-right": 10,
+    "exclusive": false,
+    "style": "~/.config/waybar/style.css",
+    "modules-right": ["custom/recorder"],
+
+    "custom/recorder": {
+      "format": "{}",
+      "interval": 1,
+      "exec": "[ -f /tmp/wf-recorder.pid ] && kill -0 $(cat /tmp/wf-recorder.pid) 2>/dev/null && echo '● REC' || echo ''",
+      "signal": 9,
+      "tooltip": false
+    }
   }
-}
+]

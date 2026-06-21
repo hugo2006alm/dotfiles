@@ -93,13 +93,7 @@ window#waybar {
 #pulseaudio.muted  { color: $inactive; }
 #custom-network.disconnected { color: $urgent; }
 
-// ── RECORDER ───────────────────────────────
-#custom-recorder {
-  color: $urgent;
-  background: transparent;
-  font-weight: bold;
-  animation: blinker 1.5s linear infinite;
-}
+
 
 @keyframes blinker {
   50% { opacity: 0.3; }
@@ -153,44 +147,37 @@ window#waybar {
   &:hover { background: $accent; }
 }
 
-// ── POWER GROUP ────────────────────────────
-#power-group {
-  padding: 2px 14px;
+// ── POWER ──────────────────────────────────
+#custom-power {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 16px;
   color: $waybar_fg;
   background: $waybar_bg;
   border-left: 3px solid $waybar_acc;
   border-bottom: 3px solid $waybar_acc;
   box-shadow: none;
 
-  #custom-power {
-    font-size: 14px;
-    font-weight: 700;
-    color: inherit;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  #custom-recorder {
-    font-size: 8px;
-    font-weight: 700;
-    color: $urgent;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: -2px 0 0 0;
-  }
-
   &:hover {
     background: $waybar_acc;
     color: $waybar_bg;
+  }
+}
 
-    #custom-power {
-      color: $waybar_bg;
-    }
-    #custom-recorder {
-      color: $waybar_bg;
-    }
+// ── RECORDER OSD ───────────────────────────
+window#waybar.recorder-osd {
+  background: transparent;
+  border: none;
+  margin-left: 88%;
+  margin-top: 42px;
+
+  #custom-recorder {
+    background-color: $background2;
+    color: $urgent;
+    border: 2px solid $border;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: bold;
+    animation: blinker 1.5s linear infinite;
   }
 }

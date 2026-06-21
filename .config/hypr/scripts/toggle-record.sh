@@ -2,11 +2,7 @@
 # toggle-record.sh — toggle wf-recorder screen capture
 # Super+Shift+R via keybinds.lua
 
-if [ -d "$HOME/Vídeos" ]; then
-    SAVE_DIR="$HOME/Vídeos/Recordings"
-else
-    SAVE_DIR="$HOME/Videos/Recordings"
-fi
+SAVE_DIR="$HOME/Vídeos/Recordings"
 PID_FILE="/tmp/wf-recorder.pid"
 mkdir -p "$SAVE_DIR"
 
@@ -21,11 +17,13 @@ if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
     # Recording in progress — stop it
     kill -INT "$(cat "$PID_FILE")"
     rm -f "$PID_FILE"
+    pkill -RTMIN+9 waybar 2>/dev/null || true
     notify-send -i media-record "Screen Recording" "Recording stopped and saved to $SAVE_DIR"
 else
     rm -f "$PID_FILE"
     FILE="$SAVE_DIR/$(date +%Y%m%d_%H%M%S).mkv"
     wf-recorder -f "$FILE" &
     echo $! > "$PID_FILE"
+    pkill -RTMIN+9 waybar 2>/dev/null || true
     notify-send -i media-record "Screen Recording" "Recording started…"
 fi

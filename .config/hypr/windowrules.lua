@@ -15,19 +15,19 @@ hl.window_rule({ match = { title = "btop" }, float = true })
 hl.window_rule({ match = { title = "nmtui" }, float = true })
 hl.window_rule({ match = { title = "bluetui" }, float = true })
 hl.window_rule({ match = { class = "zen", title = "^Extensão:" }, float = true })
-hl.window_rule({ match = { title = "System Update" }, float = true })
-hl.window_rule({ match = { title = "^nvim$" }, workspace = "unset", float = true })
+hl.window_rule({ match = { class = "com.system.update" }, float = true })
+hl.window_rule({ match = { class = "com.system.editor" }, workspace = "unset", float = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { 900, 600 } })
 hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, size = { 800, 600 } })
 hl.window_rule({ match = { class = "Bitwarden" }, size = { 1000, 700 } })
 hl.window_rule({ match = { title = "btop" }, size = { 1200, 800 } })
-hl.window_rule({ match = { title = "System Update" }, size = { 800, 500 } })
-hl.window_rule({ match = { title = "^nvim$" }, size = { 1400, 800 } })
+hl.window_rule({ match = { class = "com.system.update" }, size = { 800, 500 } })
+hl.window_rule({ match = { class = "com.system.editor" }, size = { 1400, 800 } })
 
 -- Position rules for drawers
-hl.window_rule({ match = { title = "^nvim$" }, move = { 580, 45 } })
+hl.window_rule({ match = { class = "com.system.editor" }, move = { 580, 45 } })
 
 -- Workspace rules
 hl.window_rule({ match = { class = "zen" }, workspace = "1" })

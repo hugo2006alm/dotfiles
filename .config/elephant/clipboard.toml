@@ -1,0 +1,1 @@
+text_editor_cmd = "ghostty --class=\"com.system.editor\" --title=\"Clipboard Editor\" -e nvim %FILE%"

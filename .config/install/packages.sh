@@ -161,8 +161,9 @@ AUR_PKGS=(
     greetd
     greetd-regreet
 
-    # Launcher
+    # Launcher & Backend Providers
     walker-bin
+    elephant-all
 
     # OSD
     swayosd-git
@@ -176,8 +177,9 @@ AUR_PKGS=(
     # Runtime manager
     mise-bin
 
-    # Cursors
+    # Cursors & Folders
     bibata-cursor-theme
+    papirus-folders
 
     # Apps
     vesktop-bin

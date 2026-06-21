@@ -76,7 +76,7 @@ window {
 /* ── Login card ── */
 .login-box {
     background-color: ${CARD_BG};
-    border: 3px solid ${ACCENT};
+    border: 5px solid ${ACCENT};
     border-radius: 4px;
     padding: 40px 48px;
     min-width: 380px;
@@ -158,6 +158,8 @@ button:active {
 
 /* Primary login button — filled accent */
 button.suggested-action,
+button.login-button,
+button#login_btn,
 button#login,
 button#submit,
 button.accent,
@@ -171,6 +173,8 @@ button.submit,
 }
 
 button.suggested-action:hover,
+button.login-button:hover,
+button#login_btn:hover,
 button#login:hover,
 button#submit:hover,
 button.accent:hover,
@@ -185,23 +189,29 @@ button.submit:hover,
 }
 
 /* Power management buttons */
+button.power-button,
+button#power-button,
 button.reboot, button#reboot,
 button.poweroff, button#poweroff,
 button.shutdown, button#shutdown,
 button.suspend, button#suspend,
 #reboot button, #poweroff button,
-#shutdown button, #suspend button {
+#shutdown button, #suspend button,
+popover button, modelbutton {
     background-color: transparent !important;
     color: ${CARD_FG} !important;
     border: 1px solid ${CARD_BORDER} !important;
 }
 
+button.power-button:hover,
+button#power-button:hover,
 button.reboot:hover, button#reboot:hover,
 button.poweroff:hover, button#poweroff:hover,
 button.shutdown:hover, button#shutdown:hover,
 button.suspend:hover, button#suspend:hover,
 #reboot button:hover, #poweroff button:hover,
-#shutdown button:hover, #suspend button:hover {
+#shutdown button:hover, #suspend button:hover,
+popover button:hover, modelbutton:hover {
     background-color: ${BTN_HOVER_BG} !important;
     color: ${BTN_HOVER_FG} !important;
     border-color: ${ACCENT} !important;

@@ -25,7 +25,7 @@ fi
 
 if [ "$BTOP_WAS_RUNNING" = true ]; then
     sleep 0.3
-    hyprctl dispatch togglespecialworkspace btop >/dev/null 2>&1 &
+    hyprctl dispatch 'hl.dsp.workspace.toggle_special("btop")' >/dev/null 2>&1 &
 fi
 
 echo "Applied theme: $THEME"
