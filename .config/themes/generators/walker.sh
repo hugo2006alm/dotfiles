@@ -60,35 +60,47 @@ sassc -I $THEME \
   $THEME/style.css
 echo "Compiled walker style.scss → style.css"
 
-cat > ~/.config/walker/config.toml << EOF
+# Generate ~/.config/walker/config.toml based on the system default config.toml
+CONF_SOURCE="/etc/xdg/walker/config.toml"
+CONF_DEST="$HOME/.config/walker/config.toml"
+if [ -f "$CONF_SOURCE" ]; then
+    cp "$CONF_SOURCE" "$CONF_DEST"
+    # Replace theme
+    sed -i "s/^theme[[:space:]]*=.*/theme = \"$THEME\"/" "$CONF_DEST"
+    # Append custom provider overrides
+    cat >> "$CONF_DEST" << 'EOF'
+
+[providers.symbols]
+show_initial_entries = true
+EOF
+else
+    # Fallback to a minimal working config if system config is not found
+    cat > "$CONF_DEST" << EOF
 theme = "$THEME"
 
 [search]
 placeholder = "Search..."
 
-[[modules]]
-name = "applications"
-placeholder = "Applications"
+[providers]
+default = ["desktopapplications", "calc", "websearch"]
+empty = ["desktopapplications"]
 
-[[modules]]
-name = "runner"
-placeholder = "Run"
+[[providers.prefixes]]
+prefix = "."
+provider = "symbols"
 
-[[modules]]
-name = "clipboard"
-placeholder = "Clipboard"
-
-[[modules]]
-name = "calc"
-placeholder = "= expression…"
+[[providers.prefixes]]
 prefix = "="
+provider = "calc"
 
-[[modules]]
-name = "symbols"
-placeholder = "Symbols"
+[[providers.prefixes]]
+prefix = ":"
+provider = "clipboard"
+
+[providers.symbols]
 show_initial_entries = true
 EOF
+fi
 
-echo "Generated ~/.config/walker/config.toml"
-echo "Added correct theme to config.toml"
+echo "Generated ~/.config/walker/config.toml based on $CONF_SOURCE"
 

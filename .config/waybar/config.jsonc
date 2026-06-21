@@ -8,7 +8,7 @@
 
   "modules-left": ["hyprland/workspaces", "custom/updates"],
   "modules-center": ["mpris"],
-  "modules-right": ["group/system", "group/tray-group", "clock", "custom/power"],
+  "modules-right": ["group/system", "group/tray-group", "clock", "group/power-group"],
 
   "hyprland/workspaces": {
     "format": "{name} {icon}",
@@ -34,7 +34,12 @@
 
   "group/system": {
     "orientation": "horizontal",
-    "modules": ["cpu", "memory", "pulseaudio", "custom/recorder", "custom/network", "bluetooth"]
+    "modules": ["cpu", "memory", "pulseaudio", "custom/network", "bluetooth"]
+  },
+
+  "group/power-group": {
+    "orientation": "vertical",
+    "modules": ["custom/power", "custom/recorder"]
   },
 
   "cpu": {
@@ -106,7 +111,7 @@
     "format": "↓ {}",
     "interval": 1800,
     "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); [ \"$up\" -gt 0 ] && echo \"$up\" || exit 1",
-    "on-click": "ghostty --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh",
+    "on-click": "ghostty --class=\"system-update\" --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh",
     "signal": 8,
     "tooltip": false
   },
@@ -114,7 +119,7 @@
   "custom/recorder": {
     "format": "{}",
     "interval": 1,
-    "exec": "[ -f /tmp/wf-recorder.pid ] && kill -0 $(cat /tmp/wf-recorder.pid) 2>/dev/null && echo '● REC' || exit 1",
+    "exec": "[ -f /tmp/wf-recorder.pid ] && kill -0 $(cat /tmp/wf-recorder.pid) 2>/dev/null && echo '● REC' || echo ''",
     "tooltip": false
   }
 }

@@ -95,10 +95,8 @@ window#waybar {
 
 // ── RECORDER ───────────────────────────────
 #custom-recorder {
-  padding: 0 10px;
   color: $urgent;
   background: transparent;
-  border-left: $border-thin;
   font-weight: bold;
   animation: blinker 1.5s linear infinite;
 }
@@ -155,19 +153,44 @@ window#waybar {
   &:hover { background: $accent; }
 }
 
-// ── POWER BUTTON ───────────────────────────
-#custom-power {
-  font-size: 16px;
-  font-weight: 700;
-  padding: 0 16px;
+// ── POWER GROUP ────────────────────────────
+#power-group {
+  padding: 2px 14px;
   color: $waybar_fg;
   background: $waybar_bg;
   border-left: 3px solid $waybar_acc;
   border-bottom: 3px solid $waybar_acc;
   box-shadow: none;
 
+  #custom-power {
+    font-size: 14px;
+    font-weight: 700;
+    color: inherit;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  #custom-recorder {
+    font-size: 8px;
+    font-weight: 700;
+    color: $urgent;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: -2px 0 0 0;
+  }
+
   &:hover {
     background: $waybar_acc;
     color: $waybar_bg;
+
+    #custom-power {
+      color: $waybar_bg;
+    }
+    #custom-recorder {
+      color: $waybar_bg;
+    }
   }
 }

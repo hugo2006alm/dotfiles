@@ -2,7 +2,11 @@
 # toggle-record.sh — toggle wf-recorder screen capture
 # Super+Shift+R via keybinds.lua
 
-SAVE_DIR="$HOME/Videos/Recordings"
+if [ -d "$HOME/Vídeos" ]; then
+    SAVE_DIR="$HOME/Vídeos/Recordings"
+else
+    SAVE_DIR="$HOME/Videos/Recordings"
+fi
 PID_FILE="/tmp/wf-recorder.pid"
 mkdir -p "$SAVE_DIR"
 
