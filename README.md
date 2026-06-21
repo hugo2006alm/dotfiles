@@ -56,8 +56,8 @@ The script will:
 
 1. Install `yay` (AUR helper)
 2. Enable multilib and install all pacman + AUR packages
-3. Set up SSH key and clone this repo as a bare git repo into `~/.dotfiles`
-4. Check out all dotfiles into `$HOME`
+3. Set up SSH key and clone this repo into `~/dotfiles`
+4. Symlink all dotfiles into `$HOME` using GNU Stow
 5. Enable system services (NetworkManager, bluetooth, pipewire, ufw, autologin)
 6. Set fish as default shell, configure git, refresh mirrors and fonts
 7. Generate and apply the Shade Raid theme

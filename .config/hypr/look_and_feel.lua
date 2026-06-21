@@ -1,39 +1,9 @@
 -- Look and Feel Configuration
 -- General, Decoration, Animations, Environment Variables
 
--- Colors (from colors.conf)
-local colors = {
-    background    = 0x16130F,
-    background2   = 0x201C17,
-    foreground    = 0xF4EFE4,
-    foreground2   = 0xC8C2B4,
-    border        = 0xF4EFE4,
-    accent        = 0xE8623E,
-    accent2       = 0xD94F2B,
-    active        = 0xF4EFE4,
-    inactive      = 0x4A4540,
-    urgent        = 0xE8623E,
-    shadow        = 0x00000099,
-}
-
--- Style variables (from style.conf)
-local style = {
-    border_size         = 3,
-    gaps_inner          = 4,
-    gaps_outer          = 8,
-    corner_radius       = 0,
-    cursor_theme        = "Bibata-Modern-Classic",
-    cursor_size         = 24,
-    font_mono           = "Monaspace Radon",
-    font_display        = "Bebas Neue",
-    font_size_sm        = 11,
-    font_size_md        = 13,
-    font_size_lg        = 24,
-    shadow_offset_x     = 2,
-    shadow_offset_y     = 2,
-    shadow_range        = 4,
-    shadow_render_power = 4,
-}
+-- Load dynamically generated colors and style configs
+local colors = dofile(os.getenv("HOME") .. "/.config/hypr/colors.lua")
+local style = dofile(os.getenv("HOME") .. "/.config/hypr/style.lua")
 
 -- Environment variables
 hl.env("XCURSOR_THEME", style.cursor_theme)
