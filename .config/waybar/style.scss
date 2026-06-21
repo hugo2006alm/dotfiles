@@ -168,14 +168,15 @@ window#waybar {
 window#waybar.recorder-osd {
   background: transparent;
   border: none;
-  margin-top: 42px;
+  margin-top: 36px;
 
   #custom-recorder {
     background-color: $background2;
     color: $urgent;
-    border: 2px solid $border;
-    border-radius: 4px;
-    padding: 4px 8px;
+    border: 1px solid $border;
+    border-radius: 2px;
+    padding: 1px 4px;
+    font-size: 8px;
     font-weight: bold;
     animation: blinker 1.5s linear infinite;
   }
