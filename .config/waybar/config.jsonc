@@ -113,9 +113,9 @@
   {
     "name": "recorder-osd",
     "layer": "top",
-    "position": "top",
+    "position": "bottom",
     "height": 12,
-    "margin-top": 36,
+    "margin-bottom": 15,
     "margin-right": 15,
     "exclusive": false,
     "style": "~/.config/waybar/style.css",
