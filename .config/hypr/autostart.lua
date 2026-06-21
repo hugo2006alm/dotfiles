@@ -19,7 +19,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
     
     -- Initialize gsettings theme/scheme on startup to match active theme
-    hl.exec_cmd([[sh -c '
+    hl.exec_cmd([=[sh -c '
         THEME=$(cat "$HOME/.config/themes/current" 2>/dev/null || echo shade-raid)
         if [[ "$THEME" == *-dark ]]; then
             gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
@@ -30,7 +30,7 @@ hl.on("hyprland.start", function()
             gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
             gsettings set org.gnome.desktop.interface icon-theme "Papirus-Light"
         fi
-    ']])
+    ']=])
     
     -- Wallpaper: poll socket until daemon is ready, then restore last wallpaper
     hl.exec_cmd([[sh -c '
