@@ -60,6 +60,65 @@ if [ -z "$folder_color" ]; then
     fi
 fi
 
+# Load colors for gtk.css generation
+background=$(get background)
+background2=$(get background2)
+foreground=$(get foreground)
+accent=$(get accent)
+accent_fg=$(get accent_fg)
+accent_hover=$(get color9)
+
+# Generate gtk.css for both GTK 3.0 and GTK 4.0
+for dir in "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
+    mkdir -p "$dir"
+    cat > "$dir/gtk.css" << EOF
+/* Auto-generated from themes/$THEME/colors.toml — do not edit directly */
+
+/* Custom GTK styling for Nautilus & system apps */
+window.background.csd,
+window.background.csd > decoration {
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.nautilus-window {
+  background-color: $background;
+  color: $foreground;
+}
+
+.nautilus-window .sidebar {
+  background-color: $background2;
+  border-right: 1px solid $background;
+}
+
+.nautilus-window .sidebar row:selected {
+  background-color: $accent;
+  color: $accent_fg;
+  border-radius: 6px;
+}
+
+.nautilus-window .view,
+.nautilus-window .view row {
+  background-color: $background;
+  color: $foreground;
+}
+
+.nautilus-window .view row:selected {
+  background-color: $accent;
+  color: $accent_fg;
+}
+
+button.suggested-action {
+  background-color: $accent;
+  color: $accent_fg;
+}
+
+button.suggested-action:hover {
+  background-color: $accent_hover;
+}
+EOF
+done
+
 # Run papirus-folders locally if installed
 if command -v papirus-folders &>/dev/null; then
     papirus-folders -C "$folder_color" >/dev/null 2>&1 || true

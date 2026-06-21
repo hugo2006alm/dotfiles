@@ -37,7 +37,7 @@ end
 # Theme & Config Reload
 alias theme='~/.config/themes/apply.sh'
 alias reload-waybar='pkill waybar; hyprctl dispatch exec waybar'
-alias reload-mako='pkill mako; hyprctl dispatch exec mako'
+alias reload-swaync='pkill swaync; hyprctl dispatch exec swaync'
 alias reload-walker='pkill walker; hyprctl dispatch exec "walker --gapplication-service"'
 alias reload-hyprsunset='pkill hyprsunset; hyprctl dispatch exec hyprsunset'
 alias reload-theme='~/.config/themes/apply.sh shade-raid'

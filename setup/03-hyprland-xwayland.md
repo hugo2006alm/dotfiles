@@ -107,9 +107,9 @@ hl.config({
 - **No initial focus**: vesktop, steam
 
 ### `autostart.lua` — Session Startup
-- **Core services**: swww-daemon, waybar, mako, elephant, walker, polkit, wl-paste/cliphist, hyprsunset
+- **Core services**: awww-daemon, waybar, swaync, elephant, walker, polkit, wl-paste/cliphist, hyprsunset
 - **DBus environment**: WAYLAND_DISPLAY, XDG_*, HYPRLAND_INSTANCE_SIGNATURE
-- **Wallpaper**: swww with wipe transition
+- **Wallpaper**: awww with wipe transition
 - **Drawers generation**: gen-drawers.sh + hyprctl reload
 - **Keyring**: gnome-keyring-daemon
 - **Apps**: vesktop, spotify, steam (-silent), heroic (--no-gui), bitwarden

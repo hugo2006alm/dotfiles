@@ -103,7 +103,7 @@ dotfiles_push "commit message"
 ├── waybar/
 │   ├── config.jsonc             # module layout
 │   └── style.scss               # styles (compiled to style.css on apply)
-├── mako/
+├── swaync/
 ├── ghostty/
 ├── starship.toml
 └── install/

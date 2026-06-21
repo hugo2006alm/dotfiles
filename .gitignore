@@ -7,7 +7,6 @@
 .config/hypr/colors.conf
 .config/hypr/style.conf
 .config/hypr/drawers.conf
-.config/mako/config
 .config/walker/themes/*/_colors.scss
 .config/walker/themes/*/style.css
 .config/walker/config.toml
@@ -18,3 +17,5 @@
 .config/wlogout/_colors.scss
 .config/wlogout/style.css
 .config/swaync/style.css
+.config/gtk-3.0/gtk.css
+.config/gtk-4.0/gtk.css

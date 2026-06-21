@@ -45,7 +45,7 @@ PACMAN_PKGS=(
     bluez-utils
 
     # Wallpaper
-    swww
+    awww
 
     # Notifications
     swaync
