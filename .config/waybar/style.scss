@@ -48,6 +48,7 @@ window#waybar {
   background: $background2;
   color: $foreground;
   border-right: 3px solid $border;
+  border-bottom: $border-bar;
   font-weight: bold;
 
   &:hover {

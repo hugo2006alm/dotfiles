@@ -143,6 +143,11 @@ row:selected .item-text {
   font-size: 24px;
 }
 
+.clipboard .item-box {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
 .todo.done .item-text-box {
   opacity: 0.25;
 }

@@ -92,10 +92,14 @@ theme[process_mid]="$accent"
 theme[process_end]="$accent"
 THEME_EOF
 
-# Update btop.conf to use this theme
-CONF_FILE="$HOME/.config/btop/btop.conf"
+# Update btop.conf to use this theme — resolve symlink first so sed -i doesn't replace it
+CONF_LINK="$HOME/.config/btop/btop.conf"
+CONF_FILE=$(readlink -f "$CONF_LINK" 2>/dev/null)
+[ -z "$CONF_FILE" ] && CONF_FILE="$CONF_LINK"
 if [ -f "$CONF_FILE" ]; then
     sed -i 's/^color_theme[[:space:]]*=.*/color_theme = "shade-raid"/' "$CONF_FILE"
 fi
+
+# SIGHUP is not supported by btop, apply.sh will kill btop to restart it with new config
 
 echo "Generated ~/.config/btop/themes/shade-raid.theme and updated btop.conf"

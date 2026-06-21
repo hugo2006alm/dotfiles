@@ -15,12 +15,14 @@ hl.window_rule({ match = { title = "btop" }, float = true })
 hl.window_rule({ match = { title = "nmtui" }, float = true })
 hl.window_rule({ match = { title = "bluetui" }, float = true })
 hl.window_rule({ match = { class = "zen", title = "^Extensão:" }, float = true })
+hl.window_rule({ match = { title = "System Update" }, float = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { 900, 600 } })
 hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, size = { 800, 600 } })
 hl.window_rule({ match = { class = "Bitwarden" }, size = { 1000, 700 } })
 hl.window_rule({ match = { title = "btop" }, size = { 1200, 800 } })
+hl.window_rule({ match = { title = "System Update" }, size = { 800, 500 } })
 
 -- Workspace rules
 hl.window_rule({ match = { class = "zen" }, workspace = "1" })

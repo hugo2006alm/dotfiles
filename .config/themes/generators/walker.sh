@@ -79,12 +79,14 @@ name = "clipboard"
 placeholder = "Clipboard"
 
 [[modules]]
-name = "calculator"
-placeholder = "Calculator"
+name = "calc"
+placeholder = "= expression…"
+prefix = "="
 
 [[modules]]
-name = "emojis"
-placeholder = "Emojis"
+name = "symbols"
+placeholder = "Symbols"
+show_initial_entries = true
 EOF
 
 echo "Generated ~/.config/walker/config.toml"
