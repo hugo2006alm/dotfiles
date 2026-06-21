@@ -64,3 +64,8 @@ hl.window_rule({ match = { class = "steam" }, no_initial_focus = true })
 hl.window_rule({ match = { class = "mpv" }, idle_inhibit = "focus" })
 hl.window_rule({ match = { class = "zen" }, idle_inhibit = "fullscreen" })
 
+-- Layer rules for SwayNC animations (slide from the right)
+hl.layer_rule({ match = { namespace = "swaync-control-center" }, animation = "slide right" })
+hl.layer_rule({ match = { namespace = "swaync-notification-window" }, animation = "slide right" })
+
+
