@@ -21,7 +21,7 @@ Built on Arch Linux. Uses [Omarchy](https://omarchy.org) as a reference point bu
 | Terminal | Ghostty |
 | Shell | Fish + Starship |
 | Notifications | SwayNC |
-| Wallpaper | swww |
+| Wallpaper | awww |
 | Lock screen | Hyprlock |
 | Editor | Neovim |
 | Browser | Zen |

@@ -16,8 +16,8 @@ As of Hyprland 0.55+, configuration has been migrated from `.conf` (hyprlang) to
 ├── windowrules.lua     # Window rules (float, size, workspace, opacity, etc.)
 ├── autostart.lua       # Autostart applications and services
 ├── drawers.lua         # Auto-generated special workspace drawers (gen-drawers.sh)
-├── colors.conf         # Color definitions (legacy format, sourced by look_and_feel.lua)
-├── style.conf          # Style variables (legacy format, sourced by look_and_feel.lua)
+├── colors.lua          # Generated color palette (sourced by look_and_feel.lua)
+├── style.lua           # Generated style variables (sourced by look_and_feel.lua)
 └── scripts/            # Helper scripts (gen-drawers.sh, toggle-record.sh, etc.)
 ```
 
@@ -112,7 +112,7 @@ hl.config({
 - **Wallpaper**: awww with wipe transition
 - **Drawers generation**: gen-drawers.sh + hyprctl reload
 - **Keyring**: gnome-keyring-daemon
-- **Apps**: vesktop, spotify, steam (-silent), heroic (--no-gui), bitwarden
+- **Personal Autostart**: Dynamically loads personal applications from `~/.config/hypr/autostart-personal.lua` (e.g. vesktop, spotify, steam, heroic, bitwarden)
 - **xdg-desktop-portal**: restart in Hyprland session context
 
 ### `drawers.lua` — Auto-generated Special Workspaces
@@ -129,7 +129,7 @@ The following `.conf` files are **no longer used** and should be removed:
 - `windowrules.conf` (replaced by `windowrules.lua`)
 - `autostart.conf` (replaced by `autostart.lua`)
 - `drawers.conf` (replaced by `drawers.lua`)
-- `colors.conf` / `style.conf` kept as data sources for `look_and_feel.lua`
+- `colors.lua` / `style.lua` kept as data sources for `look_and_feel.lua`
 
 ## Related Files
 - `.config/hypr/hyprland.lua` — Main config entry point
@@ -140,6 +140,6 @@ The following `.conf` files are **no longer used** and should be removed:
 - `.config/hypr/windowrules.lua` — Window rules
 - `.config/hypr/autostart.lua` — Autostart apps/services
 - `.config/hypr/drawers.lua` — Auto-generated drawers
-- `.config/hypr/colors.conf` — Color palette (data)
-- `.config/hypr/style.conf` — Style variables (data)
+- `.config/hypr/colors.lua` — Color palette (data)
+- `.config/hypr/style.lua` — Style variables (data)
 - `.config/hypr/scripts/gen-drawers.sh` — Drawer generator
