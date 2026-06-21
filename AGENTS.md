@@ -25,7 +25,7 @@ Themes for individual apps are generated using `~/.config/themes/generate.sh`.
 - **Bar:** Waybar (compiled from SCSS to CSS via `sassc`)
 - **Terminal:** Ghostty + Fish + Starship
 - **Launcher:** Walker
-- **Notifications:** Mako
+- **Notifications:** SwayNC
 - **Wallpaper:** swww
 - **Browser:** Zen (`zen-browser-bin`)
 - **Discord:** Vesktop (`vesktop-bin`)

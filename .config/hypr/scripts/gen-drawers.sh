@@ -4,8 +4,8 @@
 
 CONF="$HOME/.config/hypr/drawers.lua"
 
-# Read first monitor: pixel dimensions + scale
-MON=$(hyprctl monitors -j | jq '.[0]')
+# Read active/focused monitor: pixel dimensions + scale
+MON=$(hyprctl monitors -j | jq '(.[] | select(.focused == true)) // .[0]')
 PX_W=$(echo "$MON" | jq '.width')
 PX_H=$(echo "$MON" | jq '.height')
 SCALE=$(echo "$MON" | jq '.scale')

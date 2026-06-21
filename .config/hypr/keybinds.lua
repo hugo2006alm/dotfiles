@@ -14,7 +14,7 @@ bind("SUPER + Return", hl.dsp.exec_cmd("GTK_IM_MODULE=simple " .. terminal))
 bind("ALT + F4", hl.dsp.window.close())
 bind("SUPER + Q", hl.dsp.window.close())
 bind("SUPER + SHIFT + Q", hl.dsp.exit())
-bind("SUPER + N", hl.dsp.exec_cmd("nautilus"))
+bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t"))
 bind("SUPER + E", hl.dsp.exec_cmd("nautilus"))
 bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("walker --provider symbols"))
 bind("SUPER + B", hl.dsp.exec_cmd(browser))
@@ -113,9 +113,9 @@ bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK
 bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set 5%+ && swayosd-client --brightness raise"))
 bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%- && swayosd-client --brightness lower"))
 
--- Mako notifications
-bind("SUPER + D", hl.dsp.exec_cmd("makoctl dismiss"))
-bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("makoctl dismiss -a"))
+-- SwayNC notifications
+bind("SUPER + D", hl.dsp.exec_cmd("swaync-client --close-latest"))
+bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("swaync-client -C"))
 
 -- Mouse bindings
 bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })

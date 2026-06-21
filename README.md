@@ -20,7 +20,7 @@ Built on Arch Linux. Uses [Omarchy](https://omarchy.org) as a reference point bu
 | Launcher | Walker |
 | Terminal | Ghostty |
 | Shell | Fish + Starship |
-| Notifications | Mako |
+| Notifications | SwayNC |
 | Wallpaper | swww |
 | Lock screen | Hyprlock |
 | Editor | Neovim |
@@ -40,7 +40,7 @@ Foreground2  #3A3A3A   ink faint
 Accent       #D94F2B   red-orange
 ```
 
-All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for Hyprland, Waybar, Mako, Hyprlock, Ghostty and others are generated from this single source of truth via `generate.sh`.
+All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for Hyprland, Waybar, SwayNC, Hyprlock, Ghostty and others are generated from this single source of truth via `generate.sh`.
 
 ---
 
@@ -174,7 +174,7 @@ If you update `colors.toml`:
 ~/.config/themes/apply.sh shade-raid
 ```
 
-This regenerates all color configs and reloads Hyprland, Waybar and Mako automatically.
+This regenerates all color configs and reloads Hyprland, Waybar and SwayNC automatically.
 ```
 
 Then commit:
