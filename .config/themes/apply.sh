@@ -2,6 +2,17 @@
 
 THEME="${1:-$(cat ~/.config/themes/current)}"
 
+# Update gsettings to match theme dark/light variant
+if [[ "$THEME" == *-dark ]]; then
+    gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" 2>/dev/null || true
+else
+    gsettings set org.gnome.desktop.interface color-scheme "prefer-light" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "Papirus-Light" 2>/dev/null || true
+fi
+
 ~/.config/themes/generate.sh "$THEME"
 ~/.config/hypr/scripts/gen-drawers.sh
 

@@ -48,7 +48,7 @@ PACMAN_PKGS=(
     swww
 
     # Notifications
-    mako
+    swaync
 
     # Launcher
     rofi-wayland
@@ -101,6 +101,7 @@ PACMAN_PKGS=(
     reflector
     xdg-user-dirs
     openssh
+    imagemagick
 
     # Editors
     neovim

@@ -28,7 +28,7 @@ mise install python@latest
 
 echo "==> Creating necessary directories"
 mkdir -p ~/Imagens/Screenshots
-mkdir -p ~/Videos/Recordings
+mkdir -p ~/Vídeos/Recordings
 mkdir -p ~/wallpapers/shade-raid
 
 echo "==> Installing Fisher and fish plugins..."
