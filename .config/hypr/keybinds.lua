@@ -15,7 +15,7 @@ bind("ALT + F4", hl.dsp.window.close())
 bind("SUPER + Q", hl.dsp.window.close())
 bind("SUPER + SHIFT + Q", hl.dsp.exit())
 bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t"))
-bind("SUPER + E", hl.dsp.exec_cmd("nautilus"))
+bind("SUPER + E", hl.dsp.exec_cmd("dotfiles action file-explorer"))
 bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("walker --provider symbols"))
 bind("SUPER + B", hl.dsp.exec_cmd(browser))
 bind("SUPER + M", hl.dsp.exec_cmd("spotify"))
@@ -23,7 +23,7 @@ bind("SUPER + S", hl.dsp.exec_cmd("steam"))
 bind("SUPER + H", hl.dsp.exec_cmd("heroic"))
 bind("SUPER + A", hl.dsp.exec_cmd("antigravity"))
 bind("SUPER + I", hl.dsp.exec_cmd("antigravity-ide"))
-bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
+bind("SUPER + L", hl.dsp.exec_cmd("dotfiles action lock"))
 
 -- Launchers
 bind("SUPER + Space", hl.dsp.exec_cmd(launcher))
@@ -90,28 +90,28 @@ for kp_key, ws_num in pairs(keypad_map) do
 end
 
 -- Screenshots
-bind("Print", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; f="$dir/$(date +%Y%m%d_%H%M%S).png"; grim "$f" && wl-copy < "$f" && notify-send "Screenshot copied"']]))
-bind("SHIFT + Print", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; grim -g "$(slurp)" - | tee "$dir/$(date +%Y%m%d_%H%M%S).png" | wl-copy && notify-send "Screenshot copied"']]))
-bind("SUPER + SHIFT + S", hl.dsp.exec_cmd([[bash -c 'dir=$(xdg-user-dir PICTURES)/Screenshots; mkdir -p "$dir"; grim -g "$(slurp)" - | tee "$dir/$(date +%Y%m%d_%H%M%S).png" | wl-copy && notify-send "Screenshot copied"']]))
+bind("Print", hl.dsp.exec_cmd("dotfiles action screenshot"))
+bind("SHIFT + Print", hl.dsp.exec_cmd("dotfiles action screenshot --region"))
+bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("dotfiles action screenshot --region"))
 
 -- Screen recording
-bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/toggle-record.sh"))
+bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("dotfiles action record"))
 
 -- Media controls
-bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"))
-bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"))
-bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"))
-bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"))
+bind("XF86AudioPlay",  hl.dsp.exec_cmd("dotfiles action media-play"))
+bind("XF86AudioPause", hl.dsp.exec_cmd("dotfiles action media-play"))
+bind("XF86AudioNext",  hl.dsp.exec_cmd("dotfiles action media-next"))
+bind("XF86AudioPrev",  hl.dsp.exec_cmd("dotfiles action media-prev"))
 bind("XF86AudioStop",  hl.dsp.exec_cmd("playerctl stop"))
 
 -- Volume
-bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && swayosd-client --output-volume raise"))
-bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && swayosd-client --output-volume lower"))
-bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && swayosd-client --output-volume mute-toggle"))
+bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dotfiles action volume-up"))
+bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("dotfiles action volume-down"))
+bind("XF86AudioMute",        hl.dsp.exec_cmd("dotfiles action volume-mute"))
 
 -- Brightness
-bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set 5%+ && swayosd-client --brightness raise"))
-bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%- && swayosd-client --brightness lower"))
+bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("dotfiles action brightness-up"))
+bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("dotfiles action brightness-down"))
 
 -- SwayNC notifications
 bind("SUPER + D", hl.dsp.exec_cmd("swaync-client --close-latest"))
@@ -122,7 +122,7 @@ bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Theme toggle
-bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("python -m dotfiles_api.presentation.cli toggle"))
+bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("dotfiles toggle"))
 
 -- Wallpaper changer
-bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/wallpaper_changer.sh"))
+bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("dotfiles action wallpaper"))

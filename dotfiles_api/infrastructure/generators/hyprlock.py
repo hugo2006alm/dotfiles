@@ -9,9 +9,9 @@ class HyprlockGenerator(BaseGenerator):
         super().__init__(name, transaction, event_bus)
 
     def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
-        lock_bg = tokens.colors.colors.get("lock_bg", "#000000").lstrip("#")
-        lock_fg = tokens.colors.colors.get("lock_fg", "#FFFFFF").lstrip("#")
-        lock_input = tokens.colors.colors.get("lock_input", "#FFFFFF").lstrip("#")
+        lock_bg = tokens.colors.colors.get("background", "#000000").lstrip("#")
+        lock_fg = tokens.colors.colors.get("foreground", "#FFFFFF").lstrip("#")
+        lock_input = tokens.colors.colors.get("foreground", "#FFFFFF").lstrip("#")
         accent = tokens.colors.colors.get("accent", "#FF0000").lstrip("#")
 
         content = f"""# Auto-generated from themes/{theme_name}/colors.toml — do not edit directly

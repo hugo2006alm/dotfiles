@@ -7,6 +7,8 @@ from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
 
+from dotfiles_api.application.services.setup import SetupService
+
 class DotfilesFacade:
     def __init__(
         self,
@@ -15,7 +17,8 @@ class DotfilesFacade:
         install_service: InstallService,
         theme_service: ThemeService,
         reload_service: ReloadService,
-        linker: Linker
+        linker: Linker,
+        setup_service: SetupService | None = None
     ) -> None:
         self._env = env
         self._exec = exec_ctx
@@ -23,6 +26,7 @@ class DotfilesFacade:
         self._theme_service = theme_service
         self._reload_service = reload_service
         self._linker = linker
+        self._setup_service = setup_service
 
     def apply_profile(self, profile: Profile) -> None:
         self._install_service.install_profile(profile)
@@ -35,6 +39,10 @@ class DotfilesFacade:
 
     def reload(self) -> None:
         self._reload_service.reload_all()
+
+    def setup(self, setup_github: bool) -> None:
+        if self._setup_service:
+            self._setup_service.run_setup(setup_github)
 
     def apply_all(self, profile: Profile, theme_name: str) -> None:
         self.apply_profile(profile)

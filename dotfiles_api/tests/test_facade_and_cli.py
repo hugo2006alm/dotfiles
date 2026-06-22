@@ -110,3 +110,28 @@ class TestCliToggle(unittest.TestCase):
         # Assert
         mock_facade.apply_theme.assert_called_once_with("shade-raid")
         mock_facade.reload.assert_called_once()
+
+class TestCliCommands(unittest.TestCase):
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('dotfiles_api.presentation.cli.DotfilesFacade')
+    def test_cli_setup(self, mock_facade_class, mock_parse_args):
+        import argparse
+        mock_parse_args.return_value = argparse.Namespace(command="setup", dry_run=False, theme="shade-raid", github=True)
+        mock_facade = mock_facade_class.return_value
+        
+        from dotfiles_api.presentation.cli import main
+        main()
+        
+        mock_facade.setup.assert_called_once_with(setup_github=True)
+
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('dotfiles_api.presentation.cli.ActionService')
+    def test_cli_action(self, mock_action_svc_class, mock_parse_args):
+        import argparse
+        mock_parse_args.return_value = argparse.Namespace(command="action", dry_run=False, theme="shade-raid", action_name="screenshot", action_args=["--region"])
+        mock_action_svc = mock_action_svc_class.return_value
+        
+        from dotfiles_api.presentation.cli import main
+        main()
+        
+        mock_action_svc.run_action.assert_called_once_with("screenshot", ["--region"])

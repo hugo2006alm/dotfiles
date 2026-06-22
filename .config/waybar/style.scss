@@ -1,15 +1,20 @@
 @import "colors";
+@import "variables";
 
 // ── DERIVED VARS ───────────────────────────
+$waybar_bg: $foreground;
+$waybar_fg: $background;
+$waybar_acc: $accent;
+
 $border-thin: 2px solid $border;
-$border-bar:  3px solid $border;
+$border-bar:  $border-size solid $border;
 
 // ── RESET ──────────────────────────────────
 * {
-  font-family: 'Space Mono', monospace;
+  font-family: $font-mono, monospace;
   font-size: 12px;
   border: none;
-  border-radius: 0;
+  border-radius: $corner-radius;
   min-height: 0;
 }
 

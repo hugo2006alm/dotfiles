@@ -136,10 +136,12 @@ class TestGenerators(unittest.TestCase):
         artifacts = gen.render(tokens, "shade-raid")
 
         # Assert
-        self.assertEqual(len(artifacts), 1)
+        self.assertEqual(len(artifacts), 2)
         self.assertEqual(artifacts[0].artifact_id, "waybar-colors")
         self.assertIn("$primary_surface: #F4EFE4;", artifacts[0].content)
         self.assertIn("$accent: #D94F2B;", artifacts[0].content)
+        self.assertEqual(artifacts[1].artifact_id, "waybar-variables")
+        self.assertIn("$font-mono: 'monospace';", artifacts[1].content)
 
     def test_ghostty_generator_rendering(self):
         # Arrange

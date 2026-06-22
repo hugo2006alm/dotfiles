@@ -5,8 +5,5 @@ class HyprlandCompositor(Compositor):
     def __init__(self, exec_ctx: ExecutionContext) -> None:
         self._exec = exec_ctx
 
-    def get_capability_id(self) -> str:
-        return "compositor"
-
     def reload_compositor(self) -> None:
         self._exec.execute(["hyprctl", "reload"])

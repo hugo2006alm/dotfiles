@@ -1,5 +1,27 @@
 {
   "$schema": "/etc/xdg/swaync/configSchema.json",
+  "notification-visibility": {
+    "spotify": {
+      "state": "ignored",
+      "app-name": "Spotify"
+    },
+    "zen": {
+      "state": "ignored",
+      "app-name": "Zen Browser"
+    },
+    "zen-app": {
+      "state": "ignored",
+      "app-name": "zen"
+    },
+    "chrome": {
+      "state": "ignored",
+      "app-name": "Google Chrome"
+    },
+    "firefox": {
+      "state": "ignored",
+      "app-name": "Firefox"
+    }
+  },
   "positionX": "right",
   "positionY": "top",
   "control-center-width": 380,
