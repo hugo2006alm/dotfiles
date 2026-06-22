@@ -253,7 +253,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
 
         # Assert
         self.assertEqual(len(executor.commands), 1)
-        self.assertIn("pkill waybar", executor.commands[0])
+        self.assertIn("pkill -USR2 waybar", executor.commands[0])
 
     def test_swaync_reloadable(self):
         # Arrange

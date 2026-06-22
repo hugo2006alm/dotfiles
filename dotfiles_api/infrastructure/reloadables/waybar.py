@@ -6,4 +6,4 @@ class WaybarReloadable(Reloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["sh", "-c", "pkill waybar; hyprctl dispatch 'hl.dsp.exec_cmd(\"waybar\")'"])
+        self._exec.execute(["pkill", "-USR2", "waybar"])

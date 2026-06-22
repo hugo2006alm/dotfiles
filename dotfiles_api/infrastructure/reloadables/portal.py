@@ -7,4 +7,4 @@ class XDGPortalReloadable(Reloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["bash", "-c", "killall -9 xdg-desktop-portal-hyprland xdg-desktop-portal 2>/dev/null; /usr/lib/xdg-desktop-portal-hyprland & sleep 2; /usr/lib/xdg-desktop-portal &"])
+        self._exec.execute(["bash", "-c", "killall -9 xdg-desktop-portal-hyprland xdg-desktop-portal 2>/dev/null; /usr/lib/xdg-desktop-portal-hyprland >/dev/null 2>&1 & sleep 2; /usr/lib/xdg-desktop-portal >/dev/null 2>&1 &"])
