@@ -358,6 +358,29 @@ def main() -> None:
     action_svc.register("media-next", CommandAction(exec_ctx, [["playerctl", "next"]]))
     action_svc.register("media-prev", CommandAction(exec_ctx, [["playerctl", "previous"]]))
 
+    if args.command in ["toggle", "configure", "apply-all", "install"]:
+        import fcntl
+        lock_file_path = "/tmp/dotfiles.lock"
+        try:
+            global _lock_file
+            _lock_file = open(lock_file_path, "w")
+            fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            import atexit
+            def cleanup_lock():
+                try:
+                    global _lock_file
+                    _lock_file.close()
+                    import os
+                    if os.path.exists(lock_file_path):
+                        os.remove(lock_file_path)
+                except Exception:
+                    pass
+            atexit.register(cleanup_lock)
+        except BlockingIOError:
+            print("Another dotfiles configuration process is already running. Exiting.")
+            import sys
+            sys.exit(0)
+
     if args.command == "install":
         facade.apply_profile(desktop_profile)
     elif args.command == "link":
