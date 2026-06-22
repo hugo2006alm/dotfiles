@@ -6,6 +6,7 @@ local colors = dofile(os.getenv("HOME") .. "/.config/hypr/colors.lua")
 local style = dofile(os.getenv("HOME") .. "/.config/hypr/style.lua")
 
 -- Environment variables
+hl.env("PATH", os.getenv("PATH") .. ":" .. os.getenv("HOME") .. "/.local/bin")
 hl.env("XCURSOR_THEME", style.cursor_theme)
 hl.env("XCURSOR_SIZE", tostring(style.cursor_size))
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
