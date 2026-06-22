@@ -24,9 +24,14 @@ from dotfiles_api.infrastructure.capabilities.hyprland import HyprlandCompositor
 class MockCommandExecutor:
     def __init__(self):
         self.commands = []
+        self.mock_results = {}
 
     def execute(self, args: list[str], cwd: Path | None = None) -> CommandResult:
-        self.commands.append(" ".join(args))
+        cmd_str = " ".join(args)
+        self.commands.append(cmd_str)
+        for k, v in self.mock_results.items():
+            if k in cmd_str:
+                return CommandResult(stdout=v[0], stderr=v[1], returncode=v[2])
         return CommandResult(stdout="", stderr="", returncode=0)
 
 class MockThemeStore:
@@ -76,27 +81,27 @@ class TestThemeLoader(unittest.TestCase):
             dotfiles_dir=Path(self.temp_dir) / "dotfiles",
             user="user"
         )
-        # Create a mock colors.toml
+        # Create a mock flat colors.toml under the theme folder
         themes_dir = self.env.home_dir / ".config" / "themes" / "shade-raid"
         themes_dir.mkdir(parents=True, exist_ok=True)
-        toml_content = """
-[colors]
+        colors_content = """
 background = "#F4EFE4"
 foreground = "#0D0D0D"
 accent = "#D94F2B"
 inactive = "#C8C2B4"
-
-[metrics]
-border_size = 2
-gaps_inner = 10
-gaps_outer = 15
-corner_radius = 8
-
-[typography]
-sans = "Outfit"
-font_size = 11
 """
-        (themes_dir / "colors.toml").write_text(toml_content)
+        (themes_dir / "colors.toml").write_text(colors_content)
+
+        # Create a mock flat style.toml under the parent themes folder
+        style_dir = self.env.home_dir / ".config" / "themes"
+        style_dir.mkdir(parents=True, exist_ok=True)
+        style_content = """
+font_mono = "Monaspace Radon"
+font_display = "Bebas Neue"
+border_size = "3"
+gaps_inner = "4"
+"""
+        (style_dir / "style.toml").write_text(style_content)
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
@@ -111,10 +116,11 @@ font_size = 11
         # Assert
         self.assertEqual(tokens.colors.colors["background"], "#F4EFE4")
         self.assertEqual(tokens.colors.colors["accent"], "#D94F2B")
-        self.assertEqual(tokens.metrics.metrics["border_size"], 2)
-        self.assertEqual(tokens.metrics.metrics["gaps_inner"], 10)
-        self.assertEqual(tokens.typography.typography["sans"], "Outfit")
-        self.assertEqual(tokens.typography.typography["font_size"], 11)
+        self.assertEqual(tokens.metrics.metrics["border_size"], "3")
+        self.assertEqual(tokens.metrics.metrics["gaps_inner"], "4")
+        self.assertEqual(tokens.typography.typography["font_mono"], "Monaspace Radon")
+        self.assertEqual(tokens.typography.typography["font_display"], "Bebas Neue")
+
 
 class TestInstallService(unittest.TestCase):
     def test_profile_package_routing(self):
@@ -274,3 +280,57 @@ class TestInfrastructureImplementations(unittest.TestCase):
         # Assert
         self.assertEqual(len(executor.commands), 1)
         self.assertEqual(executor.commands[0], "walker")
+
+    def test_gsettings_reloadable_dark(self):
+        executor = MockCommandExecutor()
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        store = MockThemeStore()
+        store.set_active_theme("shade-raid-dark")
+        from dotfiles_api.infrastructure.reloadables.gsettings import GsettingsReloadable
+        r = GsettingsReloadable(exec_ctx=exec_ctx, theme_store=store)
+        r.reload()
+        self.assertTrue(any("prefer-dark" in cmd for cmd in executor.commands))
+
+    def test_ghostty_reloadable(self):
+        executor = MockCommandExecutor()
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.ghostty import GhosttyReloadable
+        r = GhosttyReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        self.assertIn("pkill -USR2 ghostty", executor.commands[0])
+
+    def test_walker_reloadable(self):
+        executor = MockCommandExecutor()
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.walker import WalkerReloadable
+        r = WalkerReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        self.assertTrue(any("walker --gapplication-service" in cmd for cmd in executor.commands))
+
+    def test_wlogout_reloadable_not_running(self):
+        executor = MockCommandExecutor()
+        executor.mock_results = {"pgrep -x wlogout": ("", "no process", 1)}
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
+        r = WlogoutReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        self.assertFalse(any("wlogout" in cmd for cmd in executor.commands if "pgrep" not in cmd))
+
+    def test_btop_reloadable_running(self):
+        executor = MockCommandExecutor()
+        executor.mock_results = {"pgrep -x btop": ("12345\n", "", 0)}
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.btop import BtopReloadable
+        r = BtopReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        self.assertTrue(any("pkill -x btop" in cmd for cmd in executor.commands))
+
+    def test_hyprland_reloadable(self):
+        executor = MockCommandExecutor()
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
+        r = HyprlandReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        self.assertTrue(any("gen-drawers.sh" in cmd for cmd in executor.commands))
+        self.assertTrue(any("hyprctl reload" in cmd for cmd in executor.commands))
+

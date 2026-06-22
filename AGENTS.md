@@ -14,11 +14,19 @@ Single source of truth is `~/.config/themes/shade-raid/colors.toml`.
 - `accent_fg`: `#F4EFE4`
 - `inactive`: `#C8C2B4`
 
-## Generator Pattern
-Themes for individual apps are generated using `~/.config/themes/generate.sh`. 
-- **Rule:** Do NOT create separate generator files for new apps; append them to the existing `generate.sh`.
-- Use the provided bash functions `get <key>` and `hex <key>` to retrieve colors.
-- Generated output files should be added to `.gitignore`, whereas the generator templates themselves are tracked.
+## Python Modular Dotfiles API & Generator Pattern
+All theme generation, linking, package installation, and reloading is managed by the Python modular API located in `dotfiles_api/`.
+
+### Key Constraints:
+1. **Single Class Per File:** Every generator class, reloadable, service, or model must reside in its own separate Python file with a name corresponding to the class/system it manages. Do not bundle multiple classes together.
+2. **Strict Test-Driven Development (TDD):** Always follow TDD. Write failing tests in `dotfiles_api/tests/` first (e.g. testing rendering outputs, command execution strings, or CLI arguments), and then implement code to make them pass.
+3. **Running Tests:** Run the test suite using:
+   ```bash
+   python -m unittest discover -s dotfiles_api/tests
+   ```
+4. **Generator Registry:** Concrete app-specific generators inherit from `BaseGenerator` and reside under `dotfiles_api/infrastructure/generators/`. They must implement `render()` and return `list[GeneratedArtifact]`.
+5. **Reloadable Registry:** Concrete app-specific reloaders inherit from `Reloadable` and reside under `dotfiles_api/infrastructure/reloadables/`. They must implement `reload()`.
+6. **Integration Point:** All new generators and reloadables must be instantiated and registered inside `dotfiles_api/presentation/cli.py` and have their paths mapped in `artifact_paths` inside `main()`.
 
 ## Tech Stack
 - **WM:** Hyprland (0.55+ using Lua wrapper configuration)

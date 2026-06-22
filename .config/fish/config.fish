@@ -29,7 +29,7 @@ function dotfiles_push
     git push
     cd $old_pwd
 end
-alias theme='~/.config/themes/apply.sh'
+alias theme='python -m dotfiles_api.presentation.cli configure --theme'
 alias ll='eza -la --icons --git'
 alias la='eza -a --icons'
 alias ls='eza --icons'
@@ -39,7 +39,7 @@ alias reload-waybar='pkill waybar; hyprctl dispatch exec waybar'
 alias reload-swaync='pkill swaync; hyprctl dispatch exec swaync'
 alias reload-walker='pkill walker; hyprctl dispatch exec "walker --gapplication-service"'
 alias reload-hyprsunset='pkill hyprsunset; hyprctl dispatch exec hyprsunset'
-alias reload-theme='~/.config/themes/apply.sh shade-raid'
+alias reload-theme='python -m dotfiles_api.presentation.cli configure --theme shade-raid'
 alias reload-hyprland='hyprctl reload'
 
 # ── Zoxide init ───────────────────────────────────────

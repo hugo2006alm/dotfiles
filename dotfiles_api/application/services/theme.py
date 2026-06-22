@@ -11,4 +11,4 @@ class ThemeService:
     def apply_theme(self, theme_name: str) -> None:
         tokens = self._loader.load(theme_name)
         self._store.set_active_theme(theme_name)
-        self._event_bus.publish(ThemeChangedEvent(tokens=tokens))
+        self._event_bus.publish(ThemeChangedEvent(theme_name=theme_name, tokens=tokens))

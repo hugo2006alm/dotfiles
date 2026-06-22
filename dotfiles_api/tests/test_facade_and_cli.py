@@ -65,3 +65,48 @@ class TestDotfilesFacade(unittest.TestCase):
         # Act & Assert reload
         facade.reload()
         self.assertTrue(reload_svc.reloaded)
+
+from unittest.mock import patch, MagicMock
+
+class TestCliToggle(unittest.TestCase):
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('dotfiles_api.presentation.cli.DotfilesFacade')
+    @patch('dotfiles_api.presentation.cli.FileThemeStore')
+    def test_cli_toggle_to_dark(self, mock_theme_store_class, mock_facade_class, mock_parse_args):
+        # Arrange
+        mock_theme_store = mock_theme_store_class.return_value
+        mock_theme_store.get_active_theme.return_value = "shade-raid"
+        
+        mock_facade = mock_facade_class.return_value
+        
+        import argparse
+        mock_parse_args.return_value = argparse.Namespace(command="toggle", dry_run=False, theme="shade-raid")
+        
+        # Act
+        from dotfiles_api.presentation.cli import main
+        main()
+        
+        # Assert
+        mock_facade.apply_theme.assert_called_once_with("shade-raid-dark")
+        mock_facade.reload.assert_called_once()
+
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('dotfiles_api.presentation.cli.DotfilesFacade')
+    @patch('dotfiles_api.presentation.cli.FileThemeStore')
+    def test_cli_toggle_to_light(self, mock_theme_store_class, mock_facade_class, mock_parse_args):
+        # Arrange
+        mock_theme_store = mock_theme_store_class.return_value
+        mock_theme_store.get_active_theme.return_value = "shade-raid-dark"
+        
+        mock_facade = mock_facade_class.return_value
+        
+        import argparse
+        mock_parse_args.return_value = argparse.Namespace(command="toggle", dry_run=False, theme="shade-raid")
+        
+        # Act
+        from dotfiles_api.presentation.cli import main
+        main()
+        
+        # Assert
+        mock_facade.apply_theme.assert_called_once_with("shade-raid")
+        mock_facade.reload.assert_called_once()

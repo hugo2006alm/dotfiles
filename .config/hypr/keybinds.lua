@@ -122,7 +122,7 @@ bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Theme toggle
-bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("$HOME/.config/themes/toggle.sh"))
+bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("python -m dotfiles_api.presentation.cli toggle"))
 
 -- Wallpaper changer
 bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/wallpaper_changer.sh"))

@@ -40,7 +40,7 @@ Foreground2  #3A3A3A   ink faint
 Accent       #D94F2B   red-orange
 ```
 
-All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for Hyprland, Waybar, SwayNC, Hyprlock, Ghostty and others are generated from this single source of truth via `generate.sh`.
+All colors live in `~/.config/themes/shade-raid/colors.toml`. Config files for Hyprland, Waybar, SwayNC, Hyprlock, Ghostty and others are generated from this single source of truth via the Python Modular Dotfiles API.
 
 ---
 
@@ -55,15 +55,12 @@ bash .config/install/install.sh
 ```
 
 The script will:
-
 1. Install `yay` (AUR helper)
 2. Enable multilib and install all pacman + AUR packages
 3. Configure GNU Stow to symlink all configuration directories
 4. Enable system services (NetworkManager, bluetooth, pipewire, ufw, greetd)
 5. Set fish as default shell, configure git, refresh mirrors and fonts
-6. Generate and apply the Shade Raid theme
-
-After installation, reboot your system. The `greetd` login manager will start automatically on TTY1, allowing you to log in to Hyprland.
+6. Generate and apply the Shade Raid theme using the Python API
 
 ---
 
@@ -78,108 +75,127 @@ To make changes, edit the files inside `~/dotfiles/` and run the custom Fish hel
 dotfiles_push "commit message"
 ```
 
-
 ---
 
-## STRUCTURE
+## PYTHON CLI MANAGER (`dotfiles_api`)
 
-```
-~/.config/
-├── themes/
-│   ├── generate.sh              # generates all color configs from colors.toml
-│   ├── apply.sh                 # generate + reload everything
-│   ├── generators/              # app-specific generators (Ghostty, Walker, waybar, etc.)
-│   └── shade-raid/
-│       └── colors.toml          # single source of truth for all colors
-├── hypr/
-│   ├── hyprland.lua             # main config (loads submodules)
-│   ├── colors.conf              # generated color variables (used by style.conf)
-│   ├── style.conf               # generated style metrics (margins, radius)
-│   ├── keybinds.lua             # keybindings
-│   ├── windowrules.lua          # window rules
-│   ├── autostart.lua            # autostart processes
-│   ├── monitor.lua              # monitors config
-│   ├── input.lua                # keyboard/mouse input settings
-│   └── look_and_feel.lua        # core theme variables, animations, decoration rules
-├── waybar/
-│   ├── config.jsonc             # module layout
-│   └── style.scss               # styles (compiled to style.css on apply)
-├── swaync/
-├── ghostty/
-├── starship.toml
-└── install/
-    ├── install.sh               # orchestrator
-    ├── packages.sh              # pacman + AUR
-    ├── dotfiles.sh              # SSH, clone, checkout
-    ├── services.sh              # systemctl + autologin
-    ├── user.sh                  # shell, git, fonts, mirrors
-    ├── theme.sh                 # generate theme
-    └── extras.sh                # spicetify, optional stuff
-```
+Theme generation, application linking, package installation, and live reloading are fully orchestrated by a clean-architecture Python CLI.
 
-
----
-
-## KEY BINDINGS
-
-| Bind | Action |
-|---|---|
-| `Super + Enter` | Terminal |
-| `Super + Space` | Launcher |
-| `Super + E` | File manager |
-| `Super + L` | Lock screen |
-| `Super + Q` / `Alt + F4` | Close window |
-| `Super + F` | Fullscreen |
-| `Super + V` | Toggle float |
-| `Super + 1-0` | Switch workspace |
-| `Super + Shift + 1-0` | Move window to workspace |
-| `Super + Arrows` | Move focus |
-| `Super + Shift + Arrows` | Move window |
-| `Super + Ctrl + Arrows` | Resize window |
-| `Print` | Screenshot (full) |
-| `Shift + Print` | Screenshot (region) |
-| `Ctrl + Print` | Screenshot to clipboard |
-
----
-
-## WORKSPACE LAYOUT
-
-| WS | App |
-|---|---|
-| 1 | Zen (browser) |
-| 2 | Ghostty (terminal) |
-| 3 | Vesktop (Discord) |
-| 4 | Neovim |
-| 9 | Spotify |
-| 10 | Steam / Heroic |
-
----
-
-## AFTER INSTALL — VERIFY CLASS NAMES
-
-Once in Hyprland, run:
-
+### Usage
 ```bash
-hyprctl clients
+python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 ```
 
-Check that window classes match what's in `windowrules.conf`. Key ones to verify: `zen-browser`, `com.mitchellh.ghostty`, `vesktop`.
+### Options
+- `--dry-run`: Runs the transaction simulation, printing what files would be written and what reload commands would execute, without making any changes to your filesystem or running processes.
+- `--theme`: The theme name to apply (default: `shade-raid`).
+
+### Commands
+- `install`: Installs the system packages defined in the active profile.
+- `link`: Runs the stow linking step.
+- `configure`: Generates all configuration files for registered applications from the theme tokens.
+- `reload`: Reloads all active desktop applications (Waybar, SwayNC, Hyprland, Ghostty, Walker, etc.).
+- `apply-all`: Performs install, link, configure, and reload commands sequentially.
+- `toggle`: Switches the theme dynamically between light and dark variants (e.g. `shade-raid` <-> `shade-raid-dark`).
 
 ---
 
-## REGENERATING COLORS
+## SYSTEM CONFIGURATION MAPPINGS
 
-If you update `colors.toml`:
+| Target Config | Generator | Output Path |
+|---|---|---|
+| Hyprland Colors | `HyprlandGenerator` | `~/.config/hypr/colors.lua` & `colors.conf` |
+| Hyprland Style | `HyprlandGenerator` | `~/.config/hypr/style.lua` & `style.conf` |
+| Waybar Colors | `WaybarGenerator` | `~/.config/waybar/colors.scss` |
+| Ghostty Colors | `GhosttyGenerator` | `~/.config/ghostty/colors.conf` |
+| SwayNC Style | `SwayncGenerator` | `~/.config/swaync/style.css` |
+| SwayOSD Colors | `SwayosdGenerator` | `~/.config/swayosd/_colors.scss` |
+| Btop Configuration | `BtopGenerator` | `~/.config/btop/btop.conf` & `shade-raid.theme` |
+| Walker Config | `WalkerGenerator` | `~/.config/walker/config.toml` & `_colors.scss` |
+| wlogout Colors | `WlogoutGenerator` | `~/.config/wlogout/_colors.scss` |
+| Vesktop Theme | `VesktopGenerator` | `~/.config/vesktop/themes/{theme_name}.theme.css` |
+| Hyprlock Config | `HyprlockGenerator` | `~/.config/hypr/hyprlock.conf` |
+| ReGreet Style | `ReGreetGenerator` | `~/.config/greetd/regreet.css` |
+| greetd Config | `GreetdGenerator` | `/etc/greetd/regreet.toml` |
+| GTK Settings | `GtkGenerator` | `~/.config/gtk-3.0/settings.ini` & `gtk-4.0/settings.ini` |
+| GTK Stylesheet | `GtkGenerator` | `~/.config/gtk-3.0/gtk.css` & `gtk-4.0/gtk.css` |
+| Plymouth Script | `PlymouthGenerator` | `~/dotfiles/plymouth-shade-raid/shade-raid.script` |
 
-```bash
-~/.config/themes/apply.sh shade-raid
-```
+---
 
-This regenerates all color configs and reloads Hyprland, Waybar and SwayNC automatically.
-```
+## DEVELOPER TUTORIAL
 
-Then commit:
-```bash
-dots add README.md
-dots commit -m "docs: update README for new theme system and install structure"
-dots push
+The project is structured following Domain-Driven Design (DDD) principles:
+- `dotfiles_api/domain/`: Core model structures, design token definitions, and events.
+- `dotfiles_api/context/`: Execution context (handling dry-runs) and environmental context.
+- `dotfiles_api/application/`: High-level services (Install, Theme, Reload), storage interfaces, and config transactions.
+- `dotfiles_api/infrastructure/`: Concrete package sources, symlinkers, file stores, generators, and reloadables.
+- `dotfiles_api/presentation/`: Entry points including the CLI execution logic.
+
+### 1. Project Constraints
+- **Single Class Per File:** Each generator, reloadable, or utility must live in its own dedicated Python file named after the class/system it manages.
+- **Strict TDD:** Implement failing unit tests first, and only write code once you have a failing test. Run the test suite:
+  ```bash
+  python -m unittest discover -s dotfiles_api/tests
+  ```
+
+### 2. Adding a New Theme
+1. Create a folder named after your theme: `~/.config/themes/<theme_name>/`.
+2. Add a flat `colors.toml` file containing your palette:
+   ```toml
+   background = "#F4EFE4"
+   foreground = "#0D0D0D"
+   accent = "#D94F2B"
+   ...
+   ```
+3. The global styling configuration is managed in `~/.config/themes/style.toml`.
+
+### 3. Creating a New Configuration Generator
+1. Create a new file under `dotfiles_api/infrastructure/generators/<app_name>.py`.
+2. Declare a class extending `BaseGenerator` implementing `render()`:
+   ```python
+   from dotfiles_api.domain.tokens import DesignTokens
+   from dotfiles_api.domain.artifacts import GeneratedArtifact
+   from dotfiles_api.infrastructure.generators.base import BaseGenerator
+
+   class AppGenerator(BaseGenerator):
+       def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
+           content = f"background = {tokens.colors.colors['background']}"
+           return [GeneratedArtifact(artifact_id="app-config", content=content)]
+   ```
+3. Define the physical path in `artifact_paths` inside `dotfiles_api/presentation/cli.py`.
+4. Instantiate the generator and subscribe it to `ThemeChangedEvent` in `cli.py`.
+
+### 4. Creating a New Reloadable
+1. Create a new file under `dotfiles_api/infrastructure/reloadables/<app_name>.py`.
+2. Declare a class extending `Reloadable` implementing `reload()`:
+   ```python
+   from dotfiles_api.domain.contracts.reloadable import Reloadable
+   from dotfiles_api.context.execution import ExecutionContext
+
+   class AppReloadable(Reloadable):
+       def __init__(self, exec_ctx: ExecutionContext) -> None:
+           self._exec = exec_ctx
+
+       def reload(self) -> None:
+           self._exec.execute(["pkill", "-x", "app"])
+   ```
+3. Instantiate and register it in `cli.py` inside the `reloadables` list.
+
+---
+
+## ISSUES & CONTRIBUTIONS
+
+We welcome bug reports and feature requests!
+1. Check the existing issues before opening a new one.
+2. Use the provided templates:
+   - **Bug Report:** Use the [Bug report template](.github/ISSUE_TEMPLATE/bug_report.md) to detail reproducing steps and environment information.
+   - **Feature Request:** Use the [Feature request template](.github/ISSUE_TEMPLATE/feature_request.md) to describe new application configuration generators or reloadables.
+
+---
+
+## LICENSE
+
+This repository is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
+
+Copyright (c) 2026 Hugo Almeida.

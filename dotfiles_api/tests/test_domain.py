@@ -50,7 +50,7 @@ class TestEventBus(unittest.TestCase):
         typography = TypographyTokens(typography={})
         tokens = DesignTokens(colors=colors, metrics=metrics, typography=typography)
         
-        theme_event = ThemeChangedEvent(tokens=tokens)
+        theme_event = ThemeChangedEvent(theme_name="shade-raid", tokens=tokens)
         config_event = ConfigGeneratedEvent(generator_name="waybar")
 
         # Act

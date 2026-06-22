@@ -2,6 +2,5 @@
 set -e
 
 echo "==> Generating and applying theme..."
-bash ~/.config/themes/generate.sh shade-raid
-echo "shade-raid" > ~/.config/themes/current
+python -m dotfiles_api.presentation.cli configure --theme shade-raid
 echo "==> Theme generated. Will apply on first Hyprland launch."

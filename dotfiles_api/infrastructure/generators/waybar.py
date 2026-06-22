@@ -8,7 +8,7 @@ class WaybarGenerator(BaseGenerator):
     def __init__(self, name: str = "waybar", transaction: ConfigTransaction = None, event_bus: EventBus = None) -> None:
         super().__init__(name, transaction, event_bus)
 
-    def render(self, tokens: DesignTokens) -> list[GeneratedArtifact]:
+    def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
         scss_lines = []
         for k, v in sorted(tokens.colors.colors.items()):
             scss_lines.append(f"${k}: {v};")
