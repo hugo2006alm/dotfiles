@@ -35,10 +35,10 @@ alias la='eza -a --icons'
 alias ls='eza --icons'
 alias cat='bat'
 alias g='git'
-alias reload-waybar='pkill waybar; hyprctl dispatch exec waybar'
-alias reload-swaync='pkill swaync; hyprctl dispatch exec swaync'
-alias reload-walker='pkill walker; hyprctl dispatch exec "walker --gapplication-service"'
-alias reload-hyprsunset='pkill hyprsunset; hyprctl dispatch exec hyprsunset'
+alias reload-waybar="pkill waybar; hyprctl dispatch 'hl.dsp.exec_cmd(\"waybar\")'"
+alias reload-swaync="pkill swaync; hyprctl dispatch 'hl.dsp.exec_cmd(\"swaync\")'"
+alias reload-walker="pkill walker; hyprctl dispatch 'hl.dsp.exec_cmd(\"walker --gapplication-service\")'"
+alias reload-hyprsunset="pkill hyprsunset; hyprctl dispatch 'hl.dsp.exec_cmd(\"hyprsunset\")'"
 alias reload-theme='python -m dotfiles_api.presentation.cli configure --theme shade-raid'
 alias reload-hyprland='hyprctl reload'
 

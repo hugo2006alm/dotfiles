@@ -9,4 +9,4 @@ class WlogoutReloadable(Reloadable):
         res = self._exec.execute(["pgrep", "-x", "wlogout"])
         if res.returncode == 0:
             self._exec.execute(["pkill", "-x", "wlogout"])
-            self._exec.execute(["hyprctl", "dispatch", "exec", "wlogout"])
+            self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('wlogout')"])

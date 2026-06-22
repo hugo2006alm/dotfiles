@@ -7,4 +7,4 @@ class WalkerReloadable(Reloadable):
 
     def reload(self) -> None:
         self._exec.execute(["pkill", "walker"])
-        self._exec.execute(["hyprctl", "dispatch", "exec", "walker --gapplication-service"])
+        self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('walker --gapplication-service')"])
