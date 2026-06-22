@@ -1,2 +1,0 @@
-[console_scripts]
-dotfiles = dotfiles_api.presentation.cli:main

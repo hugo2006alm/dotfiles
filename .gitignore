@@ -27,5 +27,6 @@
 # Python caches
 __pycache__/
 *.pyc
+*.egg-info
 
 
