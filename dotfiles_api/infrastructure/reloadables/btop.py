@@ -1,8 +1,8 @@
 import time
-from dotfiles_api.domain.contracts.reloadable import Reloadable
+from dotfiles_api.domain.contracts.reloadable import EventReloadable
 from dotfiles_api.context.execution import ExecutionContext
 
-class BtopReloadable(Reloadable):
+class BtopReloadable(EventReloadable):
     def __init__(self, exec_ctx: ExecutionContext) -> None:
         self._exec = exec_ctx
 
@@ -12,3 +12,6 @@ class BtopReloadable(Reloadable):
             self._exec.execute(["pkill", "-x", "btop"])
             time.sleep(0.3)
             self._exec.execute(["hyprctl", "dispatch", 'hl.dsp.workspace.toggle_special("btop")'])
+
+    def supports(self, generator_name: str) -> bool:
+        return generator_name == "btop"

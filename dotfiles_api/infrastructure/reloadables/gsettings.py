@@ -1,8 +1,8 @@
-from dotfiles_api.domain.contracts.reloadable import Reloadable
+from dotfiles_api.domain.contracts.reloadable import EventReloadable
 from dotfiles_api.domain.contracts.theme_store import ThemeStore
 from dotfiles_api.context.execution import ExecutionContext
 
-class GsettingsReloadable(Reloadable):
+class GsettingsReloadable(EventReloadable):
     def __init__(self, exec_ctx: ExecutionContext, theme_store: ThemeStore) -> None:
         self._exec = exec_ctx
         self._theme_store = theme_store
@@ -21,3 +21,6 @@ class GsettingsReloadable(Reloadable):
         self._exec.execute(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", scheme])
         self._exec.execute(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", gtk_theme])
         self._exec.execute(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", icon_theme])
+
+    def supports(self, generator_name: str) -> bool:
+        return generator_name == "gtk"

@@ -16,6 +16,7 @@ from dotfiles_api.application.services.reload import ReloadService
 from dotfiles_api.infrastructure.package_sources import PacmanSource, YaySource
 from dotfiles_api.infrastructure.linker import StowLinker
 from dotfiles_api.infrastructure.reloadables import WaybarReloadable, SwayNCReloadable, XDGPortalReloadable
+from dotfiles_api.domain.contracts.reloadable import EventReloadable
 from dotfiles_api.infrastructure.capabilities.walker import WalkerLauncher
 from dotfiles_api.infrastructure.capabilities.waybar import WaybarStatusBar
 from dotfiles_api.infrastructure.capabilities.swaync import SwayNCNotificationCenter
@@ -61,6 +62,14 @@ class MockReloadable:
 
     def reload(self) -> None:
         self.reloaded = True
+
+class MockEventReloadable(MockReloadable, EventReloadable):
+    def __init__(self, supported_generator: str):
+        super().__init__()
+        self._supported = supported_generator
+
+    def supports(self, generator_name: str) -> bool:
+        return generator_name == self._supported
 
 class TestPackageRegistry(unittest.TestCase):
     def test_resolve_source(self):
@@ -191,7 +200,7 @@ class TestReloadService(unittest.TestCase):
 
     def test_reload_on_event(self):
         # Arrange
-        r = MockReloadable()
+        r = MockEventReloadable("waybar")
         bus = EventBus()
         reload_svc = ReloadService(reloadables=[r])
         bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
@@ -201,6 +210,23 @@ class TestReloadService(unittest.TestCase):
 
         # Assert
         self.assertTrue(r.reloaded)
+
+    def test_reload_on_event_with_mapping(self):
+        # Arrange
+        r_waybar = MockEventReloadable("waybar")
+        r_swaync = MockEventReloadable("swaync")
+        r_portal = MockReloadable() # not an EventReloadable
+        bus = EventBus()
+        reload_svc = ReloadService(reloadables=[r_waybar, r_swaync, r_portal])
+        bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
+
+        # Act
+        bus.publish(ConfigGeneratedEvent(generator_name="waybar"))
+
+        # Assert
+        self.assertTrue(r_waybar.reloaded)
+        self.assertFalse(r_swaync.reloaded)
+        self.assertFalse(r_portal.reloaded)
 
 class TestInfrastructureImplementations(unittest.TestCase):
     def test_pacman_source(self):
@@ -252,8 +278,9 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertEqual(len(executor.commands), 1)
-        self.assertIn("pkill -USR2 waybar", executor.commands[0])
+        self.assertEqual(len(executor.commands), 2)
+        self.assertIn("sassc", executor.commands[0])
+        self.assertIn("pkill -USR2 waybar", executor.commands[1])
 
     def test_swaync_reloadable(self):
         # Arrange

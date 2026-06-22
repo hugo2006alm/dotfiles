@@ -1,7 +1,7 @@
-from dotfiles_api.domain.contracts.reloadable import Reloadable
+from dotfiles_api.domain.contracts.reloadable import EventReloadable
 from dotfiles_api.context.execution import ExecutionContext
 
-class WlogoutReloadable(Reloadable):
+class WlogoutReloadable(EventReloadable):
     def __init__(self, exec_ctx: ExecutionContext) -> None:
         self._exec = exec_ctx
 
@@ -10,3 +10,6 @@ class WlogoutReloadable(Reloadable):
         if res.returncode == 0:
             self._exec.execute(["pkill", "-x", "wlogout"])
             self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('wlogout')"])
+
+    def supports(self, generator_name: str) -> bool:
+        return generator_name == "wlogout"

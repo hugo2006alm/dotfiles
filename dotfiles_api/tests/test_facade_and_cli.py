@@ -88,7 +88,7 @@ class TestCliToggle(unittest.TestCase):
         
         # Assert
         mock_facade.apply_theme.assert_called_once_with("shade-raid-dark")
-        mock_facade.reload.assert_called_once()
+        mock_facade.reload.assert_not_called()
 
     @patch('argparse.ArgumentParser.parse_args')
     @patch('dotfiles_api.presentation.cli.DotfilesFacade')
@@ -109,7 +109,7 @@ class TestCliToggle(unittest.TestCase):
         
         # Assert
         mock_facade.apply_theme.assert_called_once_with("shade-raid")
-        mock_facade.reload.assert_called_once()
+        mock_facade.reload.assert_not_called()
 
 class TestCliCommands(unittest.TestCase):
     @patch('argparse.ArgumentParser.parse_args')

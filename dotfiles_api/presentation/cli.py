@@ -402,7 +402,6 @@ def main() -> None:
             next_theme = active + "-dark"
         print(f"Toggling theme from {active} to {next_theme}")
         facade.apply_theme(next_theme)
-        facade.reload()
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
     elif args.command == "action":
