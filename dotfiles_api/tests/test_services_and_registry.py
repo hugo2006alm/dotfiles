@@ -192,7 +192,9 @@ class TestReloadService(unittest.TestCase):
         reload_svc = ReloadService(reloadables=[r1, r2])
 
         # Act
-        reload_svc.reload_all()
+        threads = reload_svc.reload_all()
+        for t in threads:
+            t.join()
 
         # Assert
         self.assertTrue(r1.reloaded)
@@ -201,12 +203,12 @@ class TestReloadService(unittest.TestCase):
     def test_reload_on_event(self):
         # Arrange
         r = MockEventReloadable("waybar")
-        bus = EventBus()
         reload_svc = ReloadService(reloadables=[r])
-        bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
         # Act
-        bus.publish(ConfigGeneratedEvent(generator_name="waybar"))
+        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
+        for t in threads:
+            t.join()
 
         # Assert
         self.assertTrue(r.reloaded)
@@ -216,17 +218,35 @@ class TestReloadService(unittest.TestCase):
         r_waybar = MockEventReloadable("waybar")
         r_swaync = MockEventReloadable("swaync")
         r_portal = MockReloadable() # not an EventReloadable
-        bus = EventBus()
         reload_svc = ReloadService(reloadables=[r_waybar, r_swaync, r_portal])
-        bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
         # Act
-        bus.publish(ConfigGeneratedEvent(generator_name="waybar"))
+        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
+        for t in threads:
+            t.join()
 
         # Assert
         self.assertTrue(r_waybar.reloaded)
         self.assertFalse(r_swaync.reloaded)
         self.assertFalse(r_portal.reloaded)
+
+    @unittest.mock.patch("builtins.print")
+    def test_reload_service_verbose(self, mock_print):
+        r = MockEventReloadable("waybar")
+        reload_svc = ReloadService(reloadables=[r], verbose=True)
+        
+        threads = reload_svc.reload_all()
+        for t in threads:
+            t.join()
+            
+        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
+        for t in threads:
+            t.join()
+            
+        # Assert printing was called
+        mock_print.assert_any_call("[VERBOSE] Reloading all 1 reloadables in parallel threads")
+        mock_print.assert_any_call("[VERBOSE] Spawning reload thread for: MockEventReloadable")
+
 
 class TestInfrastructureImplementations(unittest.TestCase):
     def test_pacman_source(self):
@@ -341,7 +361,57 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
         r = WlogoutReloadable(exec_ctx=exec_ctx)
         r.reload()
-        self.assertFalse(any("wlogout" in cmd for cmd in executor.commands if "pgrep" not in cmd))
+        # sassc should run
+        self.assertTrue(any("sassc" in cmd for cmd in executor.commands))
+        # wlogout relaunch commands should NOT run
+        self.assertFalse(any("pkill" in cmd and "wlogout" in cmd for cmd in executor.commands))
+
+    def test_wlogout_reloadable_running(self):
+        executor = MockCommandExecutor()
+        executor.mock_results = {"pgrep -x wlogout": ("12345\n", "", 0)}
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
+        r = WlogoutReloadable(exec_ctx=exec_ctx)
+        r.reload()
+        # sassc should run
+        self.assertTrue(any("sassc" in cmd for cmd in executor.commands))
+        # wlogout relaunch commands should run
+        self.assertTrue(any("pkill" in cmd and "wlogout" in cmd for cmd in executor.commands))
+        self.assertTrue(any("hyprctl" in cmd and "wlogout" in cmd for cmd in executor.commands))
+
+    @unittest.mock.patch("pathlib.Path.home")
+    def test_vesktop_reloadable(self, mock_home):
+        temp_dir = tempfile.mkdtemp()
+        temp_home = Path(temp_dir)
+        mock_home.return_value = temp_home
+        
+        try:
+            settings_dir = temp_home / ".config" / "vesktop" / "settings"
+            settings_dir.mkdir(parents=True, exist_ok=True)
+            settings_file = settings_dir / "settings.json"
+            
+            import json
+            initial_data = {"enabledThemes": ["old.theme.css"], "transparent": False}
+            with open(settings_file, "w") as f:
+                json.dump(initial_data, f)
+                
+            executor = MockCommandExecutor()
+            exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+            store = MockThemeStore()
+            store.set_active_theme("shade-raid-dark")
+            
+            from dotfiles_api.infrastructure.reloadables.vesktop import VesktopReloadable
+            r = VesktopReloadable(exec_ctx=exec_ctx, theme_store=store)
+            
+            r.reload()
+            
+            with open(settings_file, "r") as f:
+                updated_data = json.load(f)
+            self.assertEqual(updated_data["enabledThemes"], ["shade-raid-dark.theme.css"])
+            self.assertFalse(updated_data["transparent"])
+            
+        finally:
+            shutil.rmtree(temp_dir)
 
     def test_btop_reloadable_running(self):
         executor = MockCommandExecutor()
@@ -360,4 +430,5 @@ class TestInfrastructureImplementations(unittest.TestCase):
         r.reload()
         self.assertTrue(any("gen-drawers.sh" in cmd for cmd in executor.commands))
         self.assertTrue(any("hyprctl reload" in cmd for cmd in executor.commands))
+
 

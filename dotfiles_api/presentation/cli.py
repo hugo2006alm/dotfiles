@@ -23,6 +23,8 @@ from dotfiles_api.infrastructure.reloadables.walker import WalkerReloadable
 from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
 from dotfiles_api.infrastructure.reloadables.btop import BtopReloadable
 from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
+from dotfiles_api.infrastructure.reloadables.vesktop import VesktopReloadable
+
 
 # Generators
 from dotfiles_api.infrastructure.generators.hypr import HyprlandGenerator
@@ -75,6 +77,7 @@ def main() -> None:
     parser.add_argument("action_name", nargs="?", help="Action name to run (required for action command)")
     parser.add_argument("action_args", nargs=argparse.REMAINDER, help="Arguments passed to the action")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     
     args = parser.parse_args()
 
@@ -88,7 +91,7 @@ def main() -> None:
     env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user)
     
     executor = SystemCommandExecutor()
-    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor)
+    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor, verbose=getattr(args, "verbose", False))
 
     package_mapping = {
         # AUR packages
@@ -205,6 +208,7 @@ def main() -> None:
         "waybar-colors": env.home_dir / ".config" / "waybar" / "colors.scss",
         "waybar-variables": env.home_dir / ".config" / "waybar" / "variables.scss",
         "ghostty-colors": env.home_dir / ".config" / "ghostty" / "colors.conf",
+        "swaync-config": env.home_dir / ".config" / "swaync" / "config.json",
         "swaync-style": env.home_dir / ".config" / "swaync" / "style.css",
         "swayosd-colors": env.home_dir / ".config" / "swayosd" / "_colors.scss",
         "btop-theme": env.home_dir / ".config" / "btop" / "themes" / "shade-raid.theme",
@@ -241,6 +245,7 @@ def main() -> None:
     wlogout_reload = WlogoutReloadable(exec_ctx=exec_ctx)
     btop_reload = BtopReloadable(exec_ctx=exec_ctx)
     hyprland_reload = HyprlandReloadable(exec_ctx=exec_ctx)
+    vesktop_reload = VesktopReloadable(exec_ctx=exec_ctx, theme_store=theme_store)
 
     reloadables = [
         waybar_reload,
@@ -251,7 +256,8 @@ def main() -> None:
         walker_reload,
         wlogout_reload,
         btop_reload,
-        hyprland_reload
+        hyprland_reload,
+        vesktop_reload
     ]
 
     install_svc = InstallService(
@@ -265,7 +271,7 @@ def main() -> None:
     event_bus = EventBus()
     theme_svc = ThemeService(loader=theme_loader, store=theme_store, event_bus=event_bus)
 
-    reload_svc = ReloadService(reloadables=reloadables)
+    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False))
     event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
@@ -365,6 +371,12 @@ def main() -> None:
             global _lock_file
             _lock_file = open(lock_file_path, "w")
             fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if args.command == "toggle":
+                try:
+                    with open("/tmp/dotfiles_toggle.clicks", "w") as f:
+                        f.write("1")
+                except Exception:
+                    pass
             import atexit
             def cleanup_lock():
                 try:
@@ -375,11 +387,36 @@ def main() -> None:
                         os.remove(lock_file_path)
                 except Exception:
                     pass
+                try:
+                    import os
+                    if os.path.exists("/tmp/dotfiles_toggle.clicks"):
+                        os.remove("/tmp/dotfiles_toggle.clicks")
+                except Exception:
+                    pass
             atexit.register(cleanup_lock)
         except BlockingIOError:
-            print("Another dotfiles configuration process is already running. Exiting.")
-            import sys
-            sys.exit(0)
+            if args.command == "toggle":
+                clicks_path = "/tmp/dotfiles_toggle.clicks"
+                clicks = 1
+                import os
+                if os.path.exists(clicks_path):
+                    try:
+                        with open(clicks_path, "r") as f:
+                            clicks = int(f.read().strip())
+                    except Exception:
+                        clicks = 1
+                clicks += 1
+                try:
+                    with open(clicks_path, "w") as f:
+                        f.write(str(clicks))
+                except Exception:
+                    pass
+                import sys
+                sys.exit(0)
+            else:
+                print("Another dotfiles configuration process is already running. Exiting.")
+                import sys
+                sys.exit(0)
 
     if args.command == "install":
         facade.apply_profile(desktop_profile)
@@ -395,13 +432,46 @@ def main() -> None:
         facade.apply_theme(args.theme)
         facade.reload()
     elif args.command == "toggle":
-        active = theme_store.get_active_theme()
-        if active.endswith("-dark"):
-            next_theme = active[:-5]
-        else:
-            next_theme = active + "-dark"
-        print(f"Toggling theme from {active} to {next_theme}")
-        facade.apply_theme(next_theme)
+        toggles_performed = 0
+        while True:
+            active = theme_store.get_active_theme()
+            if active.endswith("-dark"):
+                next_theme = active[:-5]
+            else:
+                next_theme = active + "-dark"
+            
+            # Check counterpart existence
+            next_theme_dir = env.home_dir / ".config" / "themes" / next_theme
+            if not next_theme_dir.is_dir():
+                print(f"Theme counterpart '{next_theme}' does not exist. Cannot toggle.")
+                import sys
+                sys.exit(1)
+                
+            print(f"Toggling theme from {active} to {next_theme}")
+            facade.apply_theme(next_theme)
+            toggles_performed += 1
+            
+            # Read click count
+            clicks_path = "/tmp/dotfiles_toggle.clicks"
+            total_clicks = 1
+            import os
+            if os.path.exists(clicks_path):
+                try:
+                    with open(clicks_path, "r") as f:
+                        total_clicks = int(f.read().strip())
+                except Exception:
+                    total_clicks = 1
+            
+            # Determine target toggles based on parity
+            if total_clicks == 1:
+                target_toggles = 1
+            elif total_clicks == 2:
+                target_toggles = 2
+            else:
+                target_toggles = 1 if total_clicks % 2 == 1 else 2
+                
+            if toggles_performed >= target_toggles:
+                break
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
     elif args.command == "action":

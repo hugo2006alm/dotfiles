@@ -57,6 +57,7 @@ class WallpaperAction(Action):
             "--transition-angle", "30"
         ])
         self._exec.execute(["notify-send", "Wallpaper Changed", selected_wall.name])
+        self._exec.execute(["swaync-client", "-R"])
 
         if not self._exec.dry_run:
             cache_dir.mkdir(parents=True, exist_ok=True)

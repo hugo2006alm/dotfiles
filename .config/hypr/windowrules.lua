@@ -15,8 +15,8 @@ hl.window_rule({ match = { title = "btop" }, float = true })
 hl.window_rule({ match = { title = "nmtui" }, float = true })
 hl.window_rule({ match = { title = "bluetui" }, float = true })
 hl.window_rule({ match = { class = "zen", title = "^Extensão:" }, float = true })
-hl.window_rule({ match = { class = "com.system.update" }, workspace = "unset", float = true })
-hl.window_rule({ match = { class = "com.system.editor" }, workspace = "unset", float = true })
+hl.window_rule({ match = { class = "com.system.update" }, float = true })
+hl.window_rule({ match = { class = "com.system.editor" }, float = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { 900, 600 } })

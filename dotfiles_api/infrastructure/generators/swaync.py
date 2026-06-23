@@ -1,3 +1,6 @@
+import json
+import tomllib
+from pathlib import Path
 from dotfiles_api.domain.tokens import DesignTokens
 from dotfiles_api.domain.artifacts import GeneratedArtifact
 from dotfiles_api.infrastructure.generators.base import BaseGenerator
@@ -18,7 +21,125 @@ class SwayncGenerator(BaseGenerator):
         inactive = tokens.colors.colors.get("inactive", "#C8C2B4")
         font_mono = tokens.typography.typography.get("font_mono", "SpaceMono")
 
-        content = f"""/* Auto-generated from themes/{theme_name}/colors.toml — do not edit directly */
+        # 1. Scan themes directory
+        theme_dir = Path.home() / ".config" / "themes"
+        themes = []
+        if theme_dir.is_dir():
+            for p in theme_dir.iterdir():
+                if p.is_dir() and (p / "colors.toml").is_file():
+                    themes.append(p.name)
+        themes.sort()
+
+        # If empty (e.g. in test env), default to theme_name
+        if not themes:
+            themes = [theme_name]
+
+        # 2. Load theme colors
+        theme_colors = {}
+        for t in themes:
+            toml_path = theme_dir / t / "colors.toml"
+            if toml_path.is_file():
+                try:
+                    with open(toml_path, "rb") as f:
+                        data = tomllib.load(f)
+                    colors = data.get("colors", data)
+                    theme_colors[t] = {
+                        "bg": colors.get("background", "#F4EFE4"),
+                        "accent": colors.get("accent", "#D94F2B"),
+                        "fg": colors.get("foreground", "#0D0D0D")
+                    }
+                except Exception:
+                    theme_colors[t] = {"bg": "#F4EFE4", "accent": "#D94F2B", "fg": "#0D0D0D"}
+            else:
+                # Fallback to current token values if not found (mainly for testing)
+                theme_colors[t] = {"bg": bg, "accent": accent, "fg": fg}
+
+        # 3. Generate config.json (swaync-config)
+        config_data = {
+            "$schema": "/etc/xdg/swaync/configSchema.json",
+            "notification-visibility": {
+                "spotify": {"state": "ignored", "app-name": "Spotify"},
+                "zen": {"state": "ignored", "app-name": "Zen Browser"},
+                "zen-app": {"state": "ignored", "app-name": "zen"},
+                "chrome": {"state": "ignored", "app-name": "Google Chrome"},
+                "firefox": {"state": "ignored", "app-name": "Firefox"}
+            },
+            "positionX": "right",
+            "positionY": "top",
+            "control-center-width": 380,
+            "control-center-height": 860,
+            "control-center-margin-top": 10,
+            "control-center-margin-bottom": 10,
+            "control-center-margin-right": 10,
+            "control-center-margin-left": 10,
+            "notification-window-width": 400,
+            "layer": "top",
+            "cssPriority": "application",
+            "notification-icon-size": 64,
+            "notification-body-image-height": 100,
+            "notification-body-image-width": 200,
+            "timeout": 10,
+            "timeout-low": 5,
+            "timeout-critical": 0,
+            "fit-to-screen": True,
+            "keyboard-shortcuts": True,
+            "image-visibility": "always",
+            "transition-time": 200,
+            "hide-on-clear": False,
+            "hide-on-action": True,
+            "widgets": [
+                "title",
+                "dnd",
+                "mpris",
+                "volume",
+                "buttons-grid#updates",
+                "buttons-grid#themes",
+                "label#wallpaper",
+                "notifications"
+            ],
+            "widget-config": {
+                "title": {
+                    "text": "Notifications",
+                    "clear-all-button": True,
+                    "button-text": "Clear All"
+                },
+                "dnd": {
+                    "text": "Do Not Disturb"
+                },
+                "mpris": {
+                    "image-size": 96,
+                    "image-radius": 4
+                },
+                "volume": {
+                    "label": "󰕾"
+                },
+                "buttons-grid#updates": {
+                    "buttons-per-row": 1,
+                    "actions": [
+                        {
+                            "label": "Check for Updates",
+                            "command": f"sh -c 'ghostty --class=com.system.update --title=\"System Update\" -e {Path.home()}/.config/waybar/scripts/system-update.sh'"
+                        }
+                    ]
+                },
+                "buttons-grid#themes": {
+                    "buttons-per-row": 4,
+                    "actions": [
+                        {
+                            "label": t,
+                            "command": f"dotfiles configure --theme {t}"
+                        } for t in themes
+                    ]
+                },
+                "label#wallpaper": {
+                    "text": " ",
+                    "clear-all-button": False
+                }
+            }
+        }
+
+        # 4. Generate style.css (swaync-style)
+        style_content = f"""/* Auto-generated from themes/{theme_name}/colors.toml — do not edit directly */
 
 * {{
   font-family: "{font_mono}", monospace;
@@ -117,32 +238,100 @@ class SwayncGenerator(BaseGenerator):
   border-radius: 0px;
 }}
 
-/* ── Buttons Grid ── */
-.widget-buttons-grid {{
+/* ── Updates Buttons Grid ── */
+#updates {{
   margin: 8px 0;
 }}
-.widget-buttons-grid > flowbox > flowboxchild > button {{
+#updates > flowbox > flowboxchild > button {{
   background: {bg2};
   border: 2px solid {border};
   border-radius: 0px;
   color: {fg};
-  padding: 8px 12px;
+  padding: 10px 16px;
   font-weight: bold;
   font-size: 11px;
   text-transform: uppercase;
-  margin: 4px;
+  margin: 4px 0;
 }}
-.widget-buttons-grid > flowbox > flowboxchild > button:hover {{
-  background: {accent};
-  color: {bg};
-  border-color: {accent};
-}}
-.widget-buttons-grid > flowbox > flowboxchild > button.active {{
+#updates > flowbox > flowboxchild > button:hover {{
   background: {accent};
   color: {bg};
   border-color: {accent};
 }}
 
+/* ── Themes Buttons Grid ── */
+#themes {{
+  margin: 8px 0;
+}}
+#themes > flowbox > flowboxchild > button {{
+  color: transparent;
+  text-shadow: none;
+  font-size: 0px;
+  min-height: 36px;
+  padding: 0;
+  margin: 4px;
+}}
+"""
+
+        # Generate styled theme preview rectangles
+        for i, t in enumerate(themes):
+            colors = theme_colors[t]
+            t_bg = colors["bg"]
+            t_accent = colors["accent"]
+            t_fg = colors["fg"]
+            child_idx = i + 1
+
+            style_content += f"""
+#themes > flowbox > flowboxchild:nth-child({child_idx}) > button {{
+  background: linear-gradient(to bottom, {t_bg} 70%, {t_accent} 70%);
+  border: 2px solid {t_fg};
+  border-radius: 0px;
+}}
+"""
+            if t == theme_name:
+                style_content += f"""
+#themes > flowbox > flowboxchild:nth-child({child_idx}) > button {{
+  outline: 3px solid {accent};
+  outline-offset: -3px;
+}}
+"""
+
+        # 5. Read active wallpaper for styling
+        cache_dir = Path.home() / ".cache" / "shade-raid"
+        last_wp_file = cache_dir / "last_wallpaper"
+        wallpaper_path = ""
+        if last_wp_file.is_file():
+            try:
+                wallpaper_path = last_wp_file.read_text().strip()
+            except Exception:
+                pass
+
+        if wallpaper_path:
+            style_content += f"""
+/* ── Wallpaper Widget ── */
+#wallpaper, .widget-wallpaper, #widget-wallpaper {{
+  background-image: url("{wallpaper_path}");
+  background-size: cover;
+  background-position: center;
+  min-height: 150px;
+  border: 2px solid {border};
+  border-radius: 0px;
+  margin: 8px 0;
+}}
+"""
+        else:
+            style_content += f"""
+/* ── Wallpaper Widget (Fallback) ── */
+#wallpaper, .widget-wallpaper, #widget-wallpaper {{
+  background-color: {bg2};
+  min-height: 150px;
+  border: 2px solid {border};
+  border-radius: 0px;
+  margin: 8px 0;
+}}
+"""
+
+        style_content += f"""
 /* ── Notifications ── */
 .notification {{
   background: {bg2};
@@ -182,6 +371,8 @@ class SwayncGenerator(BaseGenerator):
   color: {bg};
 }}
 """
+
         return [
-            GeneratedArtifact(artifact_id="swaync-style", content=content)
+            GeneratedArtifact(artifact_id="swaync-config", content=json.dumps(config_data, indent=2)),
+            GeneratedArtifact(artifact_id="swaync-style", content=style_content)
         ]

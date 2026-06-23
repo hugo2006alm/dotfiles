@@ -171,10 +171,14 @@ class TestGenerators(unittest.TestCase):
         from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
         gen = SwayncGenerator()
         artifacts = gen.render(tokens, "shade-raid")
-        self.assertEqual(len(artifacts), 1)
-        self.assertEqual(artifacts[0].artifact_id, "swaync-style")
-        self.assertIn("font-family: \"SpaceMono\"", artifacts[0].content)
-        self.assertIn("background: #F4EFE4;", artifacts[0].content)
+        self.assertEqual(len(artifacts), 2)
+        
+        config_artifact = next(a for a in artifacts if a.artifact_id == "swaync-config")
+        style_artifact = next(a for a in artifacts if a.artifact_id == "swaync-style")
+        
+        self.assertIn("Check for Updates", config_artifact.content)
+        self.assertIn("font-family: \"SpaceMono\"", style_artifact.content)
+        self.assertIn("background: #F4EFE4;", style_artifact.content)
 
     def test_swayosd_generator_rendering(self):
         colors = ColorTokens(colors={"background": "#F4EFE4", "foreground": "#0D0D0D", "accent": "#D94F2B"})

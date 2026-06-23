@@ -50,7 +50,9 @@
     "dnd",
     "mpris",
     "volume",
-    "buttons-grid",
+    "buttons-grid#updates",
+    "buttons-grid#themes",
+    "label#wallpaper",
     "notifications"
   ],
   "widget-config": {
@@ -67,33 +69,37 @@
       "image-radius": 4
     },
     "volume": {
-      "label": "󰕾"
+      "label": "\udb81\udd7e"
     },
-    "buttons-grid": {
+    "buttons-grid#updates": {
+      "buttons-per-row": 1,
       "actions": [
         {
-          "label": "󰖩 Wi-Fi",
-          "type": "toggle",
-          "active": true,
-          "command": "sh -c '[[ $SWAYNC_TOGGLE_STATE == true ]] && nmcli radio wifi on || nmcli radio wifi off'",
-          "update-command": "sh -c '[[ $(nmcli radio wifi) == \"enabled\" ]] && echo true || echo false'"
-        },
-        {
-          "label": "󰂯 Bluetooth",
-          "type": "toggle",
-          "active": true,
-          "command": "sh -c '[[ $SWAYNC_TOGGLE_STATE == true ]] && bluetoothctl power on || bluetoothctl power off'",
-          "update-command": "sh -c '[[ $(bluetoothctl show | grep \"Powered:\") == *\"yes\"* ]] && echo true || echo false'"
-        },
-        {
-          "label": "󰅢 Monitor",
-          "command": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"btop\")'"
-        },
-        {
-          "label": "↓ Updates",
-          "command": "ghostty --class=\"com.system.update\" --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh"
+          "label": "Check for Updates",
+          "command": "sh -c 'ghostty --class=com.system.update --title=\"System Update\" -e /home/hugo2006alm/.config/waybar/scripts/system-update.sh'"
         }
       ]
+    },
+    "buttons-grid#themes": {
+      "buttons-per-row": 4,
+      "actions": [
+        {
+          "label": "pokemon-forest",
+          "command": "dotfiles configure --theme pokemon-forest"
+        },
+        {
+          "label": "shade-raid",
+          "command": "dotfiles configure --theme shade-raid"
+        },
+        {
+          "label": "shade-raid-dark",
+          "command": "dotfiles configure --theme shade-raid-dark"
+        }
+      ]
+    },
+    "label#wallpaper": {
+      "text": " ",
+      "clear-all-button": false
     }
   }
 }
