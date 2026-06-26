@@ -63,6 +63,9 @@ class MockReloadable:
     def reload(self) -> None:
         self.reloaded = True
 
+class MockReloadable2(MockReloadable):
+    pass
+
 class MockEventReloadable(MockReloadable, EventReloadable):
     def __init__(self, supported_generator: str):
         super().__init__()
@@ -188,7 +191,7 @@ class TestReloadService(unittest.TestCase):
     def test_reload_all(self):
         # Arrange
         r1 = MockReloadable()
-        r2 = MockReloadable()
+        r2 = MockReloadable2()
         reload_svc = ReloadService(reloadables=[r1, r2])
 
         # Act
@@ -377,7 +380,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
         self.assertTrue(any("sassc" in cmd for cmd in executor.commands))
         # wlogout relaunch commands should run
         self.assertTrue(any("pkill" in cmd and "wlogout" in cmd for cmd in executor.commands))
-        self.assertTrue(any("hyprctl" in cmd and "wlogout" in cmd for cmd in executor.commands))
+        self.assertTrue(any("hyprctl" in cmd and "power-menu" in cmd for cmd in executor.commands))
 
     @unittest.mock.patch("pathlib.Path.home")
     def test_vesktop_reloadable(self, mock_home):

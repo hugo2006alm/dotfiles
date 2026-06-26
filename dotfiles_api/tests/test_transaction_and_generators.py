@@ -179,6 +179,20 @@ class TestGenerators(unittest.TestCase):
         self.assertIn("Check for Updates", config_artifact.content)
         self.assertIn("font-family: \"SpaceMono\"", style_artifact.content)
         self.assertIn("background: #F4EFE4;", style_artifact.content)
+        
+        # Verify preview widgets in config
+        self.assertIn("label#theme-preview-title", config_artifact.content)
+        self.assertIn("label#theme-preview-image", config_artifact.content)
+        self.assertIn("label#theme-preview-palette", config_artifact.content)
+        self.assertIn("buttons-grid#theme-preview-controls", config_artifact.content)
+        
+        # Verify MPRIS ignored players
+        self.assertIn("ignored-players", config_artifact.content)
+        
+        # Verify scrollbar hiding and animation styles
+        self.assertIn(".control-center scrollbar", style_artifact.content)
+        self.assertIn(".notification.removed", style_artifact.content)
+
 
     def test_swayosd_generator_rendering(self):
         colors = ColorTokens(colors={"background": "#F4EFE4", "foreground": "#0D0D0D", "accent": "#D94F2B"})

@@ -45,16 +45,50 @@ class SwayncGenerator(BaseGenerator):
                     colors = data.get("colors", data)
                     theme_colors[t] = {
                         "bg": colors.get("background", "#F4EFE4"),
+                        "bg2": colors.get("background2", "#EDE7D3"),
+                        "fg": colors.get("foreground", "#0D0D0D"),
                         "accent": colors.get("accent", "#D94F2B"),
-                        "fg": colors.get("foreground", "#0D0D0D")
+                        "inactive": colors.get("inactive", "#C8C2B4")
                     }
                 except Exception:
-                    theme_colors[t] = {"bg": "#F4EFE4", "accent": "#D94F2B", "fg": "#0D0D0D"}
+                    theme_colors[t] = {
+                        "bg": "#F4EFE4",
+                        "bg2": "#EDE7D3",
+                        "fg": "#0D0D0D",
+                        "accent": "#D94F2B",
+                        "inactive": "#C8C2B4"
+                    }
             else:
                 # Fallback to current token values if not found (mainly for testing)
-                theme_colors[t] = {"bg": bg, "accent": accent, "fg": fg}
+                theme_colors[t] = {
+                    "bg": bg,
+                    "bg2": bg2,
+                    "fg": fg,
+                    "accent": accent,
+                    "inactive": inactive
+                }
 
-        # 3. Generate config.json (swaync-config)
+        # 3. Read active preview theme name
+        preview_theme = theme_name
+        preview_theme_path = Path("/tmp/dotfiles_preview_theme")
+        if preview_theme_path.is_file():
+            try:
+                pt = preview_theme_path.read_text().strip()
+                if pt in themes:
+                    preview_theme = pt
+            except Exception:
+                pass
+
+        # Dots indicator
+        dots = []
+        for t in themes:
+            if t == preview_theme:
+                dots.append("•")
+            else:
+                dots.append("◦")
+        dots_str = " ".join(dots)
+
+        # 4. Generate config.json (swaync-config)
         config_data = {
             "$schema": "/etc/xdg/swaync/configSchema.json",
             "notification-visibility": {
@@ -93,8 +127,10 @@ class SwayncGenerator(BaseGenerator):
                 "mpris",
                 "volume",
                 "buttons-grid#updates",
-                "buttons-grid#themes",
-                "label#wallpaper",
+                "label#theme-preview-title",
+                "label#theme-preview-image",
+                "label#theme-preview-palette",
+                "buttons-grid#theme-preview-controls",
                 "notifications"
             ],
             "widget-config": {
@@ -108,7 +144,8 @@ class SwayncGenerator(BaseGenerator):
                 },
                 "mpris": {
                     "image-size": 96,
-                    "image-radius": 4
+                    "image-radius": 4,
+                    "ignored-players": ["zen", "firefox", "chromium"]
                 },
                 "volume": {
                     "label": "󰕾"
@@ -118,27 +155,47 @@ class SwayncGenerator(BaseGenerator):
                     "actions": [
                         {
                             "label": "Check for Updates",
-                            "command": f"sh -c 'ghostty --class=com.system.update --title=\"System Update\" -e {Path.home()}/.config/waybar/scripts/system-update.sh'"
+                            "command": f"hyprctl dispatch exec 'ghostty --class=com.system.update --title=\"System Update\" -e {Path.home()}/.config/waybar/scripts/system-update.sh'"
                         }
                     ]
                 },
-                "buttons-grid#themes": {
+                "label#theme-preview-title": {
+                    "text": f"Theme: {preview_theme}",
+                    "clear-all-button": False
+                },
+                "label#theme-preview-image": {
+                    "text": " ",
+                    "clear-all-button": False
+                },
+                "label#theme-preview-palette": {
+                    "text": " ",
+                    "clear-all-button": False
+                },
+                "buttons-grid#theme-preview-controls": {
                     "buttons-per-row": 4,
                     "actions": [
                         {
-                            "label": t,
-                            "command": f"dotfiles configure --theme {t}"
-                        } for t in themes
+                            "label": "◀",
+                            "command": "dotfiles action preview prev"
+                        },
+                        {
+                            "label": dots_str,
+                            "command": "true"
+                        },
+                        {
+                            "label": "▶",
+                            "command": "dotfiles action preview next"
+                        },
+                        {
+                            "label": "Selected" if preview_theme == theme_name else "Select",
+                            "command": "true" if preview_theme == theme_name else f"dotfiles configure --theme {preview_theme}"
+                        }
                     ]
-                },
-                "label#wallpaper": {
-                    "text": " ",
-                    "clear-all-button": False
                 }
             }
         }
 
-        # 4. Generate style.css (swaync-style)
+        # 5. Generate style.css (swaync-style)
         style_content = f"""/* Auto-generated from themes/{theme_name}/colors.toml — do not edit directly */
 
 * {{
@@ -153,6 +210,21 @@ class SwayncGenerator(BaseGenerator):
   border-radius: 0px;
   color: {fg};
   padding: 16px;
+}}
+
+/* Hide scrollbar completamente */
+.control-center scrollbar {{
+  background: transparent;
+  min-width: 0px;
+  width: 0px;
+}}
+.control-center scrollbar slider {{
+  background: transparent;
+  min-width: 0px;
+  width: 0px;
+}}
+.control-center viewport {{
+  background: transparent;
 }}
 
 /* ── Title Widget ── */
@@ -214,6 +286,7 @@ class SwayncGenerator(BaseGenerator):
 .widget-mpris-title {{
   font-weight: bold;
   font-size: 13px;
+  color: {fg};
 }}
 .widget-mpris-subtitle {{
   font-size: 11px;
@@ -259,75 +332,102 @@ class SwayncGenerator(BaseGenerator):
   border-color: {accent};
 }}
 
-/* ── Themes Buttons Grid ── */
-#themes {{
-  margin: 8px 0;
-}}
-#themes > flowbox > flowboxchild > button {{
-  color: transparent;
-  text-shadow: none;
-  font-size: 0px;
-  min-height: 36px;
-  padding: 0;
-  margin: 4px;
+/* ── Theme Preview Carousel ── */
+#theme-preview-title {{
+  font-size: 14px;
+  font-weight: bold;
+  color: {fg};
+  margin: 12px 0 4px 0;
 }}
 """
 
-        # Generate styled theme preview rectangles
-        for i, t in enumerate(themes):
-            colors = theme_colors[t]
-            t_bg = colors["bg"]
-            t_accent = colors["accent"]
-            t_fg = colors["fg"]
-            child_idx = i + 1
+        # 6. Read active wallpaper for styling
+        base_preview_theme = preview_theme.split("-")[0]
+        preview_wp_dir = Path.home() / "wallpapers" / preview_theme
+        if not preview_wp_dir.exists():
+            preview_wp_dir = Path.home() / "wallpapers" / base_preview_theme
 
+        preview_wallpapers = []
+        if preview_wp_dir.is_dir():
+            preview_wallpapers = sorted(
+                list(preview_wp_dir.glob("*.jpg")) + list(preview_wp_dir.glob("*.png"))
+            )
+
+        preview_wallpaper_path = ""
+        if preview_wallpapers:
+            preview_wallpaper_path = str(preview_wallpapers[0].resolve())
+
+        if preview_wallpaper_path:
             style_content += f"""
-#themes > flowbox > flowboxchild:nth-child({child_idx}) > button {{
-  background: linear-gradient(to bottom, {t_bg} 70%, {t_accent} 70%);
-  border: 2px solid {t_fg};
-  border-radius: 0px;
-}}
-"""
-            if t == theme_name:
-                style_content += f"""
-#themes > flowbox > flowboxchild:nth-child({child_idx}) > button {{
-  outline: 3px solid {accent};
-  outline-offset: -3px;
-}}
-"""
-
-        # 5. Read active wallpaper for styling
-        cache_dir = Path.home() / ".cache" / "shade-raid"
-        last_wp_file = cache_dir / "last_wallpaper"
-        wallpaper_path = ""
-        if last_wp_file.is_file():
-            try:
-                wallpaper_path = last_wp_file.read_text().strip()
-            except Exception:
-                pass
-
-        if wallpaper_path:
-            style_content += f"""
-/* ── Wallpaper Widget ── */
-#wallpaper, .widget-wallpaper, #widget-wallpaper {{
-  background-image: url("{wallpaper_path}");
+#theme-preview-image {{
+  background-image: url("{preview_wallpaper_path}");
   background-size: cover;
   background-position: center;
   min-height: 150px;
   border: 2px solid {border};
   border-radius: 0px;
-  margin: 8px 0;
+  margin: 6px 0;
 }}
 """
         else:
             style_content += f"""
-/* ── Wallpaper Widget (Fallback) ── */
-#wallpaper, .widget-wallpaper, #widget-wallpaper {{
+#theme-preview-image {{
   background-color: {bg2};
   min-height: 150px;
   border: 2px solid {border};
   border-radius: 0px;
+  margin: 6px 0;
+}}
+"""
+
+        p_colors = theme_colors.get(preview_theme, {
+            "bg": bg,
+            "bg2": bg2,
+            "fg": fg,
+            "accent": accent,
+            "inactive": inactive
+        })
+        p_bg = p_colors.get("bg", bg)
+        p_bg2 = p_colors.get("bg2", bg2)
+        p_fg = p_colors.get("fg", fg)
+        p_accent = p_colors.get("accent", accent)
+        p_inactive = p_colors.get("inactive", inactive)
+
+        style_content += f"""
+#theme-preview-palette {{
+  background: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
+  min-height: 20px;
+  border: 2px solid {border};
+  border-radius: 0px;
+  margin: 6px 0 12px 0;
+}}
+
+#theme-preview-controls {{
   margin: 8px 0;
+}}
+#theme-preview-controls > flowbox > flowboxchild > button {{
+  background: {bg2};
+  border: 2px solid {border};
+  border-radius: 0px;
+  color: {fg};
+  padding: 6px 12px;
+  font-weight: bold;
+  font-size: 12px;
+  margin: 4px;
+}}
+#theme-preview-controls > flowbox > flowboxchild > button:hover {{
+  background: {accent};
+  color: {bg};
+  border-color: {accent};
+}}
+"""
+
+        if preview_theme == theme_name:
+            style_content += f"""
+#theme-preview-controls > flowbox > flowboxchild:nth-child(4) > button {{
+  background: {accent};
+  color: {bg};
+  border-color: {accent};
 }}
 """
 
@@ -369,6 +469,24 @@ class SwayncGenerator(BaseGenerator):
 .notification-action:hover {{
   background: {accent};
   color: {bg};
+}}
+
+@keyframes fade-out {{
+  from {{
+    opacity: 1;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 12px;
+  }}
+  to {{
+    opacity: 0;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding: 0px;
+  }}
+}}
+.notification.removed {{
+  animation: fade-out 200ms ease-in-out forwards;
 }}
 """
 

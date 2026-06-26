@@ -119,3 +119,35 @@ class TestActions(unittest.TestCase):
         cache_wp = self.env.home_dir / ".cache" / "shade-raid" / "last_wallpaper"
         self.assertTrue(cache_wp.exists())
         self.assertIn("wall.jpg", cache_wp.read_text())
+
+    def test_preview_action(self) -> None:
+        from dotfiles_api.infrastructure.actions.preview import PreviewAction
+        action = PreviewAction(self.exec_ctx, self.env)
+
+        # Setup mock themes
+        themes_dir = self.env.home_dir / ".config" / "themes"
+        theme_a = themes_dir / "theme-a"
+        theme_b = themes_dir / "theme-b"
+        theme_a.mkdir(parents=True)
+        theme_b.mkdir(parents=True)
+        (theme_a / "colors.toml").write_text("")
+        (theme_b / "colors.toml").write_text("")
+        (themes_dir / "current").write_text("theme-a")
+
+        # Clean preview theme temp file if it exists
+        preview_temp = Path("/tmp/dotfiles_preview_theme")
+        if preview_temp.exists():
+            preview_temp.unlink()
+
+        # Act: next theme (should go from theme-a to theme-b)
+        action.execute(["next"])
+
+        # Assert
+        self.assertTrue(preview_temp.exists())
+        self.assertEqual(preview_temp.read_text().strip(), "theme-b")
+        self.assertTrue(any("swaync-client -R" in cmd for cmd in self.executor.commands))
+
+        # Act: prev theme (should go from theme-b back to theme-a)
+        action.execute(["prev"])
+        self.assertEqual(preview_temp.read_text().strip(), "theme-a")
+

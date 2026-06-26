@@ -68,6 +68,7 @@ from dotfiles_api.infrastructure.actions.recorder import RecorderAction
 from dotfiles_api.infrastructure.actions.portal import PortalAction
 from dotfiles_api.infrastructure.actions.drawer import DrawerAction
 from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
+from dotfiles_api.infrastructure.actions.preview import PreviewAction
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Modular Dotfiles API CLI Manager")
@@ -352,6 +353,7 @@ def main() -> None:
     action_svc.register("portal", PortalAction(exec_ctx))
     action_svc.register("drawer", DrawerAction(exec_ctx, env))
     action_svc.register("wallpaper", WallpaperAction(exec_ctx, env))
+    action_svc.register("preview", PreviewAction(exec_ctx, env))
 
     action_svc.register("lock", CommandAction(exec_ctx, [["loginctl", "lock-session"]]))
     action_svc.register("file-explorer", CommandAction(exec_ctx, [["nautilus"]]))
@@ -364,6 +366,7 @@ def main() -> None:
     action_svc.register("media-next", CommandAction(exec_ctx, [["playerctl", "next"]]))
     action_svc.register("media-prev", CommandAction(exec_ctx, [["playerctl", "previous"]]))
 
+    release_lock_fn = lambda: None
     if args.command in ["toggle", "configure", "apply-all", "install"]:
         import fcntl
         lock_file_path = "/tmp/dotfiles.lock"
@@ -377,8 +380,8 @@ def main() -> None:
                         f.write("1")
                 except Exception:
                     pass
-            import atexit
-            def cleanup_lock():
+            
+            def release_lock():
                 try:
                     global _lock_file
                     _lock_file.close()
@@ -393,7 +396,10 @@ def main() -> None:
                         os.remove("/tmp/dotfiles_toggle.clicks")
                 except Exception:
                     pass
-            atexit.register(cleanup_lock)
+            
+            release_lock_fn = release_lock
+            import atexit
+            atexit.register(release_lock)
         except BlockingIOError:
             if args.command == "toggle":
                 clicks_path = "/tmp/dotfiles_toggle.clicks"
@@ -420,10 +426,17 @@ def main() -> None:
 
     if args.command == "install":
         facade.apply_profile(desktop_profile)
+        release_lock_fn()
     elif args.command == "link":
         facade.link()
     elif args.command == "configure":
         facade.apply_theme(args.theme)
+        try:
+            with open("/tmp/dotfiles_preview_theme", "w") as f:
+                f.write(args.theme)
+        except Exception:
+            pass
+        release_lock_fn()
     elif args.command == "reload":
         facade.reload()
     elif args.command == "apply-all":
@@ -431,6 +444,12 @@ def main() -> None:
         facade.link()
         facade.apply_theme(args.theme)
         facade.reload()
+        try:
+            with open("/tmp/dotfiles_preview_theme", "w") as f:
+                f.write(args.theme)
+        except Exception:
+            pass
+        release_lock_fn()
     elif args.command == "toggle":
         toggles_performed = 0
         while True:
@@ -444,11 +463,17 @@ def main() -> None:
             next_theme_dir = env.home_dir / ".config" / "themes" / next_theme
             if not next_theme_dir.is_dir():
                 print(f"Theme counterpart '{next_theme}' does not exist. Cannot toggle.")
+                release_lock_fn()
                 import sys
                 sys.exit(1)
                 
             print(f"Toggling theme from {active} to {next_theme}")
             facade.apply_theme(next_theme)
+            try:
+                with open("/tmp/dotfiles_preview_theme", "w") as f:
+                    f.write(next_theme)
+            except Exception:
+                pass
             toggles_performed += 1
             
             # Read click count
@@ -472,6 +497,7 @@ def main() -> None:
                 
             if toggles_performed >= target_toggles:
                 break
+        release_lock_fn()
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
     elif args.command == "action":
