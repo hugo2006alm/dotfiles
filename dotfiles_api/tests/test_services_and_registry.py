@@ -315,8 +315,9 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertEqual(len(executor.commands), 1)
-        self.assertIn("swaync-client -R", executor.commands[0])
+        self.assertEqual(len(executor.commands), 2)
+        self.assertEqual(executor.commands[0], "pkill -x swaync")
+        self.assertEqual(executor.commands[1], "hyprctl dispatch hl.dsp.exec_cmd('swaync')")
 
     def test_walker_launcher_capability(self):
         # Arrange

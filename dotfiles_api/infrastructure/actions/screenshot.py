@@ -31,7 +31,7 @@ class ScreenshotAction(Action):
             grim_cmd = ["grim", str(file_path)]
 
         self._exec.execute(grim_cmd)
-        self._exec.execute(["bash", "-c", f"wl-copy < {file_path}"])
+        self._exec.execute(["bash", "-c", f"wl-copy --type image/png < {file_path} &"])
         self._exec.execute([
             "notify-send",
             "-i", str(file_path),

@@ -65,6 +65,7 @@ class TestActions(unittest.TestCase):
         action.execute([])
         self.assertTrue(any("grim" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("notify-send" in cmd for cmd in self.executor.commands))
+        self.assertTrue(any("wl-copy" in cmd and cmd.endswith("&") for cmd in self.executor.commands))
 
         # Test region
         action.execute(["--region"])

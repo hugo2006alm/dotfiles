@@ -273,7 +273,8 @@ def main() -> None:
     theme_svc = ThemeService(loader=theme_loader, store=theme_store, event_bus=event_bus)
 
     reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False))
-    event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
+    if args.command not in ["toggle", "configure", "apply-all"]:
+        event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
     
@@ -346,6 +347,22 @@ def main() -> None:
         linker=linker,
         setup_service=setup_svc
     )
+
+    def run_reload_detached(verbose: bool = False) -> None:
+        import subprocess
+        import sys
+        cmd = [sys.executable, "-m", "dotfiles_api.presentation.cli", "reload"]
+        if verbose:
+            cmd.append("--verbose")
+        try:
+            subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        except Exception:
+            pass
 
     action_svc = ActionService()
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
@@ -437,19 +454,20 @@ def main() -> None:
         except Exception:
             pass
         release_lock_fn()
+        run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "reload":
         facade.reload()
     elif args.command == "apply-all":
         facade.apply_profile(desktop_profile)
         facade.link()
         facade.apply_theme(args.theme)
-        facade.reload()
         try:
             with open("/tmp/dotfiles_preview_theme", "w") as f:
                 f.write(args.theme)
         except Exception:
             pass
         release_lock_fn()
+        run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "toggle":
         toggles_performed = 0
         while True:
@@ -487,17 +505,11 @@ def main() -> None:
                 except Exception:
                     total_clicks = 1
             
-            # Determine target toggles based on parity
-            if total_clicks == 1:
-                target_toggles = 1
-            elif total_clicks == 2:
-                target_toggles = 2
-            else:
-                target_toggles = 1 if total_clicks % 2 == 1 else 2
-                
-            if toggles_performed >= target_toggles:
+            # Check parity: we break if the parity of toggles performed matches the parity of total clicks
+            if (toggles_performed % 2) == (total_clicks % 2):
                 break
         release_lock_fn()
+        run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
     elif args.command == "action":

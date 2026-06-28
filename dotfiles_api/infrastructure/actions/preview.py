@@ -68,5 +68,36 @@ class PreviewAction(Action):
         except Exception:
             pass
             
-        # 5. Reload swaync
+        # 5. Regenerate swaync config/style with the new preview theme
+        try:
+            from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
+            from dotfiles_api.infrastructure.theme.store import FileSystemThemeStore
+            from dotfiles_api.infrastructure.theme.loader import ThemeLoader
+            
+            store = FileSystemThemeStore(self._env)
+            active_theme = store.get_active_theme()
+            loader = ThemeLoader(self._env)
+            tokens = loader.load(active_theme)
+            
+            gen = SwayncGenerator()
+            artifacts = gen.render(tokens, active_theme)
+            
+            dest_dir = self._env.home_dir / ".config" / "swaync"
+            if not self._exec.dry_run:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                
+            for art in artifacts:
+                if art.artifact_id == "swaync-config":
+                    dest_file = dest_dir / "config.json"
+                elif art.artifact_id == "swaync-style":
+                    dest_file = dest_dir / "style.css"
+                else:
+                    continue
+                if not self._exec.dry_run:
+                    dest_file.write_text(art.content, encoding="utf-8")
+        except Exception:
+            pass
+            
+        # 6. Reload swaync config & style in-place
         self._exec.execute(["swaync-client", "-R"])
+        self._exec.execute(["swaync-client", "-rs"])

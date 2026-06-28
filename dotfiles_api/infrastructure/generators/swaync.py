@@ -128,8 +128,8 @@ class SwayncGenerator(BaseGenerator):
                 "volume",
                 "buttons-grid#updates",
                 "label#theme-preview-title",
-                "label#theme-preview-image",
-                "label#theme-preview-palette",
+                "buttons-grid#theme-preview-image",
+                "buttons-grid#theme-preview-palette",
                 "buttons-grid#theme-preview-controls",
                 "notifications"
             ],
@@ -145,7 +145,7 @@ class SwayncGenerator(BaseGenerator):
                 "mpris": {
                     "image-size": 96,
                     "image-radius": 4,
-                    "ignored-players": ["zen", "firefox", "chromium"]
+                    "blacklist": ["zen", "firefox", "chromium", "vesktop", "Vesktop", "discord", "Zen Browser", "zen-app"]
                 },
                 "volume": {
                     "label": "󰕾"
@@ -163,20 +163,30 @@ class SwayncGenerator(BaseGenerator):
                     "text": f"Theme: {preview_theme}",
                     "clear-all-button": False
                 },
-                "label#theme-preview-image": {
-                    "text": " ",
-                    "clear-all-button": False
+                "buttons-grid#theme-preview-image": {
+                    "buttons-per-row": 1,
+                    "actions": [
+                        {
+                            "label": " ",
+                            "command": "true"
+                        }
+                    ]
                 },
-                "label#theme-preview-palette": {
-                    "text": " ",
-                    "clear-all-button": False
+                "buttons-grid#theme-preview-palette": {
+                    "buttons-per-row": 1,
+                    "actions": [
+                        {
+                            "label": " ",
+                            "command": "true"
+                        }
+                    ]
                 },
                 "buttons-grid#theme-preview-controls": {
                     "buttons-per-row": 4,
                     "actions": [
                         {
                             "label": "◀",
-                            "command": "dotfiles action preview prev"
+                            "command": "/home/hugo2006alm/.local/bin/dotfiles action preview prev"
                         },
                         {
                             "label": dots_str,
@@ -184,11 +194,11 @@ class SwayncGenerator(BaseGenerator):
                         },
                         {
                             "label": "▶",
-                            "command": "dotfiles action preview next"
+                            "command": "/home/hugo2006alm/.local/bin/dotfiles action preview next"
                         },
                         {
                             "label": "Selected" if preview_theme == theme_name else "Select",
-                            "command": "true" if preview_theme == theme_name else f"dotfiles configure --theme {preview_theme}"
+                            "command": "true" if preview_theme == theme_name else f"/home/hugo2006alm/.local/bin/dotfiles configure --theme {preview_theme}"
                         }
                     ]
                 }
@@ -359,24 +369,46 @@ class SwayncGenerator(BaseGenerator):
 
         if preview_wallpaper_path:
             style_content += f"""
-#theme-preview-image {{
+#theme-preview-image > flowbox > flowboxchild > button {{
   background-image: url("{preview_wallpaper_path}");
   background-size: cover;
   background-position: center;
-  min-height: 150px;
-  border: 2px solid {border};
+  min-height: 220px;
+  min-width: 220px;
+  margin: 12px 64px;
+  border: 8px solid {bg2};
+  outline: 2px solid {border};
   border-radius: 0px;
-  margin: 6px 0;
+}}
+#theme-preview-image > flowbox > flowboxchild > button:hover,
+#theme-preview-image > flowbox > flowboxchild > button:active,
+#theme-preview-image > flowbox > flowboxchild > button:focus {{
+  background-image: url("{preview_wallpaper_path}");
+  background-size: cover;
+  background-position: center;
+  outline: 2px solid {border};
+  border-color: {bg2};
+  box-shadow: none;
 }}
 """
         else:
             style_content += f"""
-#theme-preview-image {{
+#theme-preview-image > flowbox > flowboxchild > button {{
   background-color: {bg2};
-  min-height: 150px;
-  border: 2px solid {border};
+  min-height: 220px;
+  min-width: 220px;
+  margin: 12px 64px;
+  border: 8px solid {bg2};
+  outline: 2px solid {border};
   border-radius: 0px;
-  margin: 6px 0;
+}}
+#theme-preview-image > flowbox > flowboxchild > button:hover,
+#theme-preview-image > flowbox > flowboxchild > button:active,
+#theme-preview-image > flowbox > flowboxchild > button:focus {{
+  background-color: {bg2};
+  outline: 2px solid {border};
+  border-color: {bg2};
+  box-shadow: none;
 }}
 """
 
@@ -394,12 +426,19 @@ class SwayncGenerator(BaseGenerator):
         p_inactive = p_colors.get("inactive", inactive)
 
         style_content += f"""
-#theme-preview-palette {{
+#theme-preview-palette > flowbox > flowboxchild > button {{
   background: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
-  min-height: 20px;
+  min-height: 48px;
   border: 2px solid {border};
   border-radius: 0px;
-  margin: 6px 0 12px 0;
+  margin: 8px 16px;
+}}
+#theme-preview-palette > flowbox > flowboxchild > button:hover,
+#theme-preview-palette > flowbox > flowboxchild > button:active,
+#theme-preview-palette > flowbox > flowboxchild > button:focus {{
+  background: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
+  border-color: {border};
+  box-shadow: none;
 }}
 
 #theme-preview-controls {{

@@ -51,8 +51,10 @@
     "mpris",
     "volume",
     "buttons-grid#updates",
-    "buttons-grid#themes",
-    "label#wallpaper",
+    "label#theme-preview-title",
+    "label#theme-preview-image",
+    "label#theme-preview-palette",
+    "buttons-grid#theme-preview-controls",
     "notifications"
   ],
   "widget-config": {
@@ -66,7 +68,12 @@
     },
     "mpris": {
       "image-size": 96,
-      "image-radius": 4
+      "image-radius": 4,
+      "ignored-players": [
+        "zen",
+        "firefox",
+        "chromium"
+      ]
     },
     "volume": {
       "label": "\udb81\udd7e"
@@ -76,30 +83,42 @@
       "actions": [
         {
           "label": "Check for Updates",
-          "command": "sh -c 'ghostty --class=com.system.update --title=\"System Update\" -e /home/hugo2006alm/.config/waybar/scripts/system-update.sh'"
+          "command": "hyprctl dispatch exec 'ghostty --class=com.system.update --title=\"System Update\" -e /home/hugo2006alm/.config/waybar/scripts/system-update.sh'"
         }
       ]
     },
-    "buttons-grid#themes": {
+    "label#theme-preview-title": {
+      "text": "Theme: shade-raid",
+      "clear-all-button": false
+    },
+    "label#theme-preview-image": {
+      "text": " ",
+      "clear-all-button": false
+    },
+    "label#theme-preview-palette": {
+      "text": " ",
+      "clear-all-button": false
+    },
+    "buttons-grid#theme-preview-controls": {
       "buttons-per-row": 4,
       "actions": [
         {
-          "label": "pokemon-forest",
-          "command": "dotfiles configure --theme pokemon-forest"
+          "label": "\u25c0",
+          "command": "dotfiles action preview prev"
         },
         {
-          "label": "shade-raid",
-          "command": "dotfiles configure --theme shade-raid"
+          "label": "\u25e6 \u2022 \u25e6",
+          "command": "true"
         },
         {
-          "label": "shade-raid-dark",
-          "command": "dotfiles configure --theme shade-raid-dark"
+          "label": "\u25b6",
+          "command": "dotfiles action preview next"
+        },
+        {
+          "label": "Selected",
+          "command": "true"
         }
       ]
-    },
-    "label#wallpaper": {
-      "text": " ",
-      "clear-all-button": false
     }
   }
 }

@@ -182,12 +182,12 @@ class TestGenerators(unittest.TestCase):
         
         # Verify preview widgets in config
         self.assertIn("label#theme-preview-title", config_artifact.content)
-        self.assertIn("label#theme-preview-image", config_artifact.content)
-        self.assertIn("label#theme-preview-palette", config_artifact.content)
+        self.assertIn("buttons-grid#theme-preview-image", config_artifact.content)
+        self.assertIn("buttons-grid#theme-preview-palette", config_artifact.content)
         self.assertIn("buttons-grid#theme-preview-controls", config_artifact.content)
         
-        # Verify MPRIS ignored players
-        self.assertIn("ignored-players", config_artifact.content)
+        # Verify MPRIS blacklist
+        self.assertIn("blacklist", config_artifact.content)
         
         # Verify scrollbar hiding and animation styles
         self.assertIn(".control-center scrollbar", style_artifact.content)
