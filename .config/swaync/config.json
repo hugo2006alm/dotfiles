@@ -52,8 +52,8 @@
     "volume",
     "buttons-grid#updates",
     "label#theme-preview-title",
-    "label#theme-preview-image",
-    "label#theme-preview-palette",
+    "buttons-grid#theme-preview-image",
+    "buttons-grid#theme-preview-palette",
     "buttons-grid#theme-preview-controls",
     "notifications"
   ],
@@ -69,10 +69,15 @@
     "mpris": {
       "image-size": 96,
       "image-radius": 4,
-      "ignored-players": [
+      "blacklist": [
         "zen",
         "firefox",
-        "chromium"
+        "chromium",
+        "vesktop",
+        "Vesktop",
+        "discord",
+        "Zen Browser",
+        "zen-app"
       ]
     },
     "volume": {
@@ -91,20 +96,30 @@
       "text": "Theme: shade-raid",
       "clear-all-button": false
     },
-    "label#theme-preview-image": {
-      "text": " ",
-      "clear-all-button": false
+    "buttons-grid#theme-preview-image": {
+      "buttons-per-row": 1,
+      "actions": [
+        {
+          "label": " ",
+          "command": "true"
+        }
+      ]
     },
-    "label#theme-preview-palette": {
-      "text": " ",
-      "clear-all-button": false
+    "buttons-grid#theme-preview-palette": {
+      "buttons-per-row": 1,
+      "actions": [
+        {
+          "label": " ",
+          "command": "true"
+        }
+      ]
     },
     "buttons-grid#theme-preview-controls": {
       "buttons-per-row": 4,
       "actions": [
         {
           "label": "\u25c0",
-          "command": "dotfiles action preview prev"
+          "command": "/home/hugo2006alm/.local/bin/dotfiles action preview prev"
         },
         {
           "label": "\u25e6 \u2022 \u25e6",
@@ -112,11 +127,11 @@
         },
         {
           "label": "\u25b6",
-          "command": "dotfiles action preview next"
+          "command": "/home/hugo2006alm/.local/bin/dotfiles action preview next"
         },
         {
-          "label": "Selected",
-          "command": "true"
+          "label": "Select",
+          "command": "/home/hugo2006alm/.local/bin/dotfiles configure --theme shade-raid"
         }
       ]
     }
