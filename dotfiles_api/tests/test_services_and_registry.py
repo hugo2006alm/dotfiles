@@ -348,7 +348,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.ghostty import GhosttyReloadable
         r = GhosttyReloadable(exec_ctx=exec_ctx)
         r.reload()
-        self.assertEqual(len(executor.commands), 0)
+        self.assertIn("pkill -USR2 ghostty", executor.commands[0])
 
     def test_walker_reloadable(self):
         executor = MockCommandExecutor()
