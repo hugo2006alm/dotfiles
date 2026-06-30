@@ -130,8 +130,8 @@
           "command": "/home/hugo2006alm/.local/bin/dotfiles action preview next"
         },
         {
-          "label": "Select",
-          "command": "/home/hugo2006alm/.local/bin/dotfiles configure --theme shade-raid"
+          "label": "Selected",
+          "command": "true"
         }
       ]
     }

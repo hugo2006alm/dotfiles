@@ -251,7 +251,6 @@ def main() -> None:
     reloadables = [
         waybar_reload,
         swaync_reload,
-        portal_reload,
         gsettings_reload,
         ghostty_reload,
         walker_reload,
