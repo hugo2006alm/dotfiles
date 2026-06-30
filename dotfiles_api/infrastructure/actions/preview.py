@@ -71,16 +71,13 @@ class PreviewAction(Action):
         # 5. Regenerate swaync config/style with the new preview theme
         try:
             from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
-            from dotfiles_api.infrastructure.theme.store import FileSystemThemeStore
-            from dotfiles_api.infrastructure.theme.loader import ThemeLoader
+            from dotfiles_api.application.loader import ThemeLoader
             
-            store = FileSystemThemeStore(self._env)
-            active_theme = store.get_active_theme()
             loader = ThemeLoader(self._env)
-            tokens = loader.load(active_theme)
+            tokens = loader.load(next_theme)
             
             gen = SwayncGenerator()
-            artifacts = gen.render(tokens, active_theme)
+            artifacts = gen.render(tokens, next_theme)
             
             dest_dir = self._env.home_dir / ".config" / "swaync"
             if not self._exec.dry_run:

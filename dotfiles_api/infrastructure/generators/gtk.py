@@ -97,7 +97,7 @@ button.suggested-action:hover {{
 
         if shutil.which("papirus-folders"):
             try:
-                subprocess.run(["papirus-folders", "-C", folder_color], capture_output=True, check=False)
+                subprocess.Popen(["papirus-folders", "-C", folder_color], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception:
                 pass
 

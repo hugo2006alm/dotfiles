@@ -58,20 +58,15 @@ application_prefer_dark_theme = {is_dark_str}
                         if imgs:
                             src_wall = imgs[0]
                 
-                if src_wall and Path(src_wall).exists() and shutil.which("convert"):
+                if src_wall and Path(src_wall).exists():
                     try:
-                        subprocess.run([
-                            "convert", str(Path(src_wall).resolve()),
-                            "-filter", "Gaussian",
-                            "-blur", "0x20",
-                            "-modulate", "70",
-                            str(target_bg)
-                        ], capture_output=True, check=False)
+                        if shutil.which("convert"):
+                            cmd = f"convert '{src_wall}' -filter Gaussian -blur 0x20 -modulate 70 '{target_bg}'"
+                            subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        else:
+                            subprocess.Popen(f"cp '{src_wall}' '{target_bg}'", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     except Exception:
-                        try:
-                            shutil.copy(str(Path(src_wall).resolve()), str(target_bg))
-                        except Exception:
-                            pass
+                        pass
 
         return [
             GeneratedArtifact(artifact_id="greetd-config", content=content)
