@@ -93,7 +93,7 @@
       ]
     },
     "label#theme-preview-title": {
-      "text": "Theme: shade-raid-dark",
+      "text": "Theme: shade-raid",
       "clear-all-button": false
     },
     "buttons-grid#theme-preview-image": {
@@ -122,7 +122,7 @@
           "command": "/home/hugo2006alm/.local/bin/dotfiles action preview prev"
         },
         {
-          "label": "\u25e6 \u25e6 \u2022",
+          "label": "\u25e6 \u2022 \u25e6",
           "command": "true"
         },
         {
@@ -131,7 +131,7 @@
         },
         {
           "label": "Select",
-          "command": "/home/hugo2006alm/.local/bin/dotfiles configure --theme shade-raid-dark"
+          "command": "/home/hugo2006alm/.local/bin/dotfiles configure --theme shade-raid"
         }
       ]
     }
