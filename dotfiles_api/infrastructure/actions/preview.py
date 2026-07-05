@@ -68,16 +68,34 @@ class PreviewAction(Action):
         except Exception:
             pass
             
-        # 5. Regenerate swaync config/style with the new preview theme
+        # 5. Regenerate swaync config/style with active theme tokens and preview state.
         try:
             from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
             from dotfiles_api.application.loader import ThemeLoader
+            from dotfiles_api.application.store import ArtifactStore
+            from dotfiles_api.application.transaction import ConfigTransaction
+            from dotfiles_api.infrastructure.file_writer import SystemFileWriter
             
             loader = ThemeLoader(self._env)
-            tokens = loader.load(next_theme)
+            active_theme = current_preview
+            active_theme_path = themes_dir / "current"
+            if active_theme_path.is_file():
+                try:
+                    stored_active = active_theme_path.read_text().strip()
+                    if stored_active in themes:
+                        active_theme = stored_active
+                except Exception:
+                    pass
+            tokens = loader.load(active_theme)
             
-            gen = SwayncGenerator()
-            artifacts = gen.render(tokens, next_theme)
+            tx = ConfigTransaction(
+                env=self._env,
+                store=ArtifactStore({}),
+                writer=SystemFileWriter(),
+                dry_run=self._exec.dry_run
+            )
+            gen = SwayncGenerator(transaction=tx)
+            artifacts = gen.render(tokens, active_theme)
             
             dest_dir = self._env.home_dir / ".config" / "swaync"
             if not self._exec.dry_run:

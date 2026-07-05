@@ -16,6 +16,10 @@ class ConfigTransaction:
         self._backups: dict[Path, str] = {}
         self.theme_name = ""
 
+    @property
+    def env(self) -> EnvironmentContext:
+        return self._env
+
     def __enter__(self) -> "ConfigTransaction":
         self._backups.clear()
         return self

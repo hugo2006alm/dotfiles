@@ -121,6 +121,23 @@ class TestActions(unittest.TestCase):
         self.assertTrue(cache_wp.exists())
         self.assertIn("wall.jpg", cache_wp.read_text())
 
+    def test_wallpaper_action_falls_back_to_base_theme_for_dark_variant(self) -> None:
+        from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
+        action = WallpaperAction(self.exec_ctx, self.env)
+
+        themes_dir = self.env.home_dir / ".config" / "themes"
+        themes_dir.mkdir(parents=True)
+        (themes_dir / "current").write_text("shade-raid-dark")
+
+        wp_dir = self.env.home_dir / "wallpapers" / "shade-raid"
+        wp_dir.mkdir(parents=True)
+        (wp_dir / "wall.jpg").write_text("dummy")
+
+        action.execute([])
+
+        self.assertTrue(any("wallpapers/shade-raid/wall.jpg" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("wallpapers/shade/wall.jpg" in cmd for cmd in self.executor.commands))
+
     def test_preview_action(self) -> None:
         from dotfiles_api.infrastructure.actions.preview import PreviewAction
         action = PreviewAction(self.exec_ctx, self.env)
@@ -151,4 +168,3 @@ class TestActions(unittest.TestCase):
         # Act: prev theme (should go from theme-b back to theme-a)
         action.execute(["prev"])
         self.assertEqual(preview_temp.read_text().strip(), "theme-a")
-

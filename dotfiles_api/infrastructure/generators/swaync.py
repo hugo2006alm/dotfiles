@@ -12,6 +12,11 @@ class SwayncGenerator(BaseGenerator):
         super().__init__(name, transaction, event_bus)
 
     def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
+        env = self.transaction.env if (self.transaction and self.transaction.env) else None
+        if not env:
+            from dotfiles_api.context.environment import EnvironmentContext
+            env = EnvironmentContext(home_dir=Path.home(), dotfiles_dir=Path.home()/"dotfiles", user="hugo2006alm")
+
         bg = tokens.colors.colors.get("background", "#F4EFE4")
         bg2 = tokens.colors.colors.get("background2", "#EDE7D3")
         fg = tokens.colors.colors.get("foreground", "#0D0D0D")
@@ -22,7 +27,7 @@ class SwayncGenerator(BaseGenerator):
         font_mono = tokens.typography.typography.get("font_mono", "SpaceMono")
 
         # 1. Scan themes directory
-        theme_dir = Path.home() / ".config" / "themes"
+        theme_dir = env.home_dir / ".config" / "themes"
         themes = []
         if theme_dir.is_dir():
             for p in theme_dir.iterdir():
@@ -145,7 +150,7 @@ class SwayncGenerator(BaseGenerator):
                 "mpris": {
                     "image-size": 96,
                     "image-radius": 4,
-                    "blacklist": ["zen", "firefox", "chromium", "vesktop", "Vesktop", "discord", "Zen Browser", "zen-app"]
+                    "blacklist": ["zen", "firefox", "chromium", "vesktop", "Vesktop", "discord", "Zen Browser", "zen-app", "playerctld"]
                 },
                 "volume": {
                     "label": "󰕾"
@@ -186,7 +191,7 @@ class SwayncGenerator(BaseGenerator):
                     "actions": [
                         {
                             "label": "◀",
-                            "command": "/home/hugo2006alm/.local/bin/dotfiles action preview prev"
+                            "command": f"{env.home_dir}/.local/bin/dotfiles action preview prev"
                         },
                         {
                             "label": dots_str,
@@ -194,11 +199,11 @@ class SwayncGenerator(BaseGenerator):
                         },
                         {
                             "label": "▶",
-                            "command": "/home/hugo2006alm/.local/bin/dotfiles action preview next"
+                            "command": f"{env.home_dir}/.local/bin/dotfiles action preview next"
                         },
                         {
                             "label": "Selected" if preview_theme == theme_name else "Select",
-                            "command": "true" if preview_theme == theme_name else f"/home/hugo2006alm/.local/bin/dotfiles configure --theme {preview_theme}"
+                            "command": "true" if preview_theme == theme_name else f"{env.home_dir}/.local/bin/dotfiles configure --theme {preview_theme}"
                         }
                     ]
                 }
@@ -352,20 +357,12 @@ class SwayncGenerator(BaseGenerator):
 """
 
         # 6. Read active wallpaper for styling
-        base_preview_theme = preview_theme.split("-")[0]
-        preview_wp_dir = Path.home() / "wallpapers" / preview_theme
-        if not preview_wp_dir.exists():
-            preview_wp_dir = Path.home() / "wallpapers" / base_preview_theme
-
-        preview_wallpapers = []
-        if preview_wp_dir.is_dir():
-            preview_wallpapers = sorted(
-                list(preview_wp_dir.glob("*.jpg")) + list(preview_wp_dir.glob("*.png"))
-            )
-
+        from dotfiles_api.infrastructure.theme_wallpaper_resolver import ThemeWallpaperResolver
+        resolver = ThemeWallpaperResolver(env)
         preview_wallpaper_path = ""
-        if preview_wallpapers:
-            preview_wallpaper_path = str(preview_wallpapers[0].resolve())
+        first_wp = resolver.first_wallpaper(preview_theme)
+        if first_wp:
+            preview_wallpaper_path = str(first_wp)
 
         if preview_wallpaper_path:
             style_content += f"""

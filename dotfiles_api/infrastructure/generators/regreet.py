@@ -18,11 +18,14 @@ class ReGreetGenerator(BaseGenerator):
             card_fg = "#F4EFE4"
             card_fg2 = "#C8C2B4"
             shadow = "rgba(0,0,0,0.6)"
+            border = tokens.colors.colors.get("border", card_fg)
         else:
             card_bg = "rgba(244, 239, 228, 0.84)"
             card_fg = "#0D0D0D"
             card_fg2 = "#3A3A3A"
             shadow = "rgba(0,0,0,0.25)"
+            border = tokens.colors.colors.get("border", card_fg)
+        bg2 = tokens.colors.colors.get("background2", "#EDE7D3" if not is_dark else "#201C17")
 
         content = f"""/* ── Shade Raid — ReGreet Login Theme ── */
 /* Generated from: {theme_name} */
@@ -80,6 +83,43 @@ label:not(.title) {{
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}}
+
+/* ── Buttons ── */
+button {{
+    background-color: {bg2};
+    border: 2px solid {border};
+    border-radius: 0px;
+    background-image: none;
+    box-shadow: none;
+    text-shadow: none;
+    padding: 8px 16px;
+}}
+
+button:hover {{
+    background-color: {accent};
+    color: {accent_fg};
+    border-color: {accent};
+}}
+
+/* ── Entries ── */
+entry {{
+    background-color: {bg2};
+    border: 2px solid {border};
+    border-radius: 0px;
+    background-image: none;
+    box-shadow: none;
+    padding: 6px 12px;
+}}
+
+entry:focus {{
+    border-color: {accent};
+}}
+
+/* ── Destructive/Power actions ── */
+.destructive-action {{
+    background-color: #D94F2B;
+    color: #F4EFE4;
 }}
 """
         return [

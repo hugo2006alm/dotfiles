@@ -29,7 +29,9 @@
       "format-paused": "⏸  {artist} — {title}",
       "format-stopped": "",
       "max-length": 40,
-      "tooltip": false
+      "tooltip": false,
+      "player": "spotify",
+      "ignored-players": ["firefox", "zen", "chromium", "vesktop", "discord", "Zen Browser", "zen-app", "playerctld"]
     },
 
     "group/system": {

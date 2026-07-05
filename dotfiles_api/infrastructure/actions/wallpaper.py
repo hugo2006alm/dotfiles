@@ -6,11 +6,13 @@ from pathlib import Path
 from dotfiles_api.domain.contracts.action import Action
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.context.environment import EnvironmentContext
+from dotfiles_api.infrastructure.theme_wallpaper_resolver import ThemeWallpaperResolver
 
 class WallpaperAction(Action):
     def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
         self._exec = exec_ctx
         self._env = env
+        self._wallpapers = ThemeWallpaperResolver(env)
 
     def execute(self, args: list[str]) -> None:
         theme_file = self._env.home_dir / ".config" / "themes" / "current"
@@ -21,11 +23,7 @@ class WallpaperAction(Action):
             except Exception:
                 pass
         
-        base_theme = theme.split("-")[0]
-
-        wp_dir = self._env.home_dir / "wallpapers" / theme
-        if not wp_dir.exists():
-            wp_dir = self._env.home_dir / "wallpapers" / base_theme
+        wp_dir = self._wallpapers.wallpaper_dir(theme)
 
         if not wp_dir.exists():
             self._exec.execute(["notify-send", "Wallpaper Error", f"Directory {wp_dir} not found"])
@@ -40,7 +38,7 @@ class WallpaperAction(Action):
             except Exception:
                 pass
 
-        imgs = glob.glob(str(wp_dir / "*.jpg")) + glob.glob(str(wp_dir / "*.png"))
+        imgs = [str(path) for path in self._wallpapers.wallpapers(theme)]
         if not imgs:
             self._exec.execute(["notify-send", "Wallpaper Error", "No wallpapers found"])
             return

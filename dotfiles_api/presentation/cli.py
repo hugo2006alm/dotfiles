@@ -24,6 +24,7 @@ from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
 from dotfiles_api.infrastructure.reloadables.btop import BtopReloadable
 from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
 from dotfiles_api.infrastructure.reloadables.vesktop import VesktopReloadable
+from dotfiles_api.infrastructure.reloadables.regreet import ReGreetReloadable
 
 
 # Generators
@@ -247,6 +248,7 @@ def main() -> None:
     btop_reload = BtopReloadable(exec_ctx=exec_ctx)
     hyprland_reload = HyprlandReloadable(exec_ctx=exec_ctx)
     vesktop_reload = VesktopReloadable(exec_ctx=exec_ctx, theme_store=theme_store)
+    regreet_reload = ReGreetReloadable(exec_ctx=exec_ctx, env=env)
 
     reloadables = [
         waybar_reload,
@@ -257,7 +259,8 @@ def main() -> None:
         wlogout_reload,
         btop_reload,
         hyprland_reload,
-        vesktop_reload
+        vesktop_reload,
+        regreet_reload
     ]
 
     install_svc = InstallService(

@@ -435,4 +435,24 @@ class TestInfrastructureImplementations(unittest.TestCase):
         self.assertTrue(any("gen-drawers.sh" in cmd for cmd in executor.commands))
         self.assertTrue(any("hyprctl reload" in cmd for cmd in executor.commands))
 
+    def test_regreet_reloadable(self):
+        from dotfiles_api.infrastructure.reloadables.regreet import ReGreetReloadable
+        from dotfiles_api.context.environment import EnvironmentContext
+        
+        executor = MockCommandExecutor()
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        env = EnvironmentContext(home_dir=Path("/home/user"), dotfiles_dir=Path("/home/user/dotfiles"), user="user")
+        
+        r = ReGreetReloadable(exec_ctx=exec_ctx, env=env)
+        r.reload()
+        
+        self.assertTrue(r.supports("regreet"))
+        self.assertTrue(r.supports("greetd"))
+        self.assertFalse(r.supports("other"))
+        
+        # Check command
+        expected_cmd = "sudo /usr/bin/cp /home/user/.config/greetd/regreet.css /etc/greetd/regreet.css"
+        self.assertTrue(any(expected_cmd in cmd for cmd in executor.commands))
+
+
 

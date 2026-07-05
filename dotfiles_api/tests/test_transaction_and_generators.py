@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import shutil
+import json
 from pathlib import Path
 from dotfiles_api.domain.tokens import ColorTokens, MetricTokens, TypographyTokens, DesignTokens
 from dotfiles_api.domain.artifacts import GeneratedArtifact
@@ -193,6 +194,68 @@ class TestGenerators(unittest.TestCase):
         self.assertIn(".control-center scrollbar", style_artifact.content)
         self.assertIn(".notification.removed", style_artifact.content)
 
+    def test_swaync_preview_select_applies_preview_theme_not_active_theme(self):
+        colors = ColorTokens(colors={"background": "#F4EFE4", "foreground": "#0D0D0D", "border": "#0D0D0D"})
+        metrics = MetricTokens(metrics={})
+        typography = TypographyTokens(typography={"font_mono": "SpaceMono"})
+        tokens = DesignTokens(colors=colors, metrics=metrics, typography=typography)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            env = EnvironmentContext(home_dir=home, dotfiles_dir=home / "dotfiles", user="user")
+            themes_dir = home / ".config" / "themes"
+            (themes_dir / "shade-raid").mkdir(parents=True)
+            (themes_dir / "ember").mkdir(parents=True)
+            (themes_dir / "shade-raid" / "colors.toml").write_text('background = "#F4EFE4"\n')
+            (themes_dir / "ember" / "colors.toml").write_text('background = "#111111"\naccent = "#AA3300"\n')
+            (themes_dir / "current").write_text("shade-raid")
+            preview_path = Path("/tmp/dotfiles_preview_theme")
+            old_preview = preview_path.read_text() if preview_path.exists() else None
+            preview_path.write_text("ember")
+            tx = ConfigTransaction(env=env, store=ArtifactStore({}), writer=MockFileWriter())
+            try:
+                from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
+                gen = SwayncGenerator(transaction=tx)
+                artifacts = gen.render(tokens, "shade-raid")
+            finally:
+                if old_preview is None:
+                    if preview_path.exists():
+                        preview_path.unlink()
+                else:
+                    preview_path.write_text(old_preview)
+
+        config_artifact = next(a for a in artifacts if a.artifact_id == "swaync-config")
+        config = json.loads(config_artifact.content)
+        actions = config["widget-config"]["buttons-grid#theme-preview-controls"]["actions"]
+        self.assertEqual(actions[3]["label"], "Select")
+        self.assertIn("configure --theme ember", actions[3]["command"])
+        self.assertIn(f"{home}/.local/bin/dotfiles", actions[3]["command"])
+
+    def test_swaync_preview_wallpaper_uses_base_theme_for_dark_variant(self):
+        colors = ColorTokens(colors={"background": "#16130F", "background2": "#201C17", "foreground": "#F4EFE4", "border": "#F4EFE4"})
+        metrics = MetricTokens(metrics={})
+        typography = TypographyTokens(typography={"font_mono": "SpaceMono"})
+        tokens = DesignTokens(colors=colors, metrics=metrics, typography=typography)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            env = EnvironmentContext(home_dir=home, dotfiles_dir=home / "dotfiles", user="user")
+            themes_dir = home / ".config" / "themes" / "shade-raid-dark"
+            themes_dir.mkdir(parents=True)
+            (themes_dir / "colors.toml").write_text('background = "#16130F"\n')
+            wp_dir = home / "wallpapers" / "shade-raid"
+            wp_dir.mkdir(parents=True)
+            (wp_dir / "wall.jpg").write_text("dummy")
+            tx = ConfigTransaction(env=env, store=ArtifactStore({}), writer=MockFileWriter())
+
+            from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
+            gen = SwayncGenerator(transaction=tx)
+            artifacts = gen.render(tokens, "shade-raid-dark")
+
+        style_artifact = next(a for a in artifacts if a.artifact_id == "swaync-style")
+        self.assertIn(f'url("{wp_dir / "wall.jpg"}")', style_artifact.content)
+        self.assertNotIn("/wallpapers/shade/", style_artifact.content)
+
 
     def test_swayosd_generator_rendering(self):
         colors = ColorTokens(colors={"background": "#F4EFE4", "foreground": "#0D0D0D", "accent": "#D94F2B"})
@@ -281,6 +344,10 @@ class TestGenerators(unittest.TestCase):
         self.assertEqual(len(artifacts), 1)
         self.assertEqual(artifacts[0].artifact_id, "regreet-style")
         self.assertIn("border: 5px solid #FF0000;", artifacts[0].content)
+        self.assertIn("button {", artifacts[0].content)
+        self.assertIn("background-image: none;", artifacts[0].content)
+        self.assertIn("entry {", artifacts[0].content)
+        self.assertIn(".destructive-action", artifacts[0].content)
 
     def test_greetd_generator_rendering(self):
         colors = ColorTokens(colors={})
@@ -320,5 +387,4 @@ class TestGenerators(unittest.TestCase):
         self.assertEqual(len(artifacts), 1)
         self.assertEqual(artifacts[0].artifact_id, "plymouth-theme")
         self.assertIn("SHADE RAID", artifacts[0].content)
-
 
