@@ -105,7 +105,7 @@
       "format": "↓ {}",
       "interval": 1800,
       "exec": "up=$(($(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l))); [ \"$up\" -gt 0 ] && echo \"$up\" || exit 1",
-      "on-click": "ghostty --class=\"com.system.update\" --title=\"System Update\" -e ~/.config/waybar/scripts/system-update.sh",
+      "on-click": "WS_ID=$(hyprctl activeworkspace | grep -oE 'workspace ID [0-9]+' | cut -d' ' -f3) && hyprctl dispatch \"hl.dsp.exec_cmd('[workspace $WS_ID] ghostty --class=com.system.update --title=\\\"System Update\\\" -e ~/.config/waybar/scripts/system-update.sh')\",
       "signal": 8,
       "tooltip": false
     }
