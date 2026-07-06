@@ -348,6 +348,7 @@ class TestGenerators(unittest.TestCase):
         self.assertIn("background-image: none;", artifacts[0].content)
         self.assertIn("entry {", artifacts[0].content)
         self.assertIn(".destructive-action", artifacts[0].content)
+        self.assertNotIn("background-color: #D94F2B;", artifacts[0].content)
 
     def test_greetd_generator_rendering(self):
         colors = ColorTokens(colors={})
@@ -387,4 +388,3 @@ class TestGenerators(unittest.TestCase):
         self.assertEqual(len(artifacts), 1)
         self.assertEqual(artifacts[0].artifact_id, "plymouth-theme")
         self.assertIn("SHADE RAID", artifacts[0].content)
-

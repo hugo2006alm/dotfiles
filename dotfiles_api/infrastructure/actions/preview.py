@@ -65,8 +65,8 @@ class PreviewAction(Action):
         # 4. Write back preview theme
         try:
             preview_theme_path.write_text(next_theme)
-        except Exception:
-            pass
+        except Exception as exc:
+            self._exec.execute(["notify-send", "Theme Preview Error", str(exc)])
             
         # 5. Regenerate swaync config/style with active theme tokens and preview state.
         try:

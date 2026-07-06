@@ -118,8 +118,15 @@ entry:focus {{
 
 /* ── Destructive/Power actions ── */
 .destructive-action {{
-    background-color: #D94F2B;
-    color: #F4EFE4;
+    background-color: {bg2};
+    color: {card_fg};
+    border-color: {border};
+}}
+
+.destructive-action:hover {{
+    background-color: {accent};
+    color: {accent_fg};
+    border-color: {accent};
 }}
 """
         return [

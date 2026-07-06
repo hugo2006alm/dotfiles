@@ -55,3 +55,47 @@ label:not(.title) {
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
+
+/* ── Buttons ── */
+button {
+    background-color: #201C17;
+    border: 2px solid #F4EFE4;
+    border-radius: 0px;
+    background-image: none;
+    box-shadow: none;
+    text-shadow: none;
+    padding: 8px 16px;
+}
+
+button:hover {
+    background-color: #E8623E;
+    color: #16130F;
+    border-color: #E8623E;
+}
+
+/* ── Entries ── */
+entry {
+    background-color: #201C17;
+    border: 2px solid #F4EFE4;
+    border-radius: 0px;
+    background-image: none;
+    box-shadow: none;
+    padding: 6px 12px;
+}
+
+entry:focus {
+    border-color: #E8623E;
+}
+
+/* ── Destructive/Power actions ── */
+.destructive-action {
+    background-color: #201C17;
+    color: #F4EFE4;
+    border-color: #F4EFE4;
+}
+
+.destructive-action:hover {
+    background-color: #E8623E;
+    color: #16130F;
+    border-color: #E8623E;
+}

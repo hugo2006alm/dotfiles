@@ -455,6 +455,7 @@ def main() -> None:
                 f.write(args.theme)
         except Exception:
             pass
+        action_svc.run_action("wallpaper", [])
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "reload":
@@ -468,6 +469,7 @@ def main() -> None:
                 f.write(args.theme)
         except Exception:
             pass
+        action_svc.run_action("wallpaper", [])
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "toggle":
@@ -510,6 +512,7 @@ def main() -> None:
             # Check parity: we break if the parity of toggles performed matches the parity of total clicks
             if (toggles_performed % 2) == (total_clicks % 2):
                 break
+        action_svc.run_action("wallpaper", [])
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":

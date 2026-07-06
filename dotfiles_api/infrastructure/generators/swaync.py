@@ -160,7 +160,7 @@ class SwayncGenerator(BaseGenerator):
                     "actions": [
                         {
                             "label": "Check for Updates",
-                            "command": f"WS_ID=$(hyprctl activeworkspace | grep -oE 'workspace ID [0-9]+' | cut -d' ' -f3) && hyprctl dispatch \"hl.dsp.exec_cmd('[workspace $WS_ID] ghostty --class=com.system.update --title=\\\"System Update\\\" -e {Path.home()}/.config/waybar/scripts/system-update.sh')\""
+                            "command": f"WS_ID=$(hyprctl activeworkspace | grep -oE 'workspace ID [0-9]+' | cut -d' ' -f3) && hyprctl dispatch \"hl.dsp.exec_cmd('[workspace $WS_ID] ghostty --class=com.system.update --title=\\\"System Update\\\" -e {env.home_dir}/.config/waybar/scripts/system-update.sh')\""
                         }
                     ]
                 },

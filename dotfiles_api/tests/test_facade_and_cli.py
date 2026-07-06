@@ -135,3 +135,18 @@ class TestCliCommands(unittest.TestCase):
         main()
         
         mock_action_svc.run_action.assert_called_once_with("screenshot", ["--region"])
+
+    @patch('argparse.ArgumentParser.parse_args')
+    @patch('dotfiles_api.presentation.cli.ActionService')
+    @patch('dotfiles_api.presentation.cli.DotfilesFacade')
+    def test_cli_configure_changes_wallpaper_after_theme(self, mock_facade_class, mock_action_svc_class, mock_parse_args):
+        import argparse
+        mock_parse_args.return_value = argparse.Namespace(command="configure", dry_run=False, theme="shade-raid-dark", verbose=False)
+        mock_action_svc = mock_action_svc_class.return_value
+        mock_facade = mock_facade_class.return_value
+
+        from dotfiles_api.presentation.cli import main
+        main()
+
+        mock_facade.apply_theme.assert_called_once_with("shade-raid-dark")
+        mock_action_svc.run_action.assert_called_with("wallpaper", [])
