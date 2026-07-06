@@ -192,6 +192,10 @@ class TestGenerators(unittest.TestCase):
         
         # Verify scrollbar hiding and animation styles
         self.assertIn(".control-center scrollbar", style_artifact.content)
+        self.assertIn("scrollbar {", style_artifact.content)
+        self.assertIn("#theme-preview-image button", style_artifact.content)
+        self.assertIn("#theme-preview-palette button", style_artifact.content)
+        self.assertIn("transition: all 160ms ease;", style_artifact.content)
         self.assertIn(".notification.removed", style_artifact.content)
 
     def test_swaync_preview_select_applies_preview_theme_not_active_theme(self):

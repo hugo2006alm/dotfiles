@@ -228,15 +228,19 @@ class SwayncGenerator(BaseGenerator):
 }}
 
 /* Hide scrollbar completamente */
+scrollbar,
 .control-center scrollbar {{
   background: transparent;
   min-width: 0px;
   width: 0px;
+  opacity: 0;
 }}
+scrollbar slider,
 .control-center scrollbar slider {{
   background: transparent;
   min-width: 0px;
   width: 0px;
+  opacity: 0;
 }}
 .control-center viewport {{
   background: transparent;
@@ -366,7 +370,9 @@ class SwayncGenerator(BaseGenerator):
 
         if preview_wallpaper_path:
             style_content += f"""
+#theme-preview-image button,
 #theme-preview-image > flowbox > flowboxchild > button {{
+  background: url("{preview_wallpaper_path}");
   background-image: url("{preview_wallpaper_path}");
   background-size: cover;
   background-position: center;
@@ -376,20 +382,26 @@ class SwayncGenerator(BaseGenerator):
   border: 8px solid {bg2};
   outline: 2px solid {border};
   border-radius: 0px;
+  transition: all 160ms ease;
 }}
+#theme-preview-image button:hover,
+#theme-preview-image button:active,
+#theme-preview-image button:focus,
 #theme-preview-image > flowbox > flowboxchild > button:hover,
 #theme-preview-image > flowbox > flowboxchild > button:active,
 #theme-preview-image > flowbox > flowboxchild > button:focus {{
+  background: url("{preview_wallpaper_path}");
   background-image: url("{preview_wallpaper_path}");
   background-size: cover;
   background-position: center;
-  outline: 2px solid {border};
-  border-color: {bg2};
-  box-shadow: none;
+  outline: 3px solid {accent};
+  border-color: {accent};
+  box-shadow: 0 0 0 3px {accent};
 }}
 """
         else:
             style_content += f"""
+#theme-preview-image button,
 #theme-preview-image > flowbox > flowboxchild > button {{
   background-color: {bg2};
   min-height: 220px;
@@ -398,14 +410,18 @@ class SwayncGenerator(BaseGenerator):
   border: 8px solid {bg2};
   outline: 2px solid {border};
   border-radius: 0px;
+  transition: all 160ms ease;
 }}
+#theme-preview-image button:hover,
+#theme-preview-image button:active,
+#theme-preview-image button:focus,
 #theme-preview-image > flowbox > flowboxchild > button:hover,
 #theme-preview-image > flowbox > flowboxchild > button:active,
 #theme-preview-image > flowbox > flowboxchild > button:focus {{
   background-color: {bg2};
-  outline: 2px solid {border};
-  border-color: {bg2};
-  box-shadow: none;
+  outline: 3px solid {accent};
+  border-color: {accent};
+  box-shadow: 0 0 0 3px {accent};
 }}
 """
 
@@ -423,24 +439,32 @@ class SwayncGenerator(BaseGenerator):
         p_inactive = p_colors.get("inactive", inactive)
 
         style_content += f"""
+#theme-preview-palette button,
 #theme-preview-palette > flowbox > flowboxchild > button {{
   background: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
+  background-image: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
   min-height: 48px;
   border: 2px solid {border};
   border-radius: 0px;
   margin: 8px 16px;
+  transition: all 160ms ease;
 }}
+#theme-preview-palette button:hover,
+#theme-preview-palette button:active,
+#theme-preview-palette button:focus,
 #theme-preview-palette > flowbox > flowboxchild > button:hover,
 #theme-preview-palette > flowbox > flowboxchild > button:active,
 #theme-preview-palette > flowbox > flowboxchild > button:focus {{
   background: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
-  border-color: {border};
-  box-shadow: none;
+  background-image: linear-gradient(to right, {p_bg} 20%, {p_bg2} 20%, {p_bg2} 40%, {p_fg} 40%, {p_fg} 60%, {p_accent} 60%, {p_accent} 80%, {p_inactive} 80%);
+  border-color: {accent};
+  box-shadow: 0 0 0 2px {accent};
 }}
 
 #theme-preview-controls {{
   margin: 8px 0;
 }}
+#theme-preview-controls button,
 #theme-preview-controls > flowbox > flowboxchild > button {{
   background: {bg2};
   border: 2px solid {border};
@@ -450,16 +474,20 @@ class SwayncGenerator(BaseGenerator):
   font-weight: bold;
   font-size: 12px;
   margin: 4px;
+  transition: all 160ms ease;
 }}
+#theme-preview-controls button:hover,
 #theme-preview-controls > flowbox > flowboxchild > button:hover {{
   background: {accent};
   color: {bg};
   border-color: {accent};
+  box-shadow: 0 0 0 2px {accent};
 }}
 """
 
         if preview_theme == theme_name:
             style_content += f"""
+#theme-preview-controls button:last-child,
 #theme-preview-controls > flowbox > flowboxchild:nth-child(4) > button {{
   background: {accent};
   color: {bg};

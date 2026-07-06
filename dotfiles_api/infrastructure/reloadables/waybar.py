@@ -14,7 +14,10 @@ class WaybarReloadable(EventReloadable):
 
     def reload(self) -> None:
         self.compile_styles()
-        self._exec.execute(["pkill", "-USR2", "waybar"])
+        signal_result = self._exec.execute(["pkill", "-USR2", "waybar"])
+        running_result = self._exec.execute(["pgrep", "-x", "waybar"])
+        if signal_result.returncode != 0 or running_result.returncode != 0:
+            self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('waybar')"])
 
     def supports(self, generator_name: str) -> bool:
         return generator_name == "waybar"

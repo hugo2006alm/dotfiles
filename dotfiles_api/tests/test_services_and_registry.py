@@ -301,9 +301,26 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertEqual(len(executor.commands), 2)
+        self.assertEqual(len(executor.commands), 3)
         self.assertIn("sassc", executor.commands[0])
         self.assertIn("pkill -USR2 waybar", executor.commands[1])
+        self.assertIn("pgrep -x waybar", executor.commands[2])
+
+    def test_waybar_reloadable_restarts_when_waybar_missing(self):
+        # Arrange
+        executor = MockCommandExecutor()
+        executor.mock_results = {
+            "pkill -USR2 waybar": ("", "", 1),
+            "pgrep -x waybar": ("", "", 1),
+        }
+        exec_ctx = ExecutionContext(dry_run=False, executor=executor)
+        reloadable = WaybarReloadable(exec_ctx=exec_ctx)
+
+        # Act
+        reloadable.reload()
+
+        # Assert
+        self.assertTrue(any("hyprctl dispatch hl.dsp.exec_cmd('waybar')" in cmd for cmd in executor.commands))
 
     def test_swaync_reloadable(self):
         # Arrange
@@ -453,6 +470,4 @@ class TestInfrastructureImplementations(unittest.TestCase):
         # Check command
         expected_cmd = "sudo /usr/bin/cp /home/user/.config/greetd/regreet.css /etc/greetd/regreet.css"
         self.assertTrue(any(expected_cmd in cmd for cmd in executor.commands))
-
-
 

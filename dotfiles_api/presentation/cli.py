@@ -449,12 +449,12 @@ def main() -> None:
     elif args.command == "link":
         facade.link()
     elif args.command == "configure":
-        facade.apply_theme(args.theme)
         try:
             with open("/tmp/dotfiles_preview_theme", "w") as f:
                 f.write(args.theme)
         except Exception:
             pass
+        facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
@@ -463,12 +463,12 @@ def main() -> None:
     elif args.command == "apply-all":
         facade.apply_profile(desktop_profile)
         facade.link()
-        facade.apply_theme(args.theme)
         try:
             with open("/tmp/dotfiles_preview_theme", "w") as f:
                 f.write(args.theme)
         except Exception:
             pass
+        facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
@@ -490,12 +490,12 @@ def main() -> None:
                 sys.exit(1)
                 
             print(f"Toggling theme from {active} to {next_theme}")
-            facade.apply_theme(next_theme)
             try:
                 with open("/tmp/dotfiles_preview_theme", "w") as f:
                     f.write(next_theme)
             except Exception:
                 pass
+            facade.apply_theme(next_theme)
             toggles_performed += 1
             
             # Read click count
