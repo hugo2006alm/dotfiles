@@ -22,7 +22,7 @@ def build_desktop_profile(optional_packages: list[str] | None = None) -> Profile
         Feature(name="system", packages=["stow", "btop", "bc", "ufw", "rate-mirrors", "xdg-user-dirs", "openssh", "imagemagick", "unzip", "zip", "curl", "mise", "plymouth", "wlogout"], capabilities=["system"]),
         Feature(name="login", packages=["greetd", "greetd-regreet"], capabilities=["login"]),
         Feature(name="editors", packages=["neovim", "lazygit", "github-cli"], capabilities=["editors"]),
-        Feature(name="fonts", packages=["ttf-jetbrains-mono-nerd", "ttf-liberation", "otf-monaspace", "ttf-iosevka-nerd", "ttf-space-mono-nerd", "noto-fonts-emoji", "otf-bebas-neue"], capabilities=["fonts"]),
+        Feature(name="fonts", packages=["ttf-jetbrains-mono-nerd", "ttf-liberation", "otf-monaspace", "ttf-iosevka-nerd", "ttf-space-mono-nerd", "noto-fonts-emoji", "otf-bebas-neue-git"], capabilities=["fonts"]),
         Feature(name="gaming", packages=["mesa", "lib32-mesa", "vulkan-radeon", "lib32-vulkan-radeon", "libva-mesa-driver", "libva-utils", "gamescope", "steam", "heroic-games-launcher-bin"], capabilities=["gaming"]),
         Feature(name="apps", packages=["vesktop-bin", "bitwarden", "zen-browser-bin"], capabilities=["apps"]),
         Feature(name="keyring", packages=["gnome-keyring", "seahorse"], capabilities=["keyring"]),
