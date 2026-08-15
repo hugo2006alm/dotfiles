@@ -1,3 +1,5 @@
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -34,7 +36,21 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertIn("pacman -Syu --noconfirm", install)
 
     def test_btop_runtime_config_is_not_tracked_as_a_template(self) -> None:
-        self.assertFalse((ROOT / ".config" / "btop" / "btop.conf").exists())
+        if shutil.which("git") is None:
+            self.skipTest("git is required to inspect tracked files")
+
+        result = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", ".config/btop/btop.conf"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertNotEqual(
+            result.returncode,
+            0,
+            ".config/btop/btop.conf must remain runtime-only and untracked",
+        )
 
 
 if __name__ == "__main__":
