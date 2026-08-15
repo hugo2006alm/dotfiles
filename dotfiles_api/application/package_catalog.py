@@ -22,7 +22,7 @@ PACKAGE_SOURCES: dict[str, str] = {
     "spotify": "yay",
     "spicetify-cli": "yay",
     "zen-browser-bin": "yay",
-    "otf-bebas-neue": "yay",
+    "otf-bebas-neue-git": "yay",
 
     # Optional AUR packages
     "android-studio": "yay",
