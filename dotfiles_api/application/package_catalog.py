@@ -65,6 +65,11 @@ OPTIONAL_PACKAGES: list[dict[str, object]] = [
     # Gaming extras
     {"package": "protontricks", "label": "Protontricks", "category": "Gaming", "source": "pacman"},
 
+    # Alternative desktop tools already installed on this setup
+    {"package": "rofi", "label": "Rofi (alternative launcher)", "category": "Desktop alternatives", "source": "pacman"},
+    {"package": "mako", "label": "Mako (alternative notification daemon)", "category": "Desktop alternatives", "source": "pacman"},
+    {"package": "nano", "label": "Nano editor", "category": "Desktop alternatives", "source": "pacman"},
+
     # Utilities / appearance currently used on this setup
     {"package": "dmidecode", "label": "dmidecode", "category": "Utilities", "source": "pacman"},
     {"package": "rsync", "label": "rsync", "category": "Utilities", "source": "pacman"},
