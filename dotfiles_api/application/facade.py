@@ -3,11 +3,13 @@ from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.contracts.linker import Linker
 from dotfiles_api.domain.models.profile import Profile
+from dotfiles_api.application.profiles.desktop import build_desktop_profile
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
 
 from dotfiles_api.application.services.setup import SetupService
+
 
 class DotfilesFacade:
     def __init__(
@@ -29,6 +31,11 @@ class DotfilesFacade:
         self._setup_service = setup_service
 
     def apply_profile(self, profile: Profile) -> None:
+        # Keep a single source of truth for the standard desktop profile.
+        # SetupService installs its own profile directly when optional packages
+        # have been selected, so those selections are preserved.
+        if profile.name == "desktop":
+            profile = build_desktop_profile()
         self._install_service.install_profile(profile)
 
     def apply_theme(self, theme_name: str) -> None:
