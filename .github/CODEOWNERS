@@ -1,0 +1,5 @@
+# Default code owner for the entire repository
+* @hugo2006alm
+
+# Explicitly protect the ownership definition itself
+/.github/CODEOWNERS @hugo2006alm
