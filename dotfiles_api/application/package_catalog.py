@@ -1,4 +1,16 @@
 PACKAGE_SOURCES: dict[str, str] = {
+    # Official repo packages that used to be routed through yay in the CLI
+    "hyprlock": "pacman",
+    "hypridle": "pacman",
+    "hyprsunset": "pacman",
+    "hyprpicker": "pacman",
+    "hyprshot": "pacman",
+    "greetd": "pacman",
+    "greetd-regreet": "pacman",
+    "bluetui": "pacman",
+    "bitwarden": "pacman",
+    "ttf-iosevka-nerd": "pacman",
+
     # AUR packages used by the base desktop profile
     "walker-bin": "yay",
     "elephant-all": "yay",
