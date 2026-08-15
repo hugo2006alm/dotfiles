@@ -15,7 +15,7 @@ def build_desktop_profile(optional_packages: list[str] | None = None) -> Profile
         Feature(name="shell", packages=["fish", "starship", "zoxide", "stow", "bat", "eza", "fzf", "ripgrep", "fd", "git-delta"], capabilities=["shell"]),
         Feature(name="screenshot", packages=["grim", "slurp", "wl-clipboard", "cliphist", "pacman-contrib", "wf-recorder"], capabilities=["screenshot"]),
         Feature(name="brightness", packages=["brightnessctl"], capabilities=["brightness"]),
-        Feature(name="media", packages=["playerctl", "mpv", "imv", "spotify", "spicetify-cli"], capabilities=["media"]),
+        Feature(name="media", packages=["playerctl", "mpv", "imv"], capabilities=["media"]),
         Feature(name="theming", packages=["nwg-look", "qt6ct", "qt5ct", "papirus-icon-theme", "bibata-cursor-theme", "papirus-folders", "swayosd"], capabilities=["theming"]),
         Feature(name="polkit", packages=["polkit-gnome"], capabilities=["polkit"]),
         Feature(name="filemanager", packages=["nautilus", "tumbler", "ffmpegthumbnailer", "file-roller"], capabilities=["file-manager"]),
@@ -23,8 +23,7 @@ def build_desktop_profile(optional_packages: list[str] | None = None) -> Profile
         Feature(name="login", packages=["greetd", "greetd-regreet"], capabilities=["login"]),
         Feature(name="editors", packages=["neovim", "lazygit", "github-cli"], capabilities=["editors"]),
         Feature(name="fonts", packages=["ttf-jetbrains-mono-nerd", "ttf-liberation", "otf-monaspace", "ttf-iosevka-nerd", "ttf-space-mono-nerd", "noto-fonts-emoji", "otf-bebas-neue-git"], capabilities=["fonts"]),
-        Feature(name="gaming", packages=["mesa", "lib32-mesa", "vulkan-radeon", "lib32-vulkan-radeon", "libva-mesa-driver", "libva-utils", "gamescope", "steam", "heroic-games-launcher-bin"], capabilities=["gaming"]),
-        Feature(name="apps", packages=["vesktop-bin", "bitwarden", "zen-browser-bin"], capabilities=["apps"]),
+        Feature(name="gaming", packages=["mesa", "lib32-mesa", "vulkan-radeon", "lib32-vulkan-radeon", "libva-mesa-driver", "libva-utils", "gamescope"], capabilities=["gaming"]),
         Feature(name="keyring", packages=["gnome-keyring", "seahorse"], capabilities=["keyring"]),
     ]
 
