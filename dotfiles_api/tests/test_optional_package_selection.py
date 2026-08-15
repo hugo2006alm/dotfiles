@@ -36,6 +36,35 @@ class TestOptionalPackageSelection(unittest.TestCase):
         for option in OPTIONAL_PACKAGES:
             self.assertNotIn(option["package"], packages)
 
+    def test_personal_apps_are_optional_instead_of_base_packages(self) -> None:
+        base_packages = build_desktop_profile().get_packages()
+        optional_packages = {str(option["package"]) for option in OPTIONAL_PACKAGES}
+
+        personal_apps = {
+            "spotify",
+            "spicetify-cli",
+            "steam",
+            "heroic-games-launcher-bin",
+            "vesktop-bin",
+            "bitwarden",
+            "zen-browser-bin",
+            "codex-app-unofficial",
+        }
+
+        self.assertTrue(personal_apps.isdisjoint(base_packages))
+        self.assertTrue(personal_apps.issubset(optional_packages))
+
+    def test_chatgpt_replaces_codex_desktop_option(self) -> None:
+        optional_packages = {str(option["package"]) for option in OPTIONAL_PACKAGES}
+        self.assertIn("codex-app-unofficial", optional_packages)
+        self.assertNotIn("codex-desktop", optional_packages)
+
+        chatgpt_option = next(
+            option for option in OPTIONAL_PACKAGES
+            if option["package"] == "codex-app-unofficial"
+        )
+        self.assertIn("ChatGPT", str(chatgpt_option["label"]))
+
     def test_selected_optional_packages_are_added_to_profile(self) -> None:
         profile = build_desktop_profile(["docker", "obs-studio", "android-studio"])
         packages = profile.get_packages()
