@@ -4,6 +4,7 @@ from pathlib import Path
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.context.environment import EnvironmentContext
 
+
 class UserSetupService:
     def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
         self._exec = exec_ctx
@@ -12,7 +13,7 @@ class UserSetupService:
     def setup_user(self, setup_github: bool = False) -> None:
         name_res = self._exec.execute(["git", "config", "--global", "user.name"])
         email_res = self._exec.execute(["git", "config", "--global", "user.email"])
-        
+
         git_name = name_res.stdout.strip()
         git_email = email_res.stdout.strip()
 
@@ -28,7 +29,7 @@ class UserSetupService:
                         self._exec.execute(["git", "config", "--global", "user.email", email_input])
                 except (IOError, EOFError):
                     pass
-        
+
         self._exec.execute(["git", "config", "--global", "core.pager", "delta"])
         self._exec.execute(["chsh", "-s", "/usr/bin/fish"])
         self._exec.execute(["xdg-user-dirs-update"])
@@ -46,9 +47,8 @@ class UserSetupService:
                         pass
 
         self._exec.execute([
-            "sudo", "reflector", "--latest", "20",
-            "--protocol", "https", "--sort", "rate",
-            "--save", "/etc/pacman.d/mirrorlist"
+            "sudo", "sh", "-c",
+            "rate-mirrors --protocol https arch > /etc/pacman.d/mirrorlist"
         ])
 
         self._exec.execute(["mise", "install", "python@latest"])
