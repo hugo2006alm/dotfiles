@@ -13,10 +13,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
       - name: Install ShellCheck & Lua
         run: |
           sudo apt-get update
           sudo apt-get install -y shellcheck lua5.4
+
+      - name: Run Python tests
+        run: python -m unittest discover -s dotfiles_api/tests
 
       - name: Check Shell Script Syntax & Lint
         run: |
