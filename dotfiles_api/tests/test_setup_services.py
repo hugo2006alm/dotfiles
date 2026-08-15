@@ -95,6 +95,7 @@ class TestSetupServices(unittest.TestCase):
             user_service=mock_user,
             extras_service=mock_extras,
             optional_package_selector=mock_selector,
+            graphics_package_detector=lambda: ["mesa", "vulkan-intel"],
         )
 
         with patch("sys.stdin.isatty", return_value=True):
@@ -106,6 +107,8 @@ class TestSetupServices(unittest.TestCase):
         installed_packages = installed_profile.get_packages()
         self.assertIn("docker", installed_packages)
         self.assertIn("obs-studio", installed_packages)
+        self.assertIn("vulkan-intel", installed_packages)
+        self.assertNotIn("vulkan-radeon", installed_packages)
         mock_linker.link.assert_called_once()
         mock_services.setup_services.assert_called_once()
         mock_user.setup_user.assert_called_once_with(setup_github=True)
