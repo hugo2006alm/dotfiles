@@ -2,11 +2,12 @@ import unittest
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.contracts import CommandResult
+
 
 class MockCommandExecutor:
     def __init__(self):
@@ -21,6 +22,7 @@ class MockCommandExecutor:
         if "user.email" in args:
             return CommandResult(stdout="mock@example.com", stderr="", returncode=0)
         return CommandResult(stdout="", stderr="", returncode=0)
+
 
 class TestSetupServices(unittest.TestCase):
     def setUp(self) -> None:
@@ -41,7 +43,6 @@ class TestSetupServices(unittest.TestCase):
         svc = ServicesSetupService(self.exec_ctx, self.env)
         svc.setup_services()
 
-        # Check that systemctl commands were called
         self.assertTrue(any("systemctl enable NetworkManager" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("ufw enable" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("sudoers.d" in cmd for cmd in self.executor.commands))
@@ -49,16 +50,16 @@ class TestSetupServices(unittest.TestCase):
     def test_user_setup_service(self) -> None:
         from dotfiles_api.application.services.user import UserSetupService
         svc = UserSetupService(self.exec_ctx, self.env)
-        
-        # Test runs git configs, Default shell etc.
+
         svc.setup_user(setup_github=False)
         self.assertTrue(any("chsh -s /usr/bin/fish" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("fc-cache" in cmd for cmd in self.executor.commands))
+        self.assertTrue(any("rate-mirrors --protocol https arch" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("reflector" in cmd for cmd in self.executor.commands))
         self.assertTrue((self.env.home_dir / ".config" / "gtk-3.0" / "bookmarks").exists())
 
     def test_extras_setup_service(self) -> None:
         from dotfiles_api.application.services.extras import ExtrasSetupService
-        # Setup mock directories for spotify
         spotify_path = Path(self.temp_dir) / "opt" / "spotify"
         spotify_path.mkdir(parents=True)
         prefs_file = self.env.home_dir / ".config" / "spotify" / "prefs"
@@ -66,11 +67,11 @@ class TestSetupServices(unittest.TestCase):
         prefs_file.write_text("prefs")
 
         svc = ExtrasSetupService(self.exec_ctx, self.env)
-        # Mock paths
         svc._spotify_path = spotify_path
         svc._prefs_path = prefs_file
 
-        svc.setup_extras()
+        with patch("shutil.which", side_effect=lambda name: f"/usr/bin/{name}"):
+            svc.setup_extras()
         self.assertTrue(any("spicetify backup apply" in cmd for cmd in self.executor.commands))
 
     def test_setup_service(self) -> None:
@@ -81,6 +82,8 @@ class TestSetupServices(unittest.TestCase):
         mock_services = MagicMock()
         mock_user = MagicMock()
         mock_extras = MagicMock()
+        mock_selector = MagicMock()
+        mock_selector.select.return_value = ["docker", "obs-studio"]
 
         svc = SetupService(
             env=self.env,
@@ -90,13 +93,25 @@ class TestSetupServices(unittest.TestCase):
             theme_service=mock_theme_service,
             services_service=mock_services,
             user_service=mock_user,
-            extras_service=mock_extras
+            extras_service=mock_extras,
+            optional_package_selector=mock_selector,
         )
-        svc.run_setup(setup_github=True)
 
+        with patch("sys.stdin.isatty", return_value=True):
+            svc.run_setup(setup_github=True)
+
+        mock_selector.select.assert_called_once()
         mock_install_service.install_profile.assert_called_once()
+        installed_profile = mock_install_service.install_profile.call_args.args[0]
+        installed_packages = installed_profile.get_packages()
+        self.assertIn("docker", installed_packages)
+        self.assertIn("obs-studio", installed_packages)
         mock_linker.link.assert_called_once()
         mock_services.setup_services.assert_called_once()
         mock_user.setup_user.assert_called_once_with(setup_github=True)
         mock_theme_service.apply_theme.assert_called_once_with("shade-raid")
         mock_extras.setup_extras.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()
