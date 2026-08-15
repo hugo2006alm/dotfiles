@@ -26,7 +26,6 @@ from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
 from dotfiles_api.infrastructure.reloadables.vesktop import VesktopReloadable
 from dotfiles_api.infrastructure.reloadables.regreet import ReGreetReloadable
 
-
 # Generators
 from dotfiles_api.infrastructure.generators.hypr import HyprlandGenerator
 from dotfiles_api.infrastructure.generators.waybar import WaybarGenerator
@@ -43,6 +42,8 @@ from dotfiles_api.infrastructure.generators.greetd import GreetdGenerator
 from dotfiles_api.infrastructure.generators.gtk import GtkGenerator
 from dotfiles_api.infrastructure.generators.plymouth import PlymouthGenerator
 
+from dotfiles_api.application.hardware import detect_graphics_packages
+from dotfiles_api.application.profiles.desktop import build_desktop_profile
 from dotfiles_api.application.registry import PackageRegistry
 from dotfiles_api.application.loader import ThemeLoader
 from dotfiles_api.application.store import ArtifactStore
@@ -51,8 +52,6 @@ from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
 from dotfiles_api.application.facade import DotfilesFacade
-from dotfiles_api.domain.models.feature import Feature
-from dotfiles_api.domain.models.profile import Profile
 from dotfiles_api.domain.events import EventBus, ThemeChangedEvent, ConfigGeneratedEvent
 
 # Setup services
@@ -71,6 +70,7 @@ from dotfiles_api.infrastructure.actions.drawer import DrawerAction
 from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
 from dotfiles_api.infrastructure.actions.preview import PreviewAction
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Modular Dotfiles API CLI Manager")
     parser.add_argument("--dry-run", action="store_true", help="Log commands instead of running them")
@@ -80,7 +80,7 @@ def main() -> None:
     parser.add_argument("action_args", nargs=argparse.REMAINDER, help="Arguments passed to the action")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
-    
+
     args = parser.parse_args()
 
     home_dir = Path.home()
@@ -91,116 +91,11 @@ def main() -> None:
         user = getpass.getuser()
 
     env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user)
-    
+
     executor = SystemCommandExecutor()
     exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor, verbose=getattr(args, "verbose", False))
 
-    package_mapping = {
-        # AUR packages
-        "hyprlock": "yay",
-        "hypridle": "yay",
-        "hyprsunset": "yay",
-        "hyprpicker": "yay",
-        "hyprshot": "yay",
-        "greetd": "yay",
-        "greetd-regreet": "yay",
-        "walker-bin": "yay",
-        "elephant-all": "yay",
-        "swayosd-git": "yay",
-        "bluetui": "yay",
-        "wlogout": "yay",
-        "mise-bin": "yay",
-        "bibata-cursor-theme": "yay",
-        "papirus-folders": "yay",
-        "vesktop-bin": "yay",
-        "heroic-games-launcher-bin": "yay",
-        "bitwarden": "yay",
-        "spotify": "yay",
-        "spicetify-cli": "yay",
-        "zen-browser-bin": "yay",
-        "ttf-iosevka-nerd": "yay",
-        "otf-bebas-neue": "yay",
-        
-        # Pacman packages
-        "hyprland": "pacman",
-        "xdg-desktop-portal-hyprland": "pacman",
-        "xdg-desktop-portal-gtk": "pacman",
-        "waybar": "pacman",
-        "sassc": "pacman",
-        "jq": "pacman",
-        "pipewire": "pacman",
-        "pipewire-pulse": "pacman",
-        "pipewire-alsa": "pacman",
-        "wireplumber": "pacman",
-        "networkmanager": "pacman",
-        "network-manager-applet": "pacman",
-        "openvpn": "pacman",
-        "network-manager-openvpn": "pacman",
-        "bluez": "pacman",
-        "bluez-utils": "pacman",
-        "awww": "pacman",
-        "swaync": "pacman",
-        "rofi-wayland": "pacman",
-        "ghostty": "pacman",
-        "fish": "pacman",
-        "starship": "pacman",
-        "grim": "pacman",
-        "slurp": "pacman",
-        "wl-clipboard": "pacman",
-        "libnotify": "pacman",
-        "cliphist": "pacman",
-        "pacman-contrib": "pacman",
-        "wf-recorder": "pacman",
-        "brightnessctl": "pacman",
-        "playerctl": "pacman",
-        "mpv": "pacman",
-        "imv": "pacman",
-        "pavucontrol": "pacman",
-        "nwg-look": "pacman",
-        "qt6ct": "pacman",
-        "qt5ct": "pacman",
-        "papirus-icon-theme": "pacman",
-        "polkit-gnome": "pacman",
-        "nautilus": "pacman",
-        "tumbler": "pacman",
-        "ffmpegthumbnailer": "pacman",
-        "file-roller": "pacman",
-        "stow": "pacman",
-        "btop": "pacman",
-        "bc": "pacman",
-        "ufw": "pacman",
-        "reflector": "pacman",
-        "xdg-user-dirs": "pacman",
-        "openssh": "pacman",
-        "imagemagick": "pacman",
-        "neovim": "pacman",
-        "lazygit": "pacman",
-        "github-cli": "pacman",
-        "bat": "pacman",
-        "eza": "pacman",
-        "fzf": "pacman",
-        "zoxide": "pacman",
-        "ripgrep": "pacman",
-        "fd": "pacman",
-        "git-delta": "pacman",
-        "python-pip": "pacman",
-        "ttf-jetbrains-mono-nerd": "pacman",
-        "ttf-liberation": "pacman",
-        "otf-monaspace": "pacman",
-        "unzip": "pacman",
-        "zip": "pacman",
-        "mesa": "pacman",
-        "lib32-mesa": "pacman",
-        "vulkan-radeon": "pacman",
-        "lib32-vulkan-radeon": "pacman",
-        "libva-mesa-driver": "pacman",
-        "libva-utils": "pacman",
-        "gamescope": "pacman",
-        "steam": "pacman",
-        "gnome-keyring": "pacman",
-        "seahorse": "pacman"
-    }
-    package_registry = PackageRegistry(mapping=package_mapping)
+    package_registry = PackageRegistry()
 
     artifact_paths = {
         "hyprland-colors": env.home_dir / ".config" / "hypr" / "colors.lua",
@@ -226,7 +121,7 @@ def main() -> None:
         "gtk4-settings": env.home_dir / ".config" / "gtk-4.0" / "settings.ini",
         "gtk3-css": env.home_dir / ".config" / "gtk-3.0" / "gtk.css",
         "gtk4-css": env.home_dir / ".config" / "gtk-4.0" / "gtk.css",
-        "plymouth-theme": env.dotfiles_dir / "plymouth-shade-raid" / "shade-raid.script"
+        "plymouth-theme": env.dotfiles_dir / "plymouth-shade-raid" / "shade-raid.script",
     }
     artifact_store = ArtifactStore(mappings=artifact_paths)
 
@@ -260,14 +155,14 @@ def main() -> None:
         btop_reload,
         hyprland_reload,
         vesktop_reload,
-        regreet_reload
+        regreet_reload,
     ]
 
     install_svc = InstallService(
         env=env,
         exec_ctx=exec_ctx,
         registry=package_registry,
-        sources=sources
+        sources=sources,
     )
 
     theme_loader = ThemeLoader(env=env)
@@ -279,7 +174,7 @@ def main() -> None:
         event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
-    
+
     generators = [
         HyprlandGenerator(name="hyprland", transaction=tx, event_bus=event_bus),
         WaybarGenerator(name="waybar", transaction=tx, event_bus=event_bus),
@@ -294,37 +189,13 @@ def main() -> None:
         ReGreetGenerator(name="regreet", transaction=tx, event_bus=event_bus),
         GreetdGenerator(name="greetd", transaction=tx, event_bus=event_bus),
         GtkGenerator(name="gtk", transaction=tx, event_bus=event_bus),
-        PlymouthGenerator(name="plymouth", transaction=tx, event_bus=event_bus)
+        PlymouthGenerator(name="plymouth", transaction=tx, event_bus=event_bus),
     ]
 
     for gen in generators:
         event_bus.subscribe(ThemeChangedEvent, gen.handle_theme_changed)
 
-    features = [
-        Feature(name="compositor", packages=["hyprland", "xdg-desktop-portal-hyprland", "xdg-desktop-portal-gtk", "hyprlock", "hypridle", "hyprsunset", "hyprpicker", "hyprshot", "awww"], capabilities=["compositor"]),
-        Feature(name="statusbar", packages=["waybar", "sassc", "jq"], capabilities=["status-bar"]),
-        Feature(name="audio", packages=["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber", "pavucontrol"], capabilities=["audio"]),
-        Feature(name="network", packages=["networkmanager", "network-manager-applet", "openvpn", "network-manager-openvpn"], capabilities=["network"]),
-        Feature(name="bluetooth", packages=["bluez", "bluez-utils", "bluetui"], capabilities=["bluetooth"]),
-        Feature(name="notifications", packages=["swaync", "libnotify"], capabilities=["notification-center"]),
-        Feature(name="launcher", packages=["walker-bin", "elephant-all", "rofi-wayland"], capabilities=["launcher"]),
-        Feature(name="terminal", packages=["ghostty"], capabilities=["terminal"]),
-        Feature(name="shell", packages=["fish", "starship", "zoxide", "stow", "bat", "eza", "fzf", "ripgrep", "fd", "git-delta"], capabilities=["shell"]),
-        Feature(name="screenshot", packages=["grim", "slurp", "wl-clipboard", "cliphist", "pacman-contrib", "wf-recorder"], capabilities=["screenshot"]),
-        Feature(name="brightness", packages=["brightnessctl"], capabilities=["brightness"]),
-        Feature(name="media", packages=["playerctl", "mpv", "imv", "spotify", "spicetify-cli"], capabilities=["media"]),
-        Feature(name="theming", packages=["nwg-look", "qt6ct", "qt5ct", "papirus-icon-theme", "bibata-cursor-theme", "papirus-folders", "swayosd-git"], capabilities=["theming"]),
-        Feature(name="polkit", packages=["polkit-gnome"], capabilities=["polkit"]),
-        Feature(name="filemanager", packages=["nautilus", "tumbler", "ffmpegthumbnailer", "file-roller"], capabilities=["file-manager"]),
-        Feature(name="system", packages=["stow", "btop", "bc", "ufw", "reflector", "xdg-user-dirs", "openssh", "imagemagick", "unzip", "zip", "mise-bin"], capabilities=["system"]),
-        Feature(name="login", packages=["greetd", "greetd-regreet"], capabilities=["login"]),
-        Feature(name="editors", packages=["neovim", "lazygit", "github-cli"], capabilities=["editors"]),
-        Feature(name="fonts", packages=["ttf-jetbrains-mono-nerd", "ttf-liberation", "otf-monaspace", "ttf-iosevka-nerd", "otf-bebas-neue"], capabilities=["fonts"]),
-        Feature(name="gaming", packages=["mesa", "lib32-mesa", "vulkan-radeon", "lib32-vulkan-radeon", "libva-mesa-driver", "libva-utils", "gamescope", "steam", "heroic-games-launcher-bin"], capabilities=["gaming"]),
-        Feature(name="apps", packages=["vesktop-bin", "bitwarden", "zen-browser-bin"], capabilities=["apps"]),
-        Feature(name="keyring", packages=["gnome-keyring", "seahorse"], capabilities=["keyring"]),
-    ]
-    desktop_profile = Profile(name="desktop", features=features)
+    desktop_profile = build_desktop_profile(graphics_packages=detect_graphics_packages())
 
     services_setup_svc = ServicesSetupService(exec_ctx, env)
     user_setup_svc = UserSetupService(exec_ctx, env)
@@ -337,7 +208,7 @@ def main() -> None:
         theme_service=theme_svc,
         services_service=services_setup_svc,
         user_service=user_setup_svc,
-        extras_service=extras_setup_svc
+        extras_service=extras_setup_svc,
     )
 
     facade = DotfilesFacade(
@@ -347,12 +218,12 @@ def main() -> None:
         theme_service=theme_svc,
         reload_service=reload_svc,
         linker=linker,
-        setup_service=setup_svc
+        setup_service=setup_svc,
     )
 
     def run_reload_detached(verbose: bool = False) -> None:
         import subprocess
-        import sys
+
         cmd = [sys.executable, "-m", "dotfiles_api.presentation.cli", "reload"]
         if verbose:
             cmd.append("--verbose")
@@ -361,7 +232,7 @@ def main() -> None:
                 cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                start_new_session=True
+                start_new_session=True,
             )
         except Exception:
             pass
@@ -388,6 +259,7 @@ def main() -> None:
     release_lock_fn = lambda: None
     if args.command in ["toggle", "configure", "apply-all", "install"]:
         import fcntl
+
         lock_file_path = "/tmp/dotfiles.lock"
         try:
             global _lock_file
@@ -399,31 +271,29 @@ def main() -> None:
                         f.write("1")
                 except Exception:
                     pass
-            
+
             def release_lock():
                 try:
                     global _lock_file
                     _lock_file.close()
-                    import os
                     if os.path.exists(lock_file_path):
                         os.remove(lock_file_path)
                 except Exception:
                     pass
                 try:
-                    import os
                     if os.path.exists("/tmp/dotfiles_toggle.clicks"):
                         os.remove("/tmp/dotfiles_toggle.clicks")
                 except Exception:
                     pass
-            
+
             release_lock_fn = release_lock
             import atexit
+
             atexit.register(release_lock)
         except BlockingIOError:
             if args.command == "toggle":
                 clicks_path = "/tmp/dotfiles_toggle.clicks"
                 clicks = 1
-                import os
                 if os.path.exists(clicks_path):
                     try:
                         with open(clicks_path, "r") as f:
@@ -436,11 +306,9 @@ def main() -> None:
                         f.write(str(clicks))
                 except Exception:
                     pass
-                import sys
                 sys.exit(0)
             else:
                 print("Another dotfiles configuration process is already running. Exiting.")
-                import sys
                 sys.exit(0)
 
     if args.command == "install":
@@ -480,15 +348,13 @@ def main() -> None:
                 next_theme = active[:-5]
             else:
                 next_theme = active + "-dark"
-            
-            # Check counterpart existence
+
             next_theme_dir = env.home_dir / ".config" / "themes" / next_theme
             if not next_theme_dir.is_dir():
                 print(f"Theme counterpart '{next_theme}' does not exist. Cannot toggle.")
                 release_lock_fn()
-                import sys
                 sys.exit(1)
-                
+
             print(f"Toggling theme from {active} to {next_theme}")
             try:
                 with open("/tmp/dotfiles_preview_theme", "w") as f:
@@ -497,19 +363,16 @@ def main() -> None:
                 pass
             facade.apply_theme(next_theme)
             toggles_performed += 1
-            
-            # Read click count
+
             clicks_path = "/tmp/dotfiles_toggle.clicks"
             total_clicks = 1
-            import os
             if os.path.exists(clicks_path):
                 try:
                     with open(clicks_path, "r") as f:
                         total_clicks = int(f.read().strip())
                 except Exception:
                     total_clicks = 1
-            
-            # Check parity: we break if the parity of toggles performed matches the parity of total clicks
+
             if (toggles_performed % 2) == (total_clicks % 2):
                 break
         action_svc.run_action("wallpaper", [])
@@ -521,6 +384,7 @@ def main() -> None:
         if not args.action_name:
             parser.error("action_name is required for the 'action' command")
         action_svc.run_action(args.action_name, args.action_args or [])
+
 
 if __name__ == "__main__":
     main()
