@@ -1,7 +1,9 @@
 import sys
+from collections.abc import Callable
 
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
+from dotfiles_api.application.hardware import detect_graphics_packages
 from dotfiles_api.application.package_catalog import OPTIONAL_PACKAGES
 from dotfiles_api.application.profiles.desktop import build_desktop_profile
 from dotfiles_api.application.services.install import InstallService
@@ -25,6 +27,7 @@ class SetupService:
         user_service: UserSetupService,
         extras_service: ExtrasSetupService,
         optional_package_selector: OptionalPackageSelectionService | None = None,
+        graphics_package_detector: Callable[[], list[str]] = detect_graphics_packages,
     ) -> None:
         self._env = env
         self._exec = exec_ctx
@@ -35,13 +38,18 @@ class SetupService:
         self._user = user_service
         self._extras = extras_service
         self._optional_package_selector = optional_package_selector or OptionalPackageSelectionService()
+        self._graphics_package_detector = graphics_package_detector
 
     def run_setup(self, setup_github: bool = False) -> None:
         selected_optional_packages: list[str] = []
         if sys.stdin.isatty():
             selected_optional_packages = self._optional_package_selector.select(OPTIONAL_PACKAGES)
 
-        desktop_profile = build_desktop_profile(selected_optional_packages)
+        graphics_packages = self._graphics_package_detector()
+        desktop_profile = build_desktop_profile(
+            optional_packages=selected_optional_packages,
+            graphics_packages=graphics_packages,
+        )
 
         self._install_service.install_profile(desktop_profile)
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)

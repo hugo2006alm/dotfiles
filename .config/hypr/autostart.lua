@@ -41,8 +41,9 @@ hl.on("hyprland.start", function()
         awww restore 2>/dev/null || awww img "$HOME/wallpapers/shade-raid/wallpaper_0.jpg" --transition-type wipe --transition-angle 30
     ']])
     
-    -- Generate drawers config (reload logic is handled inside gen-drawers.sh on change)
-    hl.exec_cmd("$HOME/.config/hypr/scripts/gen-drawers.sh")
+    -- Generate monitor-aware drawer rules through the dotfiles API.
+    -- DrawerAction reloads Hyprland only when the generated config changes.
+    hl.exec_cmd("dotfiles action drawer")
 
     -- Keyring (auto-unlocks on autologin sessions)
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")

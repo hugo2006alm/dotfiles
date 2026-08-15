@@ -20,7 +20,10 @@ sudo sed -i '/^#\[multilib\]/s/^#//' /etc/pacman.conf
 sudo sed -i '/^\[multilib\]/{n;s/^#//}' /etc/pacman.conf
 sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
 sudo sed -i 's/^#ParallelDownloads = 5$/ParallelDownloads = 5/' /etc/pacman.conf
-sudo pacman -Sy --noconfirm
+
+# Arch does not support partial upgrades. Refresh repositories and upgrade the
+# installed system together before installing any additional packages.
+sudo pacman -Syu --noconfirm
 
 # Ensure yay is installed
 if ! command -v yay &> /dev/null; then

@@ -23,10 +23,9 @@
 .config/hypr/colors.lua
 .config/hypr/style.lua
 .config/hypr/autostart-personal.lua
+.config/btop/btop.conf
 
 # Python caches
 __pycache__/
 *.pyc
 *.egg-info
-
-
