@@ -14,6 +14,11 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertIn("PackageRegistry()", source)
         self.assertIn("build_desktop_profile", source)
 
+    def test_global_reload_includes_xdg_portals(self) -> None:
+        source = (ROOT / "dotfiles_api" / "presentation" / "cli.py").read_text()
+
+        self.assertIn("portal_reload,", source)
+
     def test_hyprland_uses_python_drawer_action(self) -> None:
         autostart = (ROOT / ".config" / "hypr" / "autostart.lua").read_text()
         hyprland = (ROOT / ".config" / "hypr" / "hyprland.lua").read_text()
