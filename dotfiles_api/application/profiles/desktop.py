@@ -1,8 +1,14 @@
+from dotfiles_api.application.hardware import COMMON_GRAPHICS_PACKAGES
 from dotfiles_api.domain.models.feature import Feature
 from dotfiles_api.domain.models.profile import Profile
 
 
-def build_desktop_profile(optional_packages: list[str] | None = None) -> Profile:
+def build_desktop_profile(
+    optional_packages: list[str] | None = None,
+    graphics_packages: list[str] | None = None,
+) -> Profile:
+    selected_graphics = list(graphics_packages or COMMON_GRAPHICS_PACKAGES)
+
     features = [
         Feature(name="compositor", packages=["hyprland", "xdg-desktop-portal-hyprland", "xdg-desktop-portal-gtk", "hyprlock", "hypridle", "hyprsunset", "hyprpicker", "hyprshot", "awww"], capabilities=["compositor"]),
         Feature(name="statusbar", packages=["waybar", "sassc", "jq"], capabilities=["status-bar"]),
@@ -23,7 +29,7 @@ def build_desktop_profile(optional_packages: list[str] | None = None) -> Profile
         Feature(name="login", packages=["greetd", "greetd-regreet"], capabilities=["login"]),
         Feature(name="editors", packages=["neovim", "lazygit", "github-cli"], capabilities=["editors"]),
         Feature(name="fonts", packages=["ttf-jetbrains-mono-nerd", "ttf-liberation", "otf-monaspace", "ttf-iosevka-nerd", "ttf-space-mono-nerd", "noto-fonts-emoji", "otf-bebas-neue-git"], capabilities=["fonts"]),
-        Feature(name="gaming", packages=["mesa", "lib32-mesa", "vulkan-radeon", "lib32-vulkan-radeon", "libva-mesa-driver", "libva-utils", "gamescope"], capabilities=["gaming"]),
+        Feature(name="graphics", packages=selected_graphics, capabilities=["graphics"]),
         Feature(name="keyring", packages=["gnome-keyring", "seahorse"], capabilities=["keyring"]),
     ]
 
