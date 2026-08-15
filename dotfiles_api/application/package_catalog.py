@@ -17,11 +17,6 @@ PACKAGE_SOURCES: dict[str, str] = {
     "wlogout": "yay",
     "bibata-cursor-theme": "yay",
     "papirus-folders": "yay",
-    "vesktop-bin": "yay",
-    "heroic-games-launcher-bin": "yay",
-    "spotify": "yay",
-    "spicetify-cli": "yay",
-    "zen-browser-bin": "yay",
     "otf-bebas-neue-git": "yay",
 
     # Optional AUR packages
@@ -29,13 +24,26 @@ PACKAGE_SOURCES: dict[str, str] = {
     "android-apktool-bin": "yay",
     "antigravity": "yay",
     "antigravity-ide": "yay",
-    "codex-desktop": "yay",
+    "codex-app-unofficial": "yay",
+    "heroic-games-launcher-bin": "yay",
     "neofetch": "yay",
     "phinger-cursors": "yay",
+    "spotify": "yay",
+    "spicetify-cli": "yay",
+    "vesktop-bin": "yay",
+    "zen-browser-bin": "yay",
 }
 
 
 OPTIONAL_PACKAGES: list[dict[str, object]] = [
+    # Personal desktop apps
+    {"package": "codex-app-unofficial", "label": "ChatGPT Desktop (unofficial Linux build)", "category": "Apps", "source": "yay"},
+    {"package": "spotify", "label": "Spotify", "category": "Apps", "source": "yay"},
+    {"package": "spicetify-cli", "label": "Spicetify CLI (Spotify customization)", "category": "Apps", "source": "yay"},
+    {"package": "vesktop-bin", "label": "Vesktop (Discord client)", "category": "Apps", "source": "yay"},
+    {"package": "bitwarden", "label": "Bitwarden", "category": "Apps", "source": "pacman"},
+    {"package": "zen-browser-bin", "label": "Zen Browser", "category": "Apps", "source": "yay"},
+
     # Android / mobile development
     {"package": "android-tools", "label": "Android platform tools (adb/fastboot)", "category": "Android", "source": "pacman"},
     {"package": "android-studio", "label": "Android Studio", "category": "Android", "source": "yay"},
@@ -45,7 +53,6 @@ OPTIONAL_PACKAGES: list[dict[str, object]] = [
     {"package": "docker", "label": "Docker Engine", "category": "Development", "source": "pacman"},
     {"package": "uv", "label": "uv Python package/project manager", "category": "Development", "source": "pacman"},
     {"package": "plantuml", "label": "PlantUML", "category": "Development", "source": "pacman"},
-    {"package": "codex-desktop", "label": "Codex Desktop", "category": "Development", "source": "yay"},
     {
         "package": "antigravity",
         "label": "Antigravity",
@@ -74,7 +81,9 @@ OPTIONAL_PACKAGES: list[dict[str, object]] = [
     {"package": "tailscale", "label": "Tailscale", "category": "Networking", "source": "pacman"},
     {"package": "nginx", "label": "nginx", "category": "Networking", "source": "pacman"},
 
-    # Gaming extras
+    # Gaming apps / extras
+    {"package": "steam", "label": "Steam", "category": "Gaming", "source": "pacman"},
+    {"package": "heroic-games-launcher-bin", "label": "Heroic Games Launcher", "category": "Gaming", "source": "yay"},
     {"package": "protontricks", "label": "Protontricks", "category": "Gaming", "source": "pacman"},
 
     # Alternative desktop tools already installed on this setup
