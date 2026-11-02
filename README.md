@@ -58,9 +58,22 @@ The script will:
 1. Install `yay` (AUR helper)
 2. Enable multilib and install all pacman + AUR packages
 3. Configure GNU Stow to symlink all configuration directories
-4. Enable system services (NetworkManager, bluetooth, pipewire, ufw, greetd)
-5. Set fish as default shell, configure git, refresh mirrors and fonts
+4. Enable system services (NetworkManager, bluetooth, pipewire, ufw)
+5. Set fish as default shell, preserve existing personal preferences, refresh fonts
 6. Generate and apply the Shade Raid theme using the Python API
+
+The CLI runs in a private Python virtual environment, exposed through
+`~/.local/bin/dotfiles`. Add `~/.local/bin` to your graphical session's PATH;
+Fish configuration already includes it. Run the bootstrap in an interactive
+terminal as a normal Arch user. Optional flags: `--github` and `--ssh-server`.
+`bash scripts/bootstrap.sh --dry-run` previews bootstrap without making changes.
+
+Login installation is separate: review [recovery instructions](docs/recovery.md),
+test in an Arch VM, then run `dotfiles setup-login` yourself in a terminal.
+Keep a working TTY open and verify login/logout before rebooting. Automatic
+theme changes never install files into /etc/greetd.
+
+See [Shade Raid v2 progress and remaining steps](docs/shade-raid-v2.md).
 
 ---
 
@@ -87,7 +100,7 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 ```
 
 ### Options
-- `--dry-run`: Runs the transaction simulation, printing what files would be written and what reload commands would execute, without making any changes to your filesystem or running processes.
+- `--dry-run`: Prints planned commands and artifact writes. The full side-effect-free theme/application guarantee is pending v2 step 06; bootstrap's own `--dry-run` is side-effect-free.
 - `--theme`: The theme name to apply (default: `shade-raid`).
 
 ### Commands
@@ -97,6 +110,9 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 - `reload`: Reloads all active desktop applications (Waybar, SwayNC, Hyprland, Ghostty, Walker, etc.).
 - `apply-all`: Performs install, link, configure, and reload commands sequentially.
 - `toggle`: Switches the theme dynamically between light and dark variants (e.g. `shade-raid` <-> `shade-raid-dark`).
+- `setup --github`: Runs setup and explicitly requests interactive GitHub authentication.
+- `setup --ssh-server`: Explicitly enables the SSH server and its firewall rule.
+- `setup-login`: Explicit interactive installation of root-owned greetd files, with backups.
 
 ---
 
@@ -116,7 +132,7 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 | Vesktop Theme | `VesktopGenerator` | `~/.config/vesktop/themes/{theme_name}.theme.css` |
 | Hyprlock Config | `HyprlockGenerator` | `~/.config/hypr/hyprlock.conf` |
 | ReGreet Style | `ReGreetGenerator` | `~/.config/greetd/regreet.css` |
-| greetd Config | `GreetdGenerator` | `/etc/greetd/regreet.toml` |
+| greetd Config | `GreetdGenerator` | `~/.config/greetd/regreet.toml` (installed explicitly by `setup-login`) |
 | GTK Settings | `GtkGenerator` | `~/.config/gtk-3.0/settings.ini` & `gtk-4.0/settings.ini` |
 | GTK Stylesheet | `GtkGenerator` | `~/.config/gtk-3.0/gtk.css` & `gtk-4.0/gtk.css` |
 | Plymouth Script | `PlymouthGenerator` | `~/dotfiles/plymouth-shade-raid/shade-raid.script` |

@@ -20,6 +20,8 @@ class LoginSetupService:
             raise RuntimeError("Login setup requires an interactive terminal; run dotfiles setup-login yourself.")
 
         source = self._env.home_dir / ".config" / "greetd"
+        if Path("/etc/greetd").is_symlink() or Path("/var/backups/shade-raid").is_symlink():
+            raise ValueError("Refusing linked login or backup directories; inspect them before installation.")
         files = {name: (source / name).read_text() for name in
                  ("hyprland-greet.conf", "regreet.toml", "regreet.css")}
         tomllib.loads(files["regreet.toml"])
@@ -66,6 +68,18 @@ done
                 staged.chmod(0o600)
                 self._exec.execute(["sudo", "install", "-T", "-o", "root", "-g", "root",
                                     "-m", "0644", str(staged), str(Path("/etc/greetd") / name)])
+        secure_background = '''set -eu
+path=/etc/greetd/regreet-background.jpg
+if [ -L "$path" ]; then
+    echo "Refusing a linked login background; restore or replace it explicitly." >&2
+    exit 1
+fi
+if [ -f "$path" ]; then
+    chown root:root -- "$path"
+    chmod 0644 -- "$path"
+fi
+'''
+        self._exec.execute(["sudo", "sh", "-c", secure_background, "shade-raid-background"])
         self._exec.execute(["sudo", "rm", "-f", "--", "/etc/sudoers.d/shade-raid",
                             "/etc/sudoers.d/plymouth_sync", "/etc/sudoers.d/regreet-theme"])
         self._exec.execute(["sudo", "visudo", "-c"])

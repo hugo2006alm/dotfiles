@@ -14,6 +14,10 @@ class TestCliParser(unittest.TestCase):
         args = self.parse(["setup", "--github"])
         self.assertTrue(args.github)
 
+    def test_setup_ssh_server_option_is_explicit(self):
+        self.assertFalse(self.parse(["setup"]).ssh_server)
+        self.assertTrue(self.parse(["setup", "--ssh-server"]).ssh_server)
+
     def test_configure_theme_is_not_swallowed(self):
         args = self.parse(["configure", "--theme", "shade-raid-dark"])
         self.assertEqual(args.theme, "shade-raid-dark")

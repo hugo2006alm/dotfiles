@@ -17,6 +17,28 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class TestBootstrapSafety(unittest.TestCase):
+    def test_shared_resolver_preserves_hardware_across_optional_selection(self):
+        from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
+
+        detector = Mock(return_value=["mesa", "vulkan-intel"])
+        resolver = DesktopProfileResolver(detector)
+        initial = resolver.resolve()
+        selected = resolver.resolve(["obs-studio"])
+        detector.assert_called_once()
+        self.assertIn("vulkan-intel", initial.get_packages())
+        self.assertIn("vulkan-intel", selected.get_packages())
+        self.assertIn("obs-studio", selected.get_packages())
+        self.assertNotIn("vulkan-radeon", selected.get_packages())
+
+    def test_ssh_server_and_firewall_rule_require_explicit_option(self):
+        executor = Mock()
+        executor.execute.return_value = CommandResult("", "", 0)
+        ServicesSetupService(ExecutionContext(False, executor), Mock()).setup_services(enable_ssh_server=True)
+        commands = [call.args[0] for call in executor.execute.call_args_list]
+        self.assertIn(["sudo", "systemctl", "enable", "sshd"], commands)
+        self.assertLess(commands.index(["sudo", "ufw", "allow", "ssh"]),
+                        commands.index(["sudo", "ufw", "enable"]))
+
     def test_facade_preserves_resolved_desktop_profile(self):
         profile = build_desktop_profile(optional_packages=["obs-studio"], graphics_packages=["vulkan-intel"])
         install = Mock()
