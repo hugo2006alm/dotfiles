@@ -1,4 +1,5 @@
 import json
+import shlex
 import tomllib
 from pathlib import Path
 from dotfiles_api.domain.tokens import DesignTokens
@@ -191,7 +192,7 @@ class SwayncGenerator(BaseGenerator):
                     "actions": [
                         {
                             "label": "◀",
-                            "command": f"{env.home_dir}/.local/bin/dotfiles action preview prev"
+                            "command": shlex.join([str(env.home_dir / ".local/bin/dotfiles"), "action", "preview", "prev"])
                         },
                         {
                             "label": dots_str,
@@ -199,11 +200,11 @@ class SwayncGenerator(BaseGenerator):
                         },
                         {
                             "label": "▶",
-                            "command": f"{env.home_dir}/.local/bin/dotfiles action preview next"
+                            "command": shlex.join([str(env.home_dir / ".local/bin/dotfiles"), "action", "preview", "next"])
                         },
                         {
                             "label": "Selected" if preview_theme == theme_name else "Select",
-                            "command": "true" if preview_theme == theme_name else f"{env.home_dir}/.local/bin/dotfiles configure --theme {preview_theme}"
+                            "command": "true" if preview_theme == theme_name else shlex.join([str(env.home_dir / ".local/bin/dotfiles"), "configure", "--theme", preview_theme])
                         }
                     ]
                 }
