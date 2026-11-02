@@ -77,7 +77,11 @@ class SwayncGenerator(BaseGenerator):
         # 3. Read active preview theme name
         preview_theme = theme_name
         preview_theme_path = env.runtime_dir / "preview-theme"
-        if preview_theme_path.is_file():
+        if not self.transaction or not self.transaction.theme_name:
+            preview_theme_path = env.runtime_dir / "preview-theme"
+        else:
+            preview_theme_path = None
+        if preview_theme_path is not None and preview_theme_path.is_file():
             try:
                 pt = preview_theme_path.read_text().strip()
                 if pt in themes:

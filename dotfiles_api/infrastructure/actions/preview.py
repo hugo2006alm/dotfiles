@@ -57,6 +57,9 @@ class PreviewAction(Action):
             return
             
         next_theme = themes[next_idx]
+        if self._exec.dry_run:
+            print(f"[DRY-RUN] Would preview theme {next_theme} and refresh SwayNC")
+            return
         
         # 4. Write back preview theme
         try:

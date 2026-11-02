@@ -10,6 +10,9 @@ class VesktopReloadable(EventReloadable):
         self._theme_store = theme_store
 
     def reload(self) -> None:
+        if self._exec.dry_run:
+            print("[DRY-RUN] Would update Vesktop enabled themes")
+            return
         theme_name = self._theme_store.get_active_theme()
         settings_path = Path.home() / ".config" / "vesktop" / "settings" / "settings.json"
         

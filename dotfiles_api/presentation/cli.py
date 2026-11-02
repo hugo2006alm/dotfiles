@@ -47,6 +47,7 @@ from dotfiles_api.application.registry import PackageRegistry
 from dotfiles_api.application.loader import ThemeLoader
 from dotfiles_api.application.store import ArtifactStore
 from dotfiles_api.application.transaction import ConfigTransaction
+from dotfiles_api.application.planner import ThemePlanner
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
@@ -155,7 +156,7 @@ def main(argv: list[str] | None = None) -> None:
     waybar_reload = WaybarReloadable(exec_ctx=exec_ctx)
     swaync_reload = SwayNCReloadable(exec_ctx=exec_ctx)
     portal_reload = XDGPortalReloadable(exec_ctx=exec_ctx)
-    gsettings_reload = GsettingsReloadable(exec_ctx=exec_ctx, theme_store=theme_store)
+    gsettings_reload = GsettingsReloadable(exec_ctx=exec_ctx, theme_store=theme_store, loader=ThemeLoader(env))
     ghostty_reload = GhosttyReloadable(exec_ctx=exec_ctx)
     walker_reload = WalkerReloadable(exec_ctx=exec_ctx)
     wlogout_reload = WlogoutReloadable(exec_ctx=exec_ctx)
@@ -187,9 +188,8 @@ def main(argv: list[str] | None = None) -> None:
 
     theme_loader = ThemeLoader(env=env)
     event_bus = EventBus()
-    theme_svc = ThemeService(loader=theme_loader, store=theme_store, event_bus=event_bus)
 
-    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False))
+    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False), dry_run=args.dry_run)
     if args.command not in ["toggle", "configure", "apply-all"]:
         event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
 
@@ -211,6 +211,9 @@ def main(argv: list[str] | None = None) -> None:
         GtkGenerator(name="gtk", transaction=tx, event_bus=event_bus),
         PlymouthGenerator(name="plymouth", transaction=tx, event_bus=event_bus),
     ]
+
+    theme_svc = ThemeService(theme_loader, theme_store, event_bus,
+                             planner=ThemePlanner(env, artifact_store, generators), dry_run=args.dry_run)
 
     for gen in generators:
         event_bus.subscribe(ThemeChangedEvent, gen.handle_theme_changed)
@@ -244,6 +247,9 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     def run_reload_detached(verbose: bool = False) -> None:
+        if exec_ctx.dry_run:
+            print("[DRY-RUN] Would update wallpaper and reload desktop applications")
+            return
         import subprocess
 
         cmd = [sys.executable, "-m", "dotfiles_api.presentation.cli", "reload"]
@@ -279,7 +285,7 @@ def main(argv: list[str] | None = None) -> None:
     action_svc.register("media-prev", CommandAction(exec_ctx, [["playerctl", "previous"]]))
 
     release_lock_fn = lambda: None
-    if args.command in ["toggle", "configure", "apply-all", "install"]:
+    if not args.dry_run and args.command in ["toggle", "configure", "apply-all", "install"]:
         import fcntl
         env.validate_output_path(env.runtime_dir / "configure.lock")
         env.runtime_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -341,11 +347,6 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "link":
         facade.link()
     elif args.command == "configure":
-        try:
-            with open(str(env.runtime_dir / "preview-theme"), "w") as f:
-                f.write(args.theme)
-        except Exception:
-            pass
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
@@ -355,11 +356,6 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "apply-all":
         facade.apply_profile(desktop_profile)
         facade.link()
-        try:
-            with open(str(env.runtime_dir / "preview-theme"), "w") as f:
-                f.write(args.theme)
-        except Exception:
-            pass
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
@@ -374,17 +370,12 @@ def main(argv: list[str] | None = None) -> None:
                 next_theme = active + "-dark"
 
             next_theme_dir = env.home_dir / ".config" / "themes" / next_theme
-            if not next_theme_dir.is_dir():
+            if not next_theme_dir.is_dir() and not (env.source_home / ".config/themes" / next_theme).is_dir():
                 print(f"Theme counterpart '{next_theme}' does not exist. Cannot toggle.")
                 release_lock_fn()
                 sys.exit(1)
 
             print(f"Toggling theme from {active} to {next_theme}")
-            try:
-                with open(str(env.runtime_dir / "preview-theme"), "w") as f:
-                    f.write(next_theme)
-            except Exception:
-                pass
             facade.apply_theme(next_theme)
             toggles_performed += 1
 

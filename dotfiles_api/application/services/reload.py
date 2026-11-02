@@ -5,9 +5,10 @@ from dotfiles_api.domain.contracts.reloadable import Reloadable, EventReloadable
 from dotfiles_api.domain.events import ConfigGeneratedEvent, ReloadRequestedEvent
 
 class ReloadService:
-    def __init__(self, reloadables: list[Reloadable], verbose: bool = False) -> None:
+    def __init__(self, reloadables: list[Reloadable], verbose: bool = False, dry_run: bool = False) -> None:
         self._reloadables = reloadables
         self._verbose = verbose
+        self._dry_run = dry_run
         self._event_reloadables = [
             r for r in reloadables if isinstance(r, EventReloadable)
         ]
@@ -85,6 +86,9 @@ class ReloadService:
             t_lock.release()
 
     def reload_all(self) -> list[threading.Thread]:
+        if self._dry_run:
+            print(f"[DRY-RUN] Would reload {len(self._reloadables)} application handlers")
+            return []
         if self._verbose:
             print(f"[VERBOSE] Reloading all {len(self._reloadables)} reloadables in parallel threads")
         threads = []
@@ -97,6 +101,9 @@ class ReloadService:
         return threads
 
     def handle_config_generated(self, event: ConfigGeneratedEvent) -> list[threading.Thread]:
+        if self._dry_run:
+            print(f"[DRY-RUN] Would refresh {event.generator_name}")
+            return []
         if self._verbose:
             print(f"[VERBOSE] Received ConfigGeneratedEvent for generator: {event.generator_name}")
         threads = []

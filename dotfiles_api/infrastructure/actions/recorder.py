@@ -33,7 +33,7 @@ class RecorderAction(Action):
 
         if is_running and pid:
             self._exec.execute(["kill", "-INT", pid])
-            if self._pid_file.exists():
+            if not self._exec.dry_run and self._pid_file.exists():
                 try:
                     self._pid_file.unlink()
                 except Exception:
@@ -65,8 +65,8 @@ class RecorderAction(Action):
                 print(f"[DRY-RUN] Would start: wf-recorder -f {file_path}")
             else:
                 import subprocess
-                proc = subprocess.Popen(["wf-recorder", "-f", str(file_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 self._pid_file.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                proc = subprocess.Popen(["wf-recorder", "-f", str(file_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 self._pid_file.write_text(str(proc.pid))
             
             self._exec.optional(["pkill", "-RTMIN+9", "waybar"])
