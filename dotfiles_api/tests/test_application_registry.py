@@ -63,3 +63,12 @@ class TestApplicationRegistry(unittest.TestCase):
         generator = SimpleNamespace(name="a", render=lambda tokens, theme: [])
         with self.assertRaisesRegex(ValueError, "outputs"):
             registry.validate_outputs([generator], None, "test")
+
+    def test_rejects_invalid_stylesheet_contracts(self):
+        from dotfiles_api.domain.models.stylesheet_spec import StylesheetSpec
+        for style in (StylesheetSpec("../escape.scss", "css", ("scss",)),
+                      StylesheetSpec("style.scss", "missing", ("scss",)),
+                      StylesheetSpec("style.scss", "css", ("missing",))):
+            with self.subTest(style=style), self.assertRaises(ValueError):
+                ApplicationRegistry((ApplicationSpec("a", outputs=(OutputSpec("scss", "colors.scss"),
+                    OutputSpec("css", "style.css")), stylesheets=(style,)),))

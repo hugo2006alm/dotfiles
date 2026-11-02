@@ -6,15 +6,21 @@ from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
 
 
 class ThemeCoordinator:
-    def __init__(self, env: EnvironmentContext, planner: ThemePlanner, transaction: ConfigTransaction) -> None:
+    def __init__(self, env: EnvironmentContext, planner: ThemePlanner, transaction: ConfigTransaction, styler=None) -> None:
         self.env, self.planner, self.transaction = env, planner, transaction
+        self.styler = styler
 
     def apply(self, tokens, theme_name: str, dry_run: bool = False):
         plan = self.planner.build(tokens, theme_name)
-        plan.describe()
         if dry_run:
+            plan.describe()
+            if self.styler:
+                self.styler.describe()
             print("No changes applied.")
             return plan
+        if self.styler:
+            plan = self.styler.compile(plan)
+        plan.describe()
         with RuntimeLock(self.env.lock_dir / "configure.lock"):
             for item in plan.artifacts:
                 current = item.path.read_bytes() if item.path.exists() else None

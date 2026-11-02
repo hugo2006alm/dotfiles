@@ -25,6 +25,7 @@ from dotfiles_api.infrastructure.generators.gtk import GtkGenerator
 from dotfiles_api.infrastructure.generators.plymouth import PlymouthGenerator
 from dotfiles_api.domain.models.application_spec import ApplicationSpec
 from dotfiles_api.domain.models.output_spec import OutputSpec
+from dotfiles_api.domain.models.stylesheet_spec import StylesheetSpec
 
 
 def _reload(cls):
@@ -48,7 +49,9 @@ APPLICATIONS = (
         outputs=(
             OutputSpec('waybar-colors', '.config/waybar/colors.scss'),
             OutputSpec('waybar-variables', '.config/waybar/variables.scss'),
+            OutputSpec('waybar-style', '.config/waybar/style.css'),
         ),
+        stylesheets=(StylesheetSpec('.config/waybar/style.scss', 'waybar-style', ('waybar-colors', 'waybar-variables')),),
         reload_factory=_reload(WaybarReloadable), reload_strategy="application",
     ),
     ApplicationSpec('ghostty', packages=('ghostty',), capabilities=('terminal',),
@@ -72,7 +75,9 @@ APPLICATIONS = (
         dependencies=("hyprland",),
         outputs=(
             OutputSpec('swayosd-colors', '.config/swayosd/_colors.scss'),
+            OutputSpec('swayosd-style', '.config/swayosd/style.css'),
         ),
+        stylesheets=(StylesheetSpec('.config/swayosd/style.scss', 'swayosd-style', ('swayosd-colors',)),),
     ),
     ApplicationSpec('btop', packages=('btop',), capabilities=(),
         generator=BtopGenerator,
@@ -89,7 +94,9 @@ APPLICATIONS = (
         outputs=(
             OutputSpec('walker-colors', '.config/walker/themes/{theme_name}/_colors.scss'),
             OutputSpec('walker-config', '.config/walker/config.toml'),
+            OutputSpec('walker-style', '.config/walker/themes/{theme_name}/style.css'),
         ),
+        stylesheets=(StylesheetSpec('.config/walker/themes/style.scss', 'walker-style', ('walker-colors',)),),
         reload_factory=_reload(WalkerReloadable), reload_strategy="application",
     ),
     ApplicationSpec('wlogout', packages=('wlogout',), capabilities=(),
@@ -98,7 +105,9 @@ APPLICATIONS = (
         dependencies=("hyprland",),
         outputs=(
             OutputSpec('wlogout-colors', '.config/wlogout/_colors.scss'),
+            OutputSpec('wlogout-style', '.config/wlogout/style.css'),
         ),
+        stylesheets=(StylesheetSpec('.config/wlogout/style.scss', 'wlogout-style', ('wlogout-colors',)),),
         reload_factory=_reload(WlogoutReloadable), reload_strategy="application",
     ),
     ApplicationSpec('vesktop', packages=('vesktop-bin',), capabilities=(),

@@ -26,6 +26,7 @@ from dotfiles_api.application.store import ArtifactStore
 from dotfiles_api.application.transaction import ConfigTransaction
 from dotfiles_api.application.planner import ThemePlanner
 from dotfiles_api.application.theme_coordinator import ThemeCoordinator
+from dotfiles_api.infrastructure.theme_styler import ThemeStyler
 from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
@@ -127,7 +128,7 @@ def main(argv: list[str] | None = None) -> None:
 
     generators = applications.generators(tx, event_bus)
     planner = ThemePlanner(env, artifact_store, generators, registry=applications)
-    coordinator = ThemeCoordinator(env, planner, tx)
+    coordinator = ThemeCoordinator(env, planner, tx, ThemeStyler(env, applications, artifact_store, exec_ctx))
     theme_svc = ThemeService(theme_loader, theme_store, event_bus, planner=planner,
                              dry_run=args.dry_run, coordinator=coordinator,
                              on_applied=reload_svc.reload_changed)
