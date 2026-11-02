@@ -32,7 +32,7 @@ class TestThemeCoordinator(unittest.TestCase):
         os.utime(self.first, ns=(1_700_000_000_000_000_000,) * 2)
         self.second = self.env.home_dir / ".config/new/second.conf"
         self.store = ArtifactStore({"first": self.first, "second": self.second,
-                                    "theme-preview": self.env.runtime_dir / "preview-theme",
+                                    "theme-preview": self.env.preview_file,
                                     "active-theme": self.env.state_dir / "active-theme"})
         self.writer = SystemFileWriter()
         self.transaction = ConfigTransaction(self.env, self.store, self.writer)
@@ -66,7 +66,7 @@ class TestThemeCoordinator(unittest.TestCase):
 
     def test_invalid_generated_json_fails_before_writing_any_artifact(self):
         self.store = ArtifactStore({"first": self.first, "second": self.second.with_suffix(".json"),
-                                    "theme-preview": self.env.runtime_dir / "preview-theme",
+                                    "theme-preview": self.env.preview_file,
                                     "active-theme": self.env.state_dir / "active-theme"})
         self.planner.store = self.store
         self.transaction._store = self.store
@@ -177,6 +177,21 @@ class TestThemeCoordinator(unittest.TestCase):
             coordinator.rollback()
         self.assertEqual(self.first.read_text(), "personal edit")
         self.assertEqual(FileThemeStore(self.env).get_active_theme(), "shade-raid-dark")
+
+    def test_rollback_remains_available_when_runtime_directory_changes(self):
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        new_env = EnvironmentContext(self.env.home_dir, self.env.dotfiles_dir, "tester",
+                                     runtime_home=self.env.home_dir / "new-runtime")
+        mappings = {"first": self.first, "second": self.second,
+                    "active-theme": new_env.state_dir / "active-theme",
+                    "theme-preview": new_env.preview_file}
+        from dotfiles_api.application.theme_coordinator import ThemeCoordinator
+        transaction = ConfigTransaction(new_env, ArtifactStore(mappings), self.writer)
+        with contextlib.redirect_stdout(io.StringIO()):
+            ThemeCoordinator(new_env, self.planner, transaction).rollback()
+        self.assertEqual(self.first.read_text(), "original")
+        self.assertFalse(self.second.exists())
 
     def test_prepared_journal_recovers_a_mix_of_original_links_and_new_files(self):
         external = self.env.home_dir / "external"

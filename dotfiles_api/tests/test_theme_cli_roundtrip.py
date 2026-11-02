@@ -2,6 +2,7 @@ import contextlib
 import io
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -43,4 +44,11 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                 self.assertEqual((home / ".config/ghostty/colors.conf").read_bytes(), light)
                 self.assertEqual((home / ".state/shade-raid/active-theme").read_text().strip(), "shade-raid")
                 process.assert_not_called()
+            if shutil.which("sassc"):
+                for app in ("waybar", "wlogout"):
+                    directory = home / ".config" / app
+                    result = subprocess.run(["sassc", str(directory / "style.scss"), str(directory / "style.css")],
+                                            capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue((directory / "style.css").is_file())
         self.assertEqual(snapshot(ROOT / "home"), before_source)

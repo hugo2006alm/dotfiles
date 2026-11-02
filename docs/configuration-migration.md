@@ -7,9 +7,9 @@
 - `templates/legacy/`: old generated greetd/SwayNC defaults retained solely for
   recovery when the former tracked paths have disappeared during an update.
 - Generated configuration: real files in the user's configuration directories.
-- Active theme, generated Plymouth script and transaction journals:
+- Active/preview theme, generated Plymouth script and transaction journals:
   `${XDG_STATE_HOME:-$HOME/.local/state}/shade-raid/`.
-- Preview/PID state: `$XDG_RUNTIME_DIR/shade-raid/`, or the state's `runtime/`
+- PID state: `$XDG_RUNTIME_DIR/shade-raid/`, or the state's `runtime/`
   directory if XDG_RUNTIME_DIR is unavailable.
 - CLI locks: the XDG runtime directory, or `~/.shade-raid-locks/`. Persistent
   lock inodes are retained to avoid unlink/recreate races.
@@ -31,6 +31,11 @@ the original link destinations and available source contents. The folder is kept
 outside .local because old installations may have .local itself folded. A failed
 link operation restores old links and removes newly created managed links.
 Successful repeated linking creates no additional migration backup.
+
+When restoration is needed, newly created diagnostics are retained in the
+snapshot's failed-contents/ tree before the old folded links are restored.
+Commands refuse a log path that still resolves into the repository; migrate
+HOME links before running installation or desktop actions after this update.
 
 If manual recovery is required, inspect manifest.json and its contents/ tree,
 restore the affected original link destinations, and retain personal/generated
@@ -82,6 +87,9 @@ explicitly; use reload or rollback after fixing the application/service problem.
 Filesystem replacements and external services are not one global transaction.
 The journal supports recovery but does not promise atomic multi-file application
 or absolute recovery guarantees during power loss.
+
+Preview selection is persistent state so journals remain restorable when
+XDG_RUNTIME_DIR changes or is unavailable in a recovery session.
 
 Test migration in a temporary HOME, then verify theme switching and recovery in
 a real Hyprland session before migrating the main desktop.

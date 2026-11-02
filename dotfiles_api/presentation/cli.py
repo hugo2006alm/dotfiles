@@ -117,13 +117,14 @@ def main(argv: list[str] | None = None) -> None:
     executor = SystemCommandExecutor()
     exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor,
                                 verbose=getattr(args, "verbose", False),
-                                log_path=env.state_dir / "commands.jsonl")
+                                log_path=env.state_dir / "commands.jsonl",
+                                output_guard=env.validate_output_path)
 
     package_registry = PackageRegistry()
 
     artifact_paths = {
         "active-theme": env.state_dir / "active-theme",
-        "theme-preview": env.runtime_dir / "preview-theme",
+        "theme-preview": env.preview_file,
         "hyprland-colors": env.home_dir / ".config" / "hypr" / "colors.lua",
         "hyprland-style": env.home_dir / ".config" / "hypr" / "style.lua",
         "hyprland-colors-conf": env.home_dir / ".config" / "hypr" / "colors.conf",

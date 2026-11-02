@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import json
 import os
 import sys
+from collections.abc import Callable
 from dotfiles_api.domain.contracts import CommandExecutor, CommandResult
 from dotfiles_api.context.command_error import CommandExecutionError
 from dotfiles_api.context.command_logging import redacted_diagnostics
@@ -14,6 +15,7 @@ class ExecutionContext:
     executor: CommandExecutor
     verbose: bool = False
     log_path: Path | None = None
+    output_guard: Callable[[Path], None] | None = None
 
     def execute(self, args: list[str], cwd: Path | None = None, *,
                 step: str = "command", allowed_returncodes: tuple[int, ...] = (0,),
@@ -22,6 +24,8 @@ class ExecutionContext:
         if self.dry_run:
             print(f"[DRY-RUN] Would execute: {command}")
             return CommandResult(stdout="", stderr="", returncode=0)
+        if self.log_path is not None and self.output_guard is not None:
+            self.output_guard(self.log_path)
         if self.verbose:
             print(f"[VERBOSE] Executing command: {command}")
         res = self.executor.execute(args, cwd)

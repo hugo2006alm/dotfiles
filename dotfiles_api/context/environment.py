@@ -18,6 +18,10 @@ class EnvironmentContext:
         return (self.state_home or self.home_dir / ".local/state") / "shade-raid"
 
     @property
+    def preview_file(self) -> Path:
+        return self.state_dir / "preview-theme"
+
+    @property
     def runtime_dir(self) -> Path:
         return self.runtime_home / "shade-raid" if self.runtime_home else self.state_dir / "runtime"
 

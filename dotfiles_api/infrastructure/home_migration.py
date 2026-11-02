@@ -135,6 +135,10 @@ class HomeMigration:
                 if destination.is_symlink() or destination.is_file():
                     destination.unlink()
                 elif destination.exists():
+                    if self.backup is not None:
+                        saved = self.backup / "failed-contents" / destination.relative_to(self.target)
+                        saved.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(destination, saved, symlinks=True)
                     shutil.rmtree(destination)
                 destination.symlink_to(raw)
             except OSError as error:

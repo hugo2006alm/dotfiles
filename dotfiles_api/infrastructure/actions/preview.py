@@ -29,7 +29,7 @@ class PreviewAction(Action):
         themes.sort()
         
         # 2. Get current preview theme
-        preview_theme_path = self._env.runtime_dir / "preview-theme"
+        preview_theme_path = self._env.preview_file
         current_preview = None
         if preview_theme_path.is_file():
             try:
