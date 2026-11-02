@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="dotfiles-api",
     version="0.1.0",
+    python_requires=">=3.11",
     packages=find_packages(),
     install_requires=[
         # System uses toml library for theme parsing

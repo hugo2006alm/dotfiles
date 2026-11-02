@@ -54,7 +54,7 @@ class TestSetupServices(unittest.TestCase):
         svc.setup_user(setup_github=False)
         self.assertTrue(any("chsh -s /usr/bin/fish" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("fc-cache" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("rate-mirrors --protocol https arch" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("rate-mirrors --protocol https arch" in cmd for cmd in self.executor.commands))
         self.assertFalse(any("reflector" in cmd for cmd in self.executor.commands))
         self.assertTrue((self.env.home_dir / ".config" / "gtk-3.0" / "bookmarks").exists())
 

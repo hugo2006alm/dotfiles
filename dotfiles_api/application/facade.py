@@ -3,7 +3,6 @@ from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.contracts.linker import Linker
 from dotfiles_api.domain.models.profile import Profile
-from dotfiles_api.application.profiles.desktop import build_desktop_profile
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
@@ -31,11 +30,6 @@ class DotfilesFacade:
         self._setup_service = setup_service
 
     def apply_profile(self, profile: Profile) -> None:
-        # Keep a single source of truth for the standard desktop profile.
-        # SetupService installs its own profile directly when optional packages
-        # have been selected, so those selections are preserved.
-        if profile.name == "desktop":
-            profile = build_desktop_profile()
         self._install_service.install_profile(profile)
 
     def apply_theme(self, theme_name: str) -> None:
@@ -47,9 +41,9 @@ class DotfilesFacade:
     def reload(self) -> None:
         self._reload_service.reload_all()
 
-    def setup(self, setup_github: bool) -> None:
+    def setup(self, setup_github: bool, enable_ssh_server: bool = False) -> None:
         if self._setup_service:
-            self._setup_service.run_setup(setup_github)
+            self._setup_service.run_setup(setup_github, enable_ssh_server=enable_ssh_server)
 
     def apply_all(self, profile: Profile, theme_name: str) -> None:
         self.apply_profile(profile)

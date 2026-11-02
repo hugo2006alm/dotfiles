@@ -42,8 +42,7 @@ from dotfiles_api.infrastructure.generators.greetd import GreetdGenerator
 from dotfiles_api.infrastructure.generators.gtk import GtkGenerator
 from dotfiles_api.infrastructure.generators.plymouth import PlymouthGenerator
 
-from dotfiles_api.application.hardware import detect_graphics_packages
-from dotfiles_api.application.profiles.desktop import build_desktop_profile
+from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
 from dotfiles_api.application.registry import PackageRegistry
 from dotfiles_api.application.loader import ThemeLoader
 from dotfiles_api.application.store import ArtifactStore
@@ -88,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
         if name == "setup":
             command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
+            command.add_argument("--ssh-server", action="store_true", help="Enable incoming SSH and open its firewall rule")
         if name == "action":
             command.add_argument("action_name")
             command.add_argument("action_args", nargs=argparse.REMAINDER)
@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     home_dir = Path.home()
-    dotfiles_dir = home_dir / "dotfiles"
+    dotfiles_dir = Path(os.environ.get("DOTFILES_DIR", Path(__file__).resolve().parents[2]))
     try:
         user = os.getlogin()
     except Exception:
@@ -213,7 +213,8 @@ def main(argv: list[str] | None = None) -> None:
     for gen in generators:
         event_bus.subscribe(ThemeChangedEvent, gen.handle_theme_changed)
 
-    desktop_profile = build_desktop_profile(graphics_packages=detect_graphics_packages())
+    profile_resolver = DesktopProfileResolver()
+    desktop_profile = profile_resolver.resolve()
 
     services_setup_svc = ServicesSetupService(exec_ctx, env)
     user_setup_svc = UserSetupService(exec_ctx, env)
@@ -227,6 +228,7 @@ def main(argv: list[str] | None = None) -> None:
         services_service=services_setup_svc,
         user_service=user_setup_svc,
         extras_service=extras_setup_svc,
+        profile_resolver=profile_resolver,
     )
 
     facade = DotfilesFacade(
@@ -397,7 +399,7 @@ def main(argv: list[str] | None = None) -> None:
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":
-        facade.setup(setup_github=args.github)
+        facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False))
     elif args.command == "setup-login":
         LoginSetupService(exec_ctx, env).apply()
     elif args.command == "action":

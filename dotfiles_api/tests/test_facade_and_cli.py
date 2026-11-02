@@ -1,4 +1,5 @@
 import argparse
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -136,6 +137,16 @@ class TestCliCommands(unittest.TestCase):
         executor.start().return_value.execute.return_value = CommandResult("", "", 0)
         self.addCleanup(executor.stop)
 
+    def test_cli_links_the_installed_checkout_instead_of_assuming_home_dotfiles(self):
+        from dotfiles_api.presentation.cli import main
+
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ), \
+                patch("dotfiles_api.presentation.cli.Path.home", return_value=Path(temp)), \
+                patch("dotfiles_api.presentation.cli.DotfilesFacade") as facade:
+            os.environ.pop("DOTFILES_DIR", None)
+            main(["link", "--dry-run"])
+        self.assertEqual(facade.call_args.kwargs["env"].dotfiles_dir, Path(__file__).resolve().parents[2])
+
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.DotfilesFacade")
     def test_cli_setup(self, mock_facade_class, mock_parse_args):
@@ -145,7 +156,7 @@ class TestCliCommands(unittest.TestCase):
         from dotfiles_api.presentation.cli import main
         main()
 
-        mock_facade.setup.assert_called_once_with(setup_github=True)
+        mock_facade.setup.assert_called_once_with(setup_github=True, enable_ssh_server=False)
 
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.ActionService")
