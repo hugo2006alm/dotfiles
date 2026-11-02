@@ -1,6 +1,7 @@
 from pathlib import Path
 from dotfiles_api.domain.contracts import ThemeStore
 from dotfiles_api.context.environment import EnvironmentContext
+from dotfiles_api.infrastructure.file_writer import SystemFileWriter
 
 class FileThemeStore(ThemeStore):
     def __init__(self, env: EnvironmentContext) -> None:
@@ -18,4 +19,4 @@ class FileThemeStore(ThemeStore):
     def set_active_theme(self, theme_name: str) -> None:
         self._env.validate_output_path(self._theme_file)
         self._theme_file.parent.mkdir(parents=True, exist_ok=True)
-        self._theme_file.write_text(theme_name)
+        SystemFileWriter().write(self._theme_file, theme_name + "\n")

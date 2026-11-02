@@ -20,6 +20,18 @@ class TestHomeLayout(unittest.TestCase):
         self.assertFalse((package / ".config/greetd/regreet.css").exists())
         self.assertFalse((package / "dotfiles_api").exists())
 
+    def test_dry_run_rejects_missing_home_package_without_writing(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            root.mkdir()
+            home.mkdir()
+            executor = Mock()
+            with self.assertRaisesRegex(ValueError, "package"):
+                StowLinker(ExecutionContext(True, executor)).link(root, home)
+            executor.execute.assert_not_called()
+            self.assertEqual(list(home.iterdir()), [])
+
     @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
     def test_stow_links_files_without_folding_or_installing_metadata(self):
         with tempfile.TemporaryDirectory() as temp:

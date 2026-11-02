@@ -43,8 +43,8 @@ recovery. Any deliberate sudoers change must pass `visudo -cf FILE` before
 installation as root:root mode 0440.
 
 Recovery is manual. This installer does not claim a global filesystem/service
-transaction or protection against power loss. Coordinated theme rollback is
-scheduled for step 07.
+transaction or protection against power loss. User theme recovery is described
+in [the configuration migration guide](configuration-migration.md).
 
 ## CLI and package recovery
 
@@ -65,8 +65,8 @@ Command logs: `~/.local/state/shade-raid/commands.jsonl`, mode 0600. Entries
 include command, step, exit status and redacted diagnostics. Common credential
 arguments and token formats are redacted; this is not a universal secret detector.
 
-`bash scripts/bootstrap.sh --dry-run` makes no changes. The complete
-theme/application dry-run guarantee remains pending step 06.
+`bash scripts/bootstrap.sh --dry-run` makes no changes. Theme/action dry-runs
+also avoid artifact/state writes, locks, child commands and reload threads.
 
 ## Required graphical smoke tests
 

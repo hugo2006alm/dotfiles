@@ -21,6 +21,10 @@ class EnvironmentContext:
     def runtime_dir(self) -> Path:
         return self.runtime_home / "shade-raid" if self.runtime_home else self.state_dir / "runtime"
 
+    @property
+    def lock_dir(self) -> Path:
+        return self.runtime_dir if self.runtime_home else self.home_dir / ".shade-raid-locks"
+
     def validate_output_path(self, path: Path) -> None:
         resolved = path.resolve()
         if resolved.is_relative_to(self.dotfiles_dir.resolve()):

@@ -79,7 +79,15 @@ See [Shade Raid v2 progress and remaining steps](docs/shade-raid-v2.md).
 
 ## DOTFILES MANAGEMENT
 
-This repo uses **GNU Stow** to manage dotfiles. All configuration files are tracked inside the `~/dotfiles/` directory and symlinked into your `$HOME`.
+GNU Stow manages only the declarative `home/` package, using `--no-folding`.
+Configuration directories remain real directories so generated files can live
+beside linked source files. Python code, Git metadata, scripts and documentation
+are not part of the Stow package.
+
+Run `dotfiles link` to install links. Legacy repository-owned directory links
+are unfolded with recovery snapshots under `~/.shade-raid-backups/`.
+Conflicting personal files are preserved; a failed migration restores old links.
+Back up affected configuration before updating an existing installation.
 
 To make changes, edit the files inside `~/dotfiles/` and run the custom Fish helper to commit, push, and re-apply:
 
@@ -100,7 +108,7 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 ```
 
 ### Options
-- `--dry-run`: Prints planned commands and artifact writes. The full side-effect-free theme/application guarantee is pending v2 step 06; bootstrap's own `--dry-run` is side-effect-free.
+- `--dry-run`: Builds the theme execution plan without writing artifacts, active state, locks or logs, starting reload threads, or launching child commands. Works before/after subcommands and after action arguments (before an explicit `--` delimiter).
 - `--theme`: The theme name to apply (default: `shade-raid`).
 
 ### Commands
@@ -113,6 +121,17 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 - `setup --github`: Runs setup and explicitly requests interactive GitHub authentication.
 - `setup --ssh-server`: Explicitly enables the SSH server and its firewall rule.
 - `setup-login`: Explicit interactive installation of root-owned greetd files, with backups.
+- `rollback --dry-run`: Inspect the most recent recoverable theme journal without changes.
+- `rollback`: Restore its original files, permissions, timestamps and active theme.
+
+Theme application renders and validates artifacts before staging and individual
+atomic replacements. Changed files and active state form one recoverable batch.
+An apply failure or interruption restores existing files and removes newly
+created ones. Unchanged themes do not refresh applications or wallpapers.
+Journals are kept under `~/.local/state/shade-raid/transactions/`, respecting
+XDG_STATE_HOME. Refresh failures are reported after the file commit and can be
+handled with `reload` or `rollback`; files and running services are not a global
+transaction.
 
 ---
 
@@ -135,7 +154,7 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 | greetd Config | `GreetdGenerator` | `~/.config/greetd/regreet.toml` (installed explicitly by `setup-login`) |
 | GTK Settings | `GtkGenerator` | `~/.config/gtk-3.0/settings.ini` & `gtk-4.0/settings.ini` |
 | GTK Stylesheet | `GtkGenerator` | `~/.config/gtk-3.0/gtk.css` & `gtk-4.0/gtk.css` |
-| Plymouth Script | `PlymouthGenerator` | `~/dotfiles/plymouth-shade-raid/shade-raid.script` |
+| Plymouth Script | `PlymouthGenerator` | `~/.local/state/shade-raid/generated/plymouth/shade-raid.script` |
 
 ---
 

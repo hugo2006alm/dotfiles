@@ -9,9 +9,10 @@ class StowLinker(Linker):
 
     def link(self, source_dir: Path, target_dir: Path) -> None:
         args = ["stow", "--no-folding", "-d", str(source_dir), "-t", str(target_dir), "home"]
+        migration = HomeMigration(source_dir, target_dir)
         if self._exec.dry_run:
-            print("[DRY-RUN] Would inspect legacy links and preserve conflicting personal files.")
+            print(f"[DRY-RUN] Would migrate {len(migration.links)} legacy links; personal-file conflicts are preserved.")
             self._exec.execute(args, step="link:stow")
             return
-        with HomeMigration(source_dir, target_dir):
+        with migration:
             self._exec.execute(args, step="link:stow")

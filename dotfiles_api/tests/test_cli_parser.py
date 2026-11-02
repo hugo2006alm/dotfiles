@@ -27,6 +27,16 @@ class TestCliParser(unittest.TestCase):
         self.assertEqual(args.action_name, "screenshot")
         self.assertEqual(args.action_args, ["--region"])
 
+    def test_dry_run_after_action_arguments_is_still_global(self):
+        args = self.parse(["action", "screenshot", "--region", "--dry-run"])
+        self.assertTrue(args.dry_run)
+        self.assertEqual(args.action_args, ["--region"])
+
+    def test_explicit_delimiter_preserves_action_flags(self):
+        args = self.parse(["action", "screenshot", "--", "--dry-run"])
+        self.assertFalse(args.dry_run)
+        self.assertEqual(args.action_args, ["--dry-run"])
+
     def test_global_options_work_before_or_after_command(self):
         for argv in (["--dry-run", "--verbose", "configure"],
                      ["configure", "--dry-run", "--verbose"],

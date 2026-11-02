@@ -9,6 +9,7 @@ class PlannedArtifact:
     artifact: GeneratedArtifact
     path: Path
     original: bytes | None
+    original_link: str | None = None
 
     @property
     def changed(self) -> bool:
