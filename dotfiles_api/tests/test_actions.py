@@ -74,7 +74,7 @@ class TestActions(unittest.TestCase):
         mock_process = MagicMock()
         mock_process.pid = 12345
         mock_popen.return_value = mock_process
-        action = RecorderAction(self.exec_ctx)
+        action = RecorderAction(self.exec_ctx, self.env)
 
         action.execute([])
         mock_popen.assert_called_once()
@@ -151,7 +151,7 @@ class TestActions(unittest.TestCase):
         (theme_b / "colors.toml").write_text("")
         (themes_dir / "current").write_text("theme-a")
 
-        preview_temp = Path("/tmp/dotfiles_preview_theme")
+        preview_temp = self.env.runtime_dir / "preview-theme"
         if preview_temp.exists():
             preview_temp.unlink()
 

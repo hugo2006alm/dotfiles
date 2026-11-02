@@ -79,8 +79,12 @@ class TestExecutionFailures(unittest.TestCase):
             installer.install_profile(Profile("example", [Feature("test", ["git"], [])]))
 
     def test_link_failure_is_an_error(self):
-        with self.assertRaises(RuntimeError):
-            StowLinker(self.context()).link(Path("/source"), Path("/target"))
+        with tempfile.TemporaryDirectory() as temp:
+            source, target = Path(temp) / "source", Path(temp) / "target"
+            (source / "home").mkdir(parents=True)
+            target.mkdir()
+            with self.assertRaises(RuntimeError):
+                StowLinker(self.context()).link(source, target)
 
     def test_private_structured_log_and_error_redact_credentials(self):
         with tempfile.TemporaryDirectory() as temp:

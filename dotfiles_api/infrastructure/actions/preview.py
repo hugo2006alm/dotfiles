@@ -2,6 +2,7 @@ from pathlib import Path
 from dotfiles_api.domain.contracts.action import Action
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.context.environment import EnvironmentContext
+from dotfiles_api.infrastructure.file_store import FileThemeStore
 
 class PreviewAction(Action):
     def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
@@ -28,7 +29,7 @@ class PreviewAction(Action):
         themes.sort()
         
         # 2. Get current preview theme
-        preview_theme_path = Path("/tmp/dotfiles_preview_theme")
+        preview_theme_path = self._env.runtime_dir / "preview-theme"
         current_preview = None
         if preview_theme_path.is_file():
             try:
@@ -38,12 +39,7 @@ class PreviewAction(Action):
                 
         # Fallback to active theme if preview theme is invalid or not in list
         if not current_preview or current_preview not in themes:
-            active_theme_path = themes_dir / "current"
-            if active_theme_path.is_file():
-                try:
-                    current_preview = active_theme_path.read_text().strip()
-                except Exception:
-                    pass
+            current_preview = FileThemeStore(self._env).get_active_theme()
             if not current_preview or current_preview not in themes:
                 current_preview = themes[0]
                 
@@ -64,6 +60,7 @@ class PreviewAction(Action):
         
         # 4. Write back preview theme
         try:
+            preview_theme_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             preview_theme_path.write_text(next_theme)
         except Exception as exc:
             self._exec.execute(["notify-send", "Theme Preview Error", str(exc)])
@@ -78,14 +75,9 @@ class PreviewAction(Action):
             
             loader = ThemeLoader(self._env)
             active_theme = current_preview
-            active_theme_path = themes_dir / "current"
-            if active_theme_path.is_file():
-                try:
-                    stored_active = active_theme_path.read_text().strip()
-                    if stored_active in themes:
-                        active_theme = stored_active
-                except Exception:
-                    pass
+            stored_active = FileThemeStore(self._env).get_active_theme()
+            if stored_active in themes:
+                active_theme = stored_active
             tokens = loader.load(active_theme)
             
             tx = ConfigTransaction(

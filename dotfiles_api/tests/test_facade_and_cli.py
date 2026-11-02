@@ -130,6 +130,11 @@ class TestCliToggle(unittest.TestCase):
 
 class TestCliCommands(unittest.TestCase):
     def setUp(self):
+        home = tempfile.TemporaryDirectory()
+        self.addCleanup(home.cleanup)
+        home_patch = patch("dotfiles_api.presentation.cli.Path.home", return_value=Path(home.name))
+        home_patch.start()
+        self.addCleanup(home_patch.stop)
         background = patch("subprocess.Popen")
         background.start()
         self.addCleanup(background.stop)

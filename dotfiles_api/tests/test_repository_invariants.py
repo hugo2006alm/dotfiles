@@ -22,8 +22,8 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertIn("portal_reload,", source)
 
     def test_hyprland_uses_python_drawer_action(self) -> None:
-        autostart = (ROOT / ".config" / "hypr" / "autostart.lua").read_text()
-        hyprland = (ROOT / ".config" / "hypr" / "hyprland.lua").read_text()
+        autostart = (ROOT / "home/.config/hypr/autostart.lua").read_text()
+        hyprland = (ROOT / "home/.config/hypr/hyprland.lua").read_text()
 
         self.assertNotIn("gen-drawers.sh", autostart)
         self.assertNotIn("gen-drawers.sh", hyprland)

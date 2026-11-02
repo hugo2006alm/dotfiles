@@ -285,11 +285,16 @@ class TestInfrastructureImplementations(unittest.TestCase):
         linker = StowLinker(exec_ctx=exec_ctx)
 
         # Act
-        linker.link(Path("/src"), Path("/dest"))
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "src"
+            target = Path(temp) / "dest"
+            (source / "home").mkdir(parents=True)
+            target.mkdir()
+            linker.link(source, target)
 
         # Assert
         self.assertEqual(len(executor.commands), 1)
-        self.assertEqual(executor.commands[0], "stow -d /src -t /dest .")
+        self.assertEqual(executor.commands[0], f"stow --no-folding -d {source} -t {target} home")
 
     def test_waybar_reloadable(self):
         # Arrange
