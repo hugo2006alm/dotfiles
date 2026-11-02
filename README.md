@@ -57,7 +57,7 @@ bash .config/install/install.sh
 The script will:
 1. Install `yay` (AUR helper)
 2. Enable multilib and install all pacman + AUR packages
-3. Configure GNU Stow to symlink all configuration directories
+3. Link declarative files from home/ using GNU Stow without directory folding
 4. Enable system services (NetworkManager, bluetooth, pipewire, ufw)
 5. Set fish as default shell, preserve existing personal preferences, refresh fonts
 6. Generate and apply the Shade Raid theme using the Python API

@@ -42,7 +42,7 @@ needed by the new workflow. Do not restore old passwordless copy rules as routin
 recovery. Any deliberate sudoers change must pass `visudo -cf FILE` before
 installation as root:root mode 0440.
 
-Recovery is manual. This installer does not claim a global filesystem/service
+Login recovery is manual. This installer does not claim a global filesystem/service
 transaction or protection against power loss. User theme recovery is described
 in [the configuration migration guide](configuration-migration.md).
 
