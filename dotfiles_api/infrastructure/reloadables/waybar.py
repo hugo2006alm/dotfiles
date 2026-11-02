@@ -14,8 +14,8 @@ class WaybarReloadable(EventReloadable):
 
     def reload(self) -> None:
         self.compile_styles()
-        signal_result = self._exec.execute(["pkill", "-USR2", "waybar"])
-        running_result = self._exec.execute(["pgrep", "-x", "waybar"])
+        signal_result = self._exec.query(["pkill", "-USR2", "waybar"])
+        running_result = self._exec.query(["pgrep", "-x", "waybar"])
         if signal_result.returncode != 0 or running_result.returncode != 0:
             self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('waybar')"])
 

@@ -6,7 +6,7 @@ class SwayNCReloadable(EventReloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["pkill", "-x", "swaync"])
+        self._exec.query(["pkill", "-x", "swaync"])
         self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('swaync')"])
 
     def supports(self, generator_name: str) -> bool:

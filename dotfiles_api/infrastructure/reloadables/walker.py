@@ -6,7 +6,7 @@ class WalkerReloadable(EventReloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["pkill", "walker"])
+        self._exec.query(["pkill", "walker"])
         self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('walker --gapplication-service')"])
 
     def supports(self, generator_name: str) -> bool:

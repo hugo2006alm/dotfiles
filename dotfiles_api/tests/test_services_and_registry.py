@@ -449,7 +449,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
         r = HyprlandReloadable(exec_ctx=exec_ctx)
         r.reload()
-        self.assertTrue(any("gen-drawers.sh" in cmd for cmd in executor.commands))
+        self.assertFalse(any("gen-drawers.sh" in cmd for cmd in executor.commands))
         self.assertTrue(any("hyprctl reload" in cmd for cmd in executor.commands))
 
     def test_regreet_reloadable(self):

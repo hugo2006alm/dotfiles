@@ -8,12 +8,12 @@ class PortalAction(Action):
 
     def execute(self, args: list[str]) -> None:
         time.sleep(0.5)
-        self._exec.execute(["killall", "-e", "xdg-desktop-portal-hyprland"])
-        self._exec.execute(["killall", "-e", "xdg-desktop-portal-gnome"])
-        self._exec.execute(["killall", "-e", "xdg-desktop-portal-kde"])
-        self._exec.execute(["killall", "-e", "xdg-desktop-portal-lxqt"])
-        self._exec.execute(["killall", "-e", "xdg-desktop-portal-wlr"])
-        self._exec.execute(["killall", "xdg-desktop-portal"])
+        self._exec.query(["killall", "-e", "xdg-desktop-portal-hyprland"])
+        self._exec.query(["killall", "-e", "xdg-desktop-portal-gnome"])
+        self._exec.query(["killall", "-e", "xdg-desktop-portal-kde"])
+        self._exec.query(["killall", "-e", "xdg-desktop-portal-lxqt"])
+        self._exec.query(["killall", "-e", "xdg-desktop-portal-wlr"])
+        self._exec.query(["killall", "xdg-desktop-portal"])
 
         if self._exec.dry_run:
             print("[DRY-RUN] Would start: /usr/lib/xdg-desktop-portal-hyprland")

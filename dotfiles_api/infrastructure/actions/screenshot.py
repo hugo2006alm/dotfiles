@@ -9,7 +9,7 @@ class ScreenshotAction(Action):
         self._exec = exec_ctx
 
     def execute(self, args: list[str]) -> None:
-        pictures_res = self._exec.execute(["xdg-user-dir", "PICTURES"])
+        pictures_res = self._exec.optional(["xdg-user-dir", "PICTURES"])
         pictures_dir = Path(pictures_res.stdout.strip() or os.path.expanduser("~/Pictures"))
         screenshot_dir = pictures_dir / "Screenshots"
         
@@ -22,7 +22,7 @@ class ScreenshotAction(Action):
         use_region = "--region" in args
         
         if use_region:
-            slurp_res = self._exec.execute(["slurp"])
+            slurp_res = self._exec.query(["slurp"])
             coords = slurp_res.stdout.strip()
             if not coords:
                 return
@@ -32,7 +32,7 @@ class ScreenshotAction(Action):
 
         self._exec.execute(grim_cmd)
         self._exec.execute(["bash", "-c", f"wl-copy --type image/png < {file_path} &"])
-        self._exec.execute([
+        self._exec.optional([
             "notify-send",
             "-i", str(file_path),
             "Screenshot copied",

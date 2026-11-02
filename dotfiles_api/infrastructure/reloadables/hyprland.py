@@ -6,7 +6,6 @@ class HyprlandReloadable(EventReloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["bash", "-c", "~/.config/hypr/scripts/gen-drawers.sh"])
         self._exec.execute(["hyprctl", "reload"])
 
     def supports(self, generator_name: str) -> bool:

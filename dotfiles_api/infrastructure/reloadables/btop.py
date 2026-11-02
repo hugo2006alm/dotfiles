@@ -7,9 +7,9 @@ class BtopReloadable(EventReloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        res = self._exec.execute(["pgrep", "-x", "btop"])
+        res = self._exec.query(["pgrep", "-x", "btop"])
         if res.returncode == 0:
-            self._exec.execute(["pkill", "-x", "btop"])
+            self._exec.query(["pkill", "-x", "btop"])
             time.sleep(0.3)
             self._exec.execute(["hyprctl", "dispatch", 'hl.dsp.workspace.toggle_special("btop")'])
 

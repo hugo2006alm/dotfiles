@@ -108,7 +108,9 @@ def main(argv: list[str] | None = None) -> None:
     env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user)
 
     executor = SystemCommandExecutor()
-    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor, verbose=getattr(args, "verbose", False))
+    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor,
+                                verbose=getattr(args, "verbose", False),
+                                log_path=env.home_dir / ".local/state/shade-raid/commands.jsonl")
 
     package_registry = PackageRegistry()
 

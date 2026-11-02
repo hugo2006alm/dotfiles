@@ -23,7 +23,7 @@ class WallpaperAction(Action):
         wp_dir = self._wallpapers.wallpaper_dir(theme)
 
         if not wp_dir.exists():
-            self._exec.execute(["notify-send", "Wallpaper Error", f"Directory {wp_dir} not found"])
+            self._exec.optional(["notify-send", "Wallpaper Error", f"Directory {wp_dir} not found"])
             return
 
         cache_dir = self._env.home_dir / ".cache" / "shade-raid"
@@ -37,7 +37,7 @@ class WallpaperAction(Action):
 
         imgs = [str(path) for path in self._wallpapers.wallpapers(theme)]
         if not imgs:
-            self._exec.execute(["notify-send", "Wallpaper Error", "No wallpapers found"])
+            self._exec.optional(["notify-send", "Wallpaper Error", "No wallpapers found"])
             return
 
         candidates = [img for img in imgs if Path(img).resolve() != Path(current_wall).resolve()]
@@ -51,8 +51,8 @@ class WallpaperAction(Action):
             "--transition-type", "wipe",
             "--transition-angle", "30"
         ])
-        self._exec.execute(["notify-send", "Wallpaper Changed", selected_wall.name])
-        self._exec.execute(["swaync-client", "-R"])
+        self._exec.optional(["notify-send", "Wallpaper Changed", selected_wall.name])
+        self._exec.optional(["swaync-client", "-R"])
 
         if not self._exec.dry_run:
             cache_dir.mkdir(parents=True, exist_ok=True)
