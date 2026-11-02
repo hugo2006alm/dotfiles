@@ -26,7 +26,7 @@ All theme generation, linking, package installation, and reloading is managed by
    ```
 4. **Generator Registry:** Concrete app-specific generators inherit from `BaseGenerator` and reside under `dotfiles_api/infrastructure/generators/`. They must implement `render()` and return `list[GeneratedArtifact]`.
 5. **Reloadable Registry:** Concrete app-specific reloaders inherit from `Reloadable` and reside under `dotfiles_api/infrastructure/reloadables/`. They must implement `reload()`.
-6. **Integration Point:** All new generators and reloadables must be instantiated and registered inside `dotfiles_api/presentation/cli.py` and have their paths mapped in `artifact_paths` inside `main()`.
+6. **Integration Point:** Declare packages, dependencies, generator, outputs, validator and reload factory in `dotfiles_api/infrastructure/application_catalog.py`. The typed ApplicationRegistry validates contracts and composes the CLI. Do not add parallel app lists to the CLI or desktop profile.
 7. **Theme application:** Full theme changes use ThemePlanner and ThemeCoordinator. Generate/validate everything before a file transaction; update active state last. Do not write generated output into the repository or mutate runtime state from render().
 8. **Dry-run:** Never create directories, files, locks, logs, threads or subprocesses in a dry-run path. Preserve this contract on errors too.
 

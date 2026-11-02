@@ -15,37 +15,12 @@ from dotfiles_api.infrastructure.linker import StowLinker
 from dotfiles_api.infrastructure.package_sources.pacman import PacmanSource
 from dotfiles_api.infrastructure.package_sources.yay import YaySource
 
-# Reloadables
-from dotfiles_api.infrastructure.reloadables.waybar import WaybarReloadable
-from dotfiles_api.infrastructure.reloadables.swaync import SwayNCReloadable
-from dotfiles_api.infrastructure.reloadables.portal import XDGPortalReloadable
-from dotfiles_api.infrastructure.reloadables.gsettings import GsettingsReloadable
-from dotfiles_api.infrastructure.reloadables.ghostty import GhosttyReloadable
-from dotfiles_api.infrastructure.reloadables.walker import WalkerReloadable
-from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
-from dotfiles_api.infrastructure.reloadables.btop import BtopReloadable
-from dotfiles_api.infrastructure.reloadables.hyprland import HyprlandReloadable
-from dotfiles_api.infrastructure.reloadables.vesktop import VesktopReloadable
-from dotfiles_api.infrastructure.reloadables.regreet import ReGreetReloadable
 
-# Generators
-from dotfiles_api.infrastructure.generators.hypr import HyprlandGenerator
-from dotfiles_api.infrastructure.generators.waybar import WaybarGenerator
-from dotfiles_api.infrastructure.generators.ghostty import GhosttyGenerator
-from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
-from dotfiles_api.infrastructure.generators.swayosd import SwayosdGenerator
-from dotfiles_api.infrastructure.generators.btop import BtopGenerator
-from dotfiles_api.infrastructure.generators.walker import WalkerGenerator
-from dotfiles_api.infrastructure.generators.wlogout import WlogoutGenerator
-from dotfiles_api.infrastructure.generators.vesktop import VesktopGenerator
-from dotfiles_api.infrastructure.generators.hyprlock import HyprlockGenerator
-from dotfiles_api.infrastructure.generators.regreet import ReGreetGenerator
-from dotfiles_api.infrastructure.generators.greetd import GreetdGenerator
-from dotfiles_api.infrastructure.generators.gtk import GtkGenerator
-from dotfiles_api.infrastructure.generators.plymouth import PlymouthGenerator
 
 from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
 from dotfiles_api.application.registry import PackageRegistry
+from dotfiles_api.application.application_registry import ApplicationRegistry
+from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
 from dotfiles_api.application.loader import ThemeLoader
 from dotfiles_api.application.store import ArtifactStore
 from dotfiles_api.application.transaction import ConfigTransaction
@@ -122,35 +97,8 @@ def main(argv: list[str] | None = None) -> None:
 
     package_registry = PackageRegistry()
 
-    artifact_paths = {
-        "active-theme": env.state_dir / "active-theme",
-        "theme-preview": env.preview_file,
-        "hyprland-colors": env.home_dir / ".config" / "hypr" / "colors.lua",
-        "hyprland-style": env.home_dir / ".config" / "hypr" / "style.lua",
-        "hyprland-colors-conf": env.home_dir / ".config" / "hypr" / "colors.conf",
-        "hyprland-style-conf": env.home_dir / ".config" / "hypr" / "style.conf",
-        "waybar-colors": env.home_dir / ".config" / "waybar" / "colors.scss",
-        "waybar-variables": env.home_dir / ".config" / "waybar" / "variables.scss",
-        "ghostty-colors": env.home_dir / ".config" / "ghostty" / "colors.conf",
-        "swaync-config": env.home_dir / ".config" / "swaync" / "config.json",
-        "swaync-style": env.home_dir / ".config" / "swaync" / "style.css",
-        "swayosd-colors": env.home_dir / ".config" / "swayosd" / "_colors.scss",
-        "btop-theme": env.home_dir / ".config" / "btop" / "themes" / "shade-raid.theme",
-        "btop-config": env.home_dir / ".config" / "btop" / "btop.conf",
-        "walker-colors": env.home_dir / ".config" / "walker" / "themes" / "{theme_name}" / "_colors.scss",
-        "walker-config": env.home_dir / ".config" / "walker" / "config.toml",
-        "wlogout-colors": env.home_dir / ".config" / "wlogout" / "_colors.scss",
-        "vesktop-theme": env.home_dir / ".config" / "vesktop" / "themes" / "{theme_name}.theme.css",
-        "hyprlock-config": env.home_dir / ".config" / "hypr" / "hyprlock.conf",
-        "regreet-style": env.home_dir / ".config" / "greetd" / "regreet.css",
-        "greetd-config": env.home_dir / ".config" / "greetd" / "regreet.toml",
-        "gtk3-settings": env.home_dir / ".config" / "gtk-3.0" / "settings.ini",
-        "gtk4-settings": env.home_dir / ".config" / "gtk-4.0" / "settings.ini",
-        "gtk3-css": env.home_dir / ".config" / "gtk-3.0" / "gtk.css",
-        "gtk4-css": env.home_dir / ".config" / "gtk-4.0" / "gtk.css",
-        "plymouth-theme": env.state_dir / "generated" / "plymouth" / "shade-raid.script",
-    }
-    artifact_store = ArtifactStore(mappings=artifact_paths)
+    applications = ApplicationRegistry(APPLICATIONS)
+    artifact_store = ArtifactStore(applications.artifact_paths(env))
 
     file_writer = SystemFileWriter()
     theme_store = FileThemeStore(env=env)
@@ -160,31 +108,8 @@ def main(argv: list[str] | None = None) -> None:
     yay_src = YaySource(exec_ctx=exec_ctx)
     sources = {"pacman": pacman_src, "yay": yay_src}
 
-    waybar_reload = WaybarReloadable(exec_ctx=exec_ctx)
-    swaync_reload = SwayNCReloadable(exec_ctx=exec_ctx)
-    portal_reload = XDGPortalReloadable(exec_ctx=exec_ctx)
-    gsettings_reload = GsettingsReloadable(exec_ctx=exec_ctx, theme_store=theme_store, loader=ThemeLoader(env))
-    ghostty_reload = GhosttyReloadable(exec_ctx=exec_ctx)
-    walker_reload = WalkerReloadable(exec_ctx=exec_ctx)
-    wlogout_reload = WlogoutReloadable(exec_ctx=exec_ctx)
-    btop_reload = BtopReloadable(exec_ctx=exec_ctx)
-    hyprland_reload = HyprlandReloadable(exec_ctx=exec_ctx)
-    vesktop_reload = VesktopReloadable(exec_ctx=exec_ctx, theme_store=theme_store)
-    regreet_reload = ReGreetReloadable(exec_ctx=exec_ctx, env=env)
-
-    reloadables = [
-        waybar_reload,
-        swaync_reload,
-        portal_reload,
-        gsettings_reload,
-        ghostty_reload,
-        walker_reload,
-        wlogout_reload,
-        btop_reload,
-        hyprland_reload,
-        vesktop_reload,
-        regreet_reload,
-    ]
+    theme_loader = ThemeLoader(env=env)
+    reloadables = applications.reloadables(exec_ctx, env, theme_store, theme_loader)
 
     install_svc = InstallService(
         env=env,
@@ -200,24 +125,8 @@ def main(argv: list[str] | None = None) -> None:
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
 
-    generators = [
-        HyprlandGenerator(name="hyprland", transaction=tx, event_bus=event_bus),
-        WaybarGenerator(name="waybar", transaction=tx, event_bus=event_bus),
-        GhosttyGenerator(name="ghostty", transaction=tx, event_bus=event_bus),
-        SwayncGenerator(name="swaync", transaction=tx, event_bus=event_bus),
-        SwayosdGenerator(name="swayosd", transaction=tx, event_bus=event_bus),
-        BtopGenerator(name="btop", transaction=tx, event_bus=event_bus),
-        WalkerGenerator(name="walker", transaction=tx, event_bus=event_bus),
-        WlogoutGenerator(name="wlogout", transaction=tx, event_bus=event_bus),
-        VesktopGenerator(name="vesktop", transaction=tx, event_bus=event_bus),
-        HyprlockGenerator(name="hyprlock", transaction=tx, event_bus=event_bus),
-        ReGreetGenerator(name="regreet", transaction=tx, event_bus=event_bus),
-        GreetdGenerator(name="greetd", transaction=tx, event_bus=event_bus),
-        GtkGenerator(name="gtk", transaction=tx, event_bus=event_bus),
-        PlymouthGenerator(name="plymouth", transaction=tx, event_bus=event_bus),
-    ]
-
-    planner = ThemePlanner(env, artifact_store, generators)
+    generators = applications.generators(tx, event_bus)
+    planner = ThemePlanner(env, artifact_store, generators, registry=applications)
     coordinator = ThemeCoordinator(env, planner, tx)
     theme_svc = ThemeService(theme_loader, theme_store, event_bus, planner=planner,
                              dry_run=args.dry_run, coordinator=coordinator,

@@ -8,8 +8,9 @@ from dotfiles_api.application.validation import ArtifactValidator
 class ThemePlanner:
     """Render and inspect all outputs without writing files or starting commands."""
 
-    def __init__(self, env: EnvironmentContext, store: ArtifactStore, generators: list) -> None:
+    def __init__(self, env: EnvironmentContext, store: ArtifactStore, generators: list, registry=None) -> None:
         self.env, self.store, self.generators = env, store, generators
+        self.registry = registry
 
     def build(self, tokens, theme_name: str) -> ThemePlan:
         items, targets = [], set()
@@ -20,13 +21,18 @@ class ThemePlanner:
                 artifacts = generator.render(tokens, theme_name)
             finally:
                 generator.transaction.theme_name = previous
+            if self.registry:
+                self.registry.validate_artifacts(generator.name, artifacts)
             for artifact in artifacts:
                 path = self.store.resolve_path(artifact.artifact_id, theme_name)
                 self.env.validate_output_path(path)
                 if path.resolve() in targets:
                     raise ValueError(f"Duplicate generated destination: {path}")
                 targets.add(path.resolve())
-                ArtifactValidator().validate(path, artifact.content)
+                if self.registry:
+                    self.registry.validate_content(generator.name, path, artifact.content)
+                else:
+                    ArtifactValidator().validate(path, artifact.content)
                 original = path.read_bytes() if path.exists() else None
                 link = str(path.readlink()) if path.is_symlink() else None
                 items.append(PlannedArtifact(generator.name, artifact, path, original, link))
