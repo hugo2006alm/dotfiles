@@ -1,0 +1,113 @@
+import contextlib
+import io
+import os
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from dotfiles_api.application.application_registry import ApplicationRegistry
+from dotfiles_api.application.services.wayland_session import WaylandSessionService
+from dotfiles_api.context.execution import ExecutionContext
+from dotfiles_api.domain.contracts import CommandResult
+from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
+
+ROOT = Path(__file__).resolve().parents[2]
+SESSION = {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland",
+           "XDG_SESSION_TYPE": "wayland", "HYPRLAND_INSTANCE_SIGNATURE": "test-session", "PATH": "/usr/bin"}
+
+
+class TestWaylandSession(unittest.TestCase):
+    def setUp(self):
+        self.executor = Mock()
+        self.executor.execute.return_value = CommandResult("", "", 0)
+        self.service = WaylandSessionService(ExecutionContext(False, self.executor), ApplicationRegistry(APPLICATIONS))
+
+    def commands(self):
+        return [call.args[0] for call in self.executor.execute.call_args_list]
+
+    def test_environment_import_precedes_idempotent_service_start(self):
+        with patch.dict(os.environ, SESSION, clear=True):
+            self.service.start()
+        commands = self.commands()
+        self.assertEqual(commands[0][:3], ["dbus-update-activation-environment", "--systemd", "WAYLAND_DISPLAY"])
+        self.assertNotIn("--all", commands[0])
+        self.assertIn("PATH", commands[0])
+        self.assertEqual(commands[1], ["systemctl", "--user", "daemon-reload"])
+        units = commands[2]
+        self.assertEqual(units[:3], ["systemctl", "--user", "start"])
+        for name in ("waybar", "swaync", "walker", "swayosd", "elephant"):
+            self.assertIn(f"shade-raid-{name}.service", units)
+        self.assertEqual(commands[-1], ["systemctl", "--user", "start", "xdg-desktop-portal.service"])
+        self.assertFalse(any("kill" in arg or "restart" == arg for cmd in commands for arg in cmd))
+
+    def test_environment_import_failure_stops_dependents(self):
+        self.executor.execute.return_value = CommandResult("", "bus unavailable", 1)
+        with patch.dict(os.environ, SESSION, clear=True), self.assertRaisesRegex(RuntimeError, "bus unavailable"):
+            self.service.start()
+        self.assertEqual(len(self.commands()), 1)
+
+    def test_missing_wayland_environment_fails_before_starting_anything(self):
+        with patch.dict(os.environ, {}, clear=True), self.assertRaisesRegex(RuntimeError, "Wayland"):
+            self.service.start()
+        self.executor.execute.assert_not_called()
+
+    def test_portal_action_uses_the_same_non_disruptive_activation(self):
+        from dotfiles_api.infrastructure.actions.portal import PortalAction
+        with patch.dict(os.environ, SESSION, clear=True), patch("subprocess.Popen") as process:
+            PortalAction(ExecutionContext(False, self.executor)).execute([])
+        process.assert_not_called()
+        self.assertEqual(self.commands()[-1], ["systemctl", "--user", "start", "xdg-desktop-portal.service"])
+
+    def test_dry_run_does_not_query_or_launch_or_write(self):
+        service = WaylandSessionService(ExecutionContext(True, self.executor), ApplicationRegistry(APPLICATIONS))
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {}, clear=True), \
+                patch("subprocess.Popen") as process, contextlib.redirect_stdout(io.StringIO()):
+            service.start()
+            self.assertEqual(list(Path(temp).iterdir()), [])
+        self.executor.execute.assert_not_called()
+        process.assert_not_called()
+
+    def test_units_follow_session_lifetime_and_autostart_has_one_owner(self):
+        source = (ROOT / "home/.config/hypr/autostart.lua").read_text()
+        self.assertIn("dotfiles action session", source)
+        for spec in APPLICATIONS:
+            if not spec.user_unit:
+                continue
+            content = (ROOT / "home/.config/systemd/user" / spec.user_unit).read_text()
+            self.assertIn("PartOf=graphical-session.target", content)
+            self.assertIn("BindsTo=hyprland-session.target", content)
+            self.assertNotIn('hl.exec_cmd("' + spec.id, source)
+        self.assertNotIn("portal.sh", source)
+        self.assertFalse((ROOT / "home/.config/hypr/scripts/portal.sh").exists())
+
+    @unittest.skipUnless(shutil.which("systemd-analyze"), "Requires systemd-analyze")
+    def test_systemd_verifies_unit_graph_offline_with_stub_application_binaries(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            units = root / "config/systemd/user"
+            units.mkdir(parents=True)
+            runtime = root / "runtime"
+            runtime.mkdir(mode=0o700)
+            stub = root / "application"
+            stub.write_text("#!/bin/sh\nexit 0\n")
+            stub.chmod(0o700)
+            # Native target fixture follows upstream; applications are never launched.
+            (units / "hyprland-session.target").write_text(
+                "[Unit]\nDescription=Hyprland session\nBindsTo=graphical-session.target\n"
+                "Wants=graphical-session-pre.target\nAfter=graphical-session-pre.target\n"
+                "PropagatesStopTo=graphical-session.target\n")
+            paths = []
+            for source in (ROOT / "home/.config/systemd/user").glob("shade-raid-*.service"):
+                content = source.read_text()
+                for binary in ("waybar", "swaync", "swayosd-server", "walker", "elephant"):
+                    content = content.replace(f"/usr/bin/{binary}", str(stub))
+                path = units / source.name
+                path.write_text(content)
+                paths.append(str(path))
+            environment = {**os.environ, "XDG_CONFIG_HOME": str(root / "config"), "XDG_RUNTIME_DIR": str(runtime)}
+            result = subprocess.run(["systemd-analyze", "--user", "--man=no", "verify", *paths],
+                                    env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)

@@ -47,6 +47,8 @@ from dotfiles_api.infrastructure.actions.command import CommandAction
 from dotfiles_api.infrastructure.actions.screenshot import ScreenshotAction
 from dotfiles_api.infrastructure.actions.recorder import RecorderAction
 from dotfiles_api.infrastructure.actions.portal import PortalAction
+from dotfiles_api.infrastructure.actions.session import SessionAction
+from dotfiles_api.application.services.wayland_session import WaylandSessionService
 from dotfiles_api.infrastructure.actions.drawer import DrawerAction
 from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
 from dotfiles_api.infrastructure.actions.preview import PreviewAction
@@ -162,9 +164,11 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     action_svc = ActionService()
+    session = WaylandSessionService(exec_ctx, applications)
+    action_svc.register("session", SessionAction(session))
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
     action_svc.register("record", RecorderAction(exec_ctx, env))
-    action_svc.register("portal", PortalAction(exec_ctx))
+    action_svc.register("portal", PortalAction(exec_ctx, session))
     action_svc.register("drawer", DrawerAction(exec_ctx, env))
     action_svc.register("wallpaper", WallpaperAction(exec_ctx, env))
     action_svc.register("preview", PreviewAction(exec_ctx, env))

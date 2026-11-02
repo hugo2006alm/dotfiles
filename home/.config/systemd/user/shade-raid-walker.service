@@ -1,0 +1,19 @@
+[Unit]
+Description=Shade Raid Walker launcher
+PartOf=graphical-session.target
+BindsTo=hyprland-session.target
+After=hyprland-session.target
+Requires=shade-raid-elephant.service
+After=shade-raid-elephant.service
+ConditionEnvironment=WAYLAND_DISPLAY
+ConditionPathExists=%h/.config/walker/config.toml
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecCondition=/usr/bin/test -x /usr/bin/walker
+ExecStart=/usr/bin/walker --gapplication-service
+Restart=on-failure
+RestartSec=1
+Slice=session.slice

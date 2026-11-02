@@ -19,6 +19,7 @@ class ApplicationSpec:
     validator: Callable | None = None
     reload_factory: Callable | None = None
     reload_strategy: str = "none"
+    user_unit: str | None = None
     required: bool = True
     profiles: tuple[str, ...] = ("desktop",)
     capabilities: tuple[str, ...] = ()

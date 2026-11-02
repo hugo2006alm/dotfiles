@@ -315,11 +315,9 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertEqual(len(executor.commands), 2)
-        self.assertIn("pkill -USR2 waybar", executor.commands[0])
-        self.assertIn("pgrep -x waybar", executor.commands[1])
+        self.assertEqual(executor.commands, ["systemctl --user try-reload-or-restart shade-raid-waybar.service"])
 
-    def test_waybar_reloadable_restarts_when_waybar_missing(self):
+    def test_waybar_reloadable_leaves_inactive_service_stopped(self):
         # Arrange
         executor = MockCommandExecutor()
         executor.mock_results = {
@@ -333,7 +331,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertTrue(any("hyprctl dispatch hl.dsp.exec_cmd('waybar')" in cmd for cmd in executor.commands))
+        self.assertEqual(executor.commands, ["systemctl --user try-reload-or-restart shade-raid-waybar.service"])
 
     def test_swaync_reloadable(self):
         # Arrange
@@ -386,7 +384,7 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.walker import WalkerReloadable
         r = WalkerReloadable(exec_ctx=exec_ctx)
         r.reload()
-        self.assertTrue(any("walker --gapplication-service" in cmd for cmd in executor.commands))
+        self.assertEqual(executor.commands, ["systemctl --user try-restart shade-raid-walker.service"])
 
     def test_wlogout_reloadable_not_running(self):
         executor = MockCommandExecutor()

@@ -1,6 +1,6 @@
 # Shade Raid v2 checkpoint
 
-Baseline: `5b95d81`. Steps 01–07 of the supplied 15-step roadmap are implemented.
+Baseline: `5b95d81`. Steps 01–10 of the supplied 15-step roadmap are implemented.
 Desktop acceptance checks remain pending; the full roadmap is not complete.
 
 | Step | Changes | Desktop acceptance still pending |
@@ -12,6 +12,12 @@ Desktop acceptance checks remain pending; the full roadmap is not complete.
 | 05 | Dedicated home/ Stow package, no directory folding, migration backups, generated/runtime state outside source | Migration on the actual desktop after backup |
 | 06 | Pure execution plans, no dry-run writes/commands/threads, fresh-HOME preview and global safety flags | Review planned changes against the actual machine |
 | 07 | One theme coordinator, atomic replacements, recoverable journals, automatic failure recovery and explicit rollback | Theme/rollback smoke tests in Hyprland |
+| 08 | Typed application registry; packages, dependency/output validation and CLI composition | Confirm installed application requirements |
+| 09 | Four staged Sass compilations, transactional CSS, native notification reload and unchanged-content refresh detection | Visual checks in each themed application |
+| 10 | Environment import before user services, native session target lifetime, one non-disruptive portal activation path | Login/logout, duplicate checks, file chooser and active screen-sharing through theme toggles |
+
+See [application contracts](application-registry.md), [style compilation](theme-styling.md)
+and [session migration and live smoke tests](wayland-session.md).
 
 ## Checks
 
@@ -35,9 +41,6 @@ overwriting external data, root ownership, mode 0644 and repeated application.
 
 ## Remaining steps
 
-08. Typed application registry.
-09. Unified compilation and selective reloads.
-10. Wayland environment, portals and user services.
 11. Composable profiles and persisted selections.
 12. Daily desktop actions and ergonomics.
 13. Read-only doctor and explicit repair plans.

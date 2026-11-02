@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from dotfiles_api.application.validation import ArtifactValidator
 from dotfiles_api.domain.models.application_spec import ApplicationSpec
@@ -10,7 +11,7 @@ class ApplicationRegistry:
         self._by_id = {spec.id: spec for spec in specs}
         if len(self._by_id) != len(specs):
             raise ValueError("Duplicate application IDs")
-        visited, visiting, output_ids, paths = set(), set(), set(), set()
+        visited, visiting, output_ids, paths, units = set(), set(), set(), set(), set()
 
         def visit(name):
             if name not in self._by_id:
@@ -27,6 +28,10 @@ class ApplicationRegistry:
 
         for spec in specs:
             visit(spec.id)
+            if spec.user_unit:
+                if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.service", spec.user_unit) or spec.user_unit in units:
+                    raise ValueError(f"Invalid or duplicate user unit: {spec.user_unit}")
+                units.add(spec.user_unit)
             for output in spec.outputs:
                 path = Path(output.path)
                 if path.is_absolute() or ".." in path.parts or output.scope not in {"home", "state"}:

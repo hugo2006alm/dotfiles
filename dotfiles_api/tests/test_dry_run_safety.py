@@ -61,6 +61,7 @@ class TestDryRunSafety(unittest.TestCase):
             ["configure", "--theme", "shade-raid-dark"], ["toggle"], ["apply-all"],
             ["setup", "--github"], ["link"], ["reload"],
             ["action", "preview", "next"], ["action", "record"],
+            ["action", "session"], ["action", "portal"],
         ]
         for words in cases:
             with self.subTest(command=words), tempfile.TemporaryDirectory() as temp:
