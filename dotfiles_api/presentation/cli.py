@@ -59,6 +59,7 @@ from dotfiles_api.application.services.services import ServicesSetupService
 from dotfiles_api.application.services.user import UserSetupService
 from dotfiles_api.application.services.extras import ExtrasSetupService
 from dotfiles_api.application.services.setup import SetupService
+from dotfiles_api.application.services.login import LoginSetupService
 
 # Actions
 from dotfiles_api.application.services.action import ActionService
@@ -75,7 +76,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Modular Dotfiles API CLI Manager")
     parser.add_argument("--dry-run", action="store_true", help="Log commands instead of running them")
     parser.add_argument("--theme", default="shade-raid", help="The name of the theme to apply")
-    parser.add_argument("command", choices=["install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup"], help="Command to execute")
+    parser.add_argument("command", choices=["install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login"], help="Command to execute")
     parser.add_argument("action_name", nargs="?", help="Action name to run (required for action command)")
     parser.add_argument("action_args", nargs=argparse.REMAINDER, help="Arguments passed to the action")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
@@ -116,7 +117,7 @@ def main() -> None:
         "vesktop-theme": env.home_dir / ".config" / "vesktop" / "themes" / "{theme_name}.theme.css",
         "hyprlock-config": env.home_dir / ".config" / "hypr" / "hyprlock.conf",
         "regreet-style": env.home_dir / ".config" / "greetd" / "regreet.css",
-        "greetd-config": Path("/etc/greetd/regreet.toml"),
+        "greetd-config": env.home_dir / ".config" / "greetd" / "regreet.toml",
         "gtk3-settings": env.home_dir / ".config" / "gtk-3.0" / "settings.ini",
         "gtk4-settings": env.home_dir / ".config" / "gtk-4.0" / "settings.ini",
         "gtk3-css": env.home_dir / ".config" / "gtk-3.0" / "gtk.css",
@@ -381,6 +382,8 @@ def main() -> None:
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
+    elif args.command == "setup-login":
+        LoginSetupService(exec_ctx, env).apply()
     elif args.command == "action":
         if not args.action_name:
             parser.error("action_name is required for the 'action' command")
