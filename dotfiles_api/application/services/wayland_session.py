@@ -6,7 +6,7 @@ class WaylandSessionService:
 
     VARIABLES = ("WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_DESKTOP", "XDG_SESSION_TYPE",
                  "HYPRLAND_INSTANCE_SIGNATURE", "DISPLAY", "XAUTHORITY", "PATH", "XDG_DATA_DIRS",
-                 "QT_QPA_PLATFORMTHEME")
+                 "QT_QPA_PLATFORMTHEME", "SSH_AUTH_SOCK")
 
     def __init__(self, execution, applications=None):
         self.execution, self.applications = execution, applications
@@ -33,6 +33,9 @@ class WaylandSessionService:
         self._prepare_environment()
         self.execution.execute(["systemctl", "--user", "daemon-reload"], step="session:units")
         units = [spec.user_unit for spec in self.applications.specs if spec.user_unit] if self.applications else []
+        external_agent = os.environ.get("SSH_AUTH_SOCK", "")
+        if external_agent and not external_agent.endswith("/shade-raid-ssh/agent.socket"):
+            units = [unit for unit in units if unit != "shade-raid-ssh-agent.service"]
         if units:
             self.execution.execute(["systemctl", "--user", "start", *units], step="session:start")
         self._start_portal()

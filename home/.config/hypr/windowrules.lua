@@ -19,11 +19,11 @@ hl.window_rule({ match = { class = "com.system.update" }, float = true })
 hl.window_rule({ match = { class = "com.system.editor" }, float = true })
 
 -- Size rules
-hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { 900, 600 } })
-hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, size = { 800, 600 } })
-hl.window_rule({ match = { class = "Bitwarden" }, size = { 1000, 700 } })
-hl.window_rule({ match = { title = "btop" }, size = { 1200, 800 } })
-hl.window_rule({ match = { class = "com.system.update" }, size = { 800, 500 } })
+hl.window_rule({ match = { class = "org.gnome.Nautilus" }, size = { "monitor_w * 0.7", "monitor_h * 0.7" } })
+hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, size = { "monitor_w * 0.7", "monitor_h * 0.7" } })
+hl.window_rule({ match = { class = "Bitwarden" }, size = { "monitor_w * 0.7", "monitor_h * 0.7" } })
+hl.window_rule({ match = { title = "btop" }, size = { "monitor_w * 0.7", "monitor_h * 0.7" } })
+hl.window_rule({ match = { class = "com.system.update" }, size = { "monitor_w * 0.7", "monitor_h * 0.7" } })
 
 -- Workspace rules
 hl.window_rule({ match = { class = "zen" }, workspace = "1" })

@@ -101,13 +101,7 @@ class SwayncGenerator(BaseGenerator):
         # 4. Generate config.json (swaync-config)
         config_data = {
             "$schema": "/etc/xdg/swaync/configSchema.json",
-            "notification-visibility": {
-                "spotify": {"state": "ignored", "app-name": "Spotify"},
-                "zen": {"state": "ignored", "app-name": "Zen Browser"},
-                "zen-app": {"state": "ignored", "app-name": "zen"},
-                "chrome": {"state": "ignored", "app-name": "Google Chrome"},
-                "firefox": {"state": "ignored", "app-name": "Firefox"}
-            },
+            "notification-visibility": {},
             "positionX": "right",
             "positionY": "top",
             "control-center-width": 380,
@@ -155,7 +149,7 @@ class SwayncGenerator(BaseGenerator):
                 "mpris": {
                     "image-size": 96,
                     "image-radius": 4,
-                    "blacklist": ["zen", "firefox", "chromium", "vesktop", "Vesktop", "discord", "Zen Browser", "zen-app", "playerctld"]
+                    "blacklist": ["playerctld"]
                 },
                 "volume": {
                     "label": "󰕾"

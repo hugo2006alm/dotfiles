@@ -102,7 +102,7 @@ class TestWaylandSession(unittest.TestCase):
             paths = []
             for source in (ROOT / "home/.config/systemd/user").glob("shade-raid-*.service"):
                 content = source.read_text()
-                for binary in ("waybar", "swaync", "swayosd-server", "walker", "elephant"):
+                for binary in ("waybar", "swaync", "swayosd-server", "walker", "elephant", "ssh-agent"):
                     content = content.replace(f"/usr/bin/{binary}", str(stub))
                 path = units / source.name
                 path.write_text(content)

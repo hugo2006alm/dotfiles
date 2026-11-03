@@ -48,6 +48,11 @@ from dotfiles_api.infrastructure.actions.screenshot import ScreenshotAction
 from dotfiles_api.infrastructure.actions.recorder import RecorderAction
 from dotfiles_api.infrastructure.actions.portal import PortalAction
 from dotfiles_api.infrastructure.actions.session import SessionAction
+from dotfiles_api.infrastructure.actions.media import MediaAction
+from dotfiles_api.infrastructure.actions.control import ControlAction
+from dotfiles_api.infrastructure.actions.browser import BrowserAction
+from dotfiles_api.infrastructure.actions.launch import LaunchAction
+from dotfiles_api.infrastructure.actions.clipboard import ClipboardAction
 from dotfiles_api.application.services.wayland_session import WaylandSessionService
 from dotfiles_api.infrastructure.actions.drawer import DrawerAction
 from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
@@ -179,22 +184,30 @@ def main(argv: list[str] | None = None) -> None:
     action_svc.register("drawer", DrawerAction(exec_ctx, env))
     action_svc.register("wallpaper", WallpaperAction(exec_ctx, env))
     action_svc.register("preview", PreviewAction(exec_ctx, env))
+    action_svc.register("browser", BrowserAction(exec_ctx))
+    action_svc.register("chatgpt", BrowserAction(exec_ctx, chatgpt=True))
+    action_svc.register("launch", LaunchAction(exec_ctx, APPLICATIONS))
+    action_svc.register("clipboard", ClipboardAction(exec_ctx, env))
+    action_svc.register("clipboard-edit", ClipboardAction(exec_ctx, env, edit=True))
 
     action_svc.register("lock", CommandAction(exec_ctx, [["loginctl", "lock-session"]]))
     action_svc.register("file-explorer", CommandAction(exec_ctx, [["nautilus"]]))
-    action_svc.register("volume-up", CommandAction(exec_ctx, [["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+"], ["swayosd-client", "--output-volume", "raise"]]))
-    action_svc.register("volume-down", CommandAction(exec_ctx, [["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"], ["swayosd-client", "--output-volume", "lower"]]))
-    action_svc.register("volume-mute", CommandAction(exec_ctx, [["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"], ["swayosd-client", "--output-volume", "mute-toggle"]]))
-    action_svc.register("brightness-up", CommandAction(exec_ctx, [["brightnessctl", "set", "5%+"], ["swayosd-client", "--brightness", "raise"]]))
-    action_svc.register("brightness-down", CommandAction(exec_ctx, [["brightnessctl", "set", "5%-"], ["swayosd-client", "--brightness", "lower"]]))
-    action_svc.register("media-play", CommandAction(exec_ctx, [["playerctl", "play-pause"]]))
-    action_svc.register("media-next", CommandAction(exec_ctx, [["playerctl", "next"]]))
-    action_svc.register("media-prev", CommandAction(exec_ctx, [["playerctl", "previous"]]))
+    for kind, directions in (("volume", ("up", "down", "mute")), ("brightness", ("up", "down"))):
+        for direction in directions:
+            action_svc.register(f"{kind}-{direction}", ControlAction(exec_ctx, kind, direction))
+    for name, command in (("play", "play-pause"), ("pause", "pause"), ("next", "next"), ("prev", "previous"), ("stop", "stop")):
+        action_svc.register(f"media-{name}", MediaAction(exec_ctx, command))
 
     def apply_theme(name):
-        plan = facade.apply_theme(name)
-        if not args.dry_run and (plan is None or plan.changed_generators):
-            action_svc.run_action("wallpaper", [])
+        try:
+            plan = facade.apply_theme(name)
+            if not args.dry_run and (plan is None or plan.changed_generators):
+                action_svc.run_action("wallpaper", [])
+                exec_ctx.optional(["notify-send", "Shade Raid", f"Theme applied: {name}"], step="theme:feedback")
+        except Exception:
+            if not args.dry_run:
+                exec_ctx.optional(["notify-send", "--urgency=critical", "Shade Raid", "Theme action failed; run dotfiles doctor"], step="theme:feedback")
+            raise
 
     def dispatch():
         if args.command == "install":
@@ -223,7 +236,13 @@ def main(argv: list[str] | None = None) -> None:
         elif args.command == "setup-login":
             LoginSetupService(exec_ctx, env).apply()
         elif args.command == "action":
-            action_svc.run_action(args.action_name, args.action_args or [])
+            try:
+                action_svc.run_action(args.action_name, args.action_args or [])
+            except Exception:
+                if not args.dry_run:
+                    exec_ctx.optional(["notify-send", "--urgency=critical", "Shade Raid",
+                                       f"Action failed: {args.action_name}"], step="action:feedback")
+                raise
 
     mutating = args.command in {"configure", "toggle", "apply-all", "install", "setup", "link", "rollback"}
     if not args.dry_run and mutating:

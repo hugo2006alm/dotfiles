@@ -1,6 +1,8 @@
 import unittest
 import tempfile
 import shutil
+import json
+import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -63,7 +65,7 @@ class TestActions(unittest.TestCase):
         action.execute([])
         self.assertTrue(any("grim" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("notify-send" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("wl-copy" in cmd and cmd.endswith("&") for cmd in self.executor.commands))
+        self.assertTrue(any("wl-copy --type image/png" in cmd for cmd in self.executor.commands))
 
         action.execute(["--region"])
         self.assertTrue(any("slurp" in cmd for cmd in self.executor.commands))
@@ -73,19 +75,22 @@ class TestActions(unittest.TestCase):
         from dotfiles_api.infrastructure.actions.recorder import RecorderAction
         mock_process = MagicMock()
         mock_process.pid = 12345
+        mock_process.wait.side_effect = subprocess.TimeoutExpired("wf-recorder", 0.2)
         mock_popen.return_value = mock_process
         action = RecorderAction(self.exec_ctx, self.env)
 
-        action.execute([])
+        with patch.object(action, "_identity", return_value="test-start-time"):
+            action.execute([])
         mock_popen.assert_called_once()
         self.assertTrue(action._pid_file.exists())
-        self.assertEqual(action._pid_file.read_text(), "12345")
+        self.assertEqual(json.loads(action._pid_file.read_text())["pid"], 12345)
 
         self.executor.mock_results = {
             "kill -0 12345": ("", "", 0),
             "pgrep -f wf-recorder": ("12345\n", "", 0),
         }
-        action.execute([])
+        with patch.object(action, "_identity", return_value="test-start-time"):
+            action.execute([])
         self.assertTrue(any("kill -INT 12345" in cmd for cmd in self.executor.commands))
 
     def test_portal_action(self) -> None:

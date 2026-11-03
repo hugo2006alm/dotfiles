@@ -62,6 +62,8 @@ class TestDryRunSafety(unittest.TestCase):
             ["setup", "--github"], ["link"], ["reload"],
             ["action", "preview", "next"], ["action", "record"],
             ["action", "session"], ["action", "portal"],
+            ["action", "browser"], ["action", "chatgpt"], ["action", "launch", "gaming"],
+            ["action", "clipboard"], ["action", "clipboard-edit"], ["action", "media-play"],
         ]
         for words in cases:
             with self.subTest(command=words), tempfile.TemporaryDirectory() as temp:

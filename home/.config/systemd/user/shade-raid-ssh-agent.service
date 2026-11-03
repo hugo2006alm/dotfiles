@@ -1,0 +1,14 @@
+[Unit]
+Description=Shade Raid session SSH agent
+PartOf=graphical-session.target
+BindsTo=hyprland-session.target
+After=hyprland-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+RuntimeDirectory=shade-raid-ssh
+RuntimeDirectoryMode=0700
+ExecStart=/usr/bin/ssh-agent -D -a %t/shade-raid-ssh/agent.socket
+Restart=on-failure
+RestartSec=1

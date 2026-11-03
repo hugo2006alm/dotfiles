@@ -20,6 +20,7 @@ class ApplicationSpec:
     reload_factory: Callable | None = None
     reload_strategy: str = "none"
     user_unit: str | None = None
+    launch: tuple[str, ...] = ()
     required: bool = True
     profiles: tuple[str, ...] = ("desktop",)
     capabilities: tuple[str, ...] = ()

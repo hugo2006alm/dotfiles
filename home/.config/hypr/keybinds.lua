@@ -2,7 +2,6 @@
 
 local terminal = "ghostty"
 local launcher = "walker"
-local browser = "zen-browser"
 
 -- Helper function for keybinds
 local function bind(keys, dispatcher, flags)
@@ -17,13 +16,14 @@ bind("SUPER + SHIFT + Q", hl.dsp.exit())
 bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t"))
 bind("SUPER + E", hl.dsp.exec_cmd("dotfiles action file-explorer"))
 bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("walker --provider symbols"))
-bind("SUPER + B", hl.dsp.exec_cmd(browser))
-bind("SUPER + M", hl.dsp.exec_cmd("spotify"))
-bind("SUPER + S", hl.dsp.exec_cmd("steam"))
-bind("SUPER + H", hl.dsp.exec_cmd("heroic"))
-bind("SUPER + A", hl.dsp.exec_cmd("antigravity"))
-bind("SUPER + I", hl.dsp.exec_cmd("antigravity-ide"))
-bind("SUPER + L", hl.dsp.exec_cmd("dotfiles action lock"))
+bind("SUPER + B", hl.dsp.exec_cmd("dotfiles action browser"))
+bind("SUPER + M", hl.dsp.exec_cmd("dotfiles action launch spotify"))
+bind("SUPER + S", hl.dsp.exec_cmd("dotfiles action launch gaming"))
+bind("SUPER + ALT + H", hl.dsp.exec_cmd("dotfiles action launch heroic"))
+bind("SUPER + A", hl.dsp.exec_cmd("dotfiles action launch antigravity"))
+bind("SUPER + I", hl.dsp.exec_cmd("dotfiles action launch antigravity-ide"))
+bind("SUPER + CTRL + L", hl.dsp.exec_cmd("dotfiles action lock"))
+bind("SUPER + ALT + G", hl.dsp.exec_cmd("dotfiles action chatgpt"))
 
 -- Launchers
 bind("SUPER + Space", hl.dsp.exec_cmd(launcher))
@@ -37,7 +37,8 @@ bind("ALT + Return", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "t
 bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 
 -- Window management
-bind("SUPER + V", hl.dsp.exec_cmd(launcher .. " --provider clipboard"))
+bind("SUPER + V", hl.dsp.exec_cmd("dotfiles action clipboard"))
+bind("SUPER + ALT + V", hl.dsp.exec_cmd("dotfiles action clipboard-edit"))
 bind("SUPER + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + P", hl.dsp.window.pseudo({ action = "toggle" }))
 
@@ -99,10 +100,10 @@ bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("dotfiles action record"))
 
 -- Media controls
 bind("XF86AudioPlay",  hl.dsp.exec_cmd("dotfiles action media-play"))
-bind("XF86AudioPause", hl.dsp.exec_cmd("dotfiles action media-play"))
+bind("XF86AudioPause", hl.dsp.exec_cmd("dotfiles action media-pause"))
 bind("XF86AudioNext",  hl.dsp.exec_cmd("dotfiles action media-next"))
 bind("XF86AudioPrev",  hl.dsp.exec_cmd("dotfiles action media-prev"))
-bind("XF86AudioStop",  hl.dsp.exec_cmd("playerctl stop"))
+bind("XF86AudioStop",  hl.dsp.exec_cmd("dotfiles action media-stop"))
 
 -- Volume
 bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("dotfiles action volume-up"))

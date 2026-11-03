@@ -10,8 +10,9 @@ end
 
 # ── SSH Agent ─────────────────────────────────────────
 if test -z "$SSH_AUTH_SOCK"
-    eval (ssh-agent -c) >/dev/null
-    ssh-add -q ~/.ssh/github-ssh
+    if test -n "$XDG_RUNTIME_DIR"
+        set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/shade-raid-ssh/agent.socket"
+    end
 end
 
 # ── Aliases ───────────────────────────────────────────
@@ -35,9 +36,9 @@ alias la='eza -a --icons'
 alias ls='eza --icons'
 alias cat='bat'
 alias g='git'
-alias reload-waybar="pkill waybar; hyprctl dispatch 'hl.dsp.exec_cmd(\"waybar\")'"
-alias reload-swaync="pkill swaync; hyprctl dispatch 'hl.dsp.exec_cmd(\"swaync\")'"
-alias reload-walker="pkill walker; hyprctl dispatch 'hl.dsp.exec_cmd(\"walker --gapplication-service\")'"
+alias reload-waybar='systemctl --user try-reload-or-restart shade-raid-waybar.service'
+alias reload-swaync='swaync-client -R; swaync-client -rs'
+alias reload-walker='systemctl --user try-restart shade-raid-walker.service'
 alias reload-hyprsunset="pkill hyprsunset; hyprctl dispatch 'hl.dsp.exec_cmd(\"hyprsunset\")'"
 alias reload-theme='dotfiles configure --theme shade-raid'
 alias reload-hyprland='hyprctl reload'
