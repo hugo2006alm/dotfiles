@@ -4,6 +4,8 @@ import json
 import re
 import tempfile
 import unittest
+import shutil
+import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -145,3 +147,18 @@ class TestDailyDesktop(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "capture failed"):
                 main(["action", "record"])
             self.assertIn("Action failed: record", feedback.call_args.args[0])
+
+    @unittest.skipUnless(shutil.which("lua"), "Requires Lua interpreter")
+    def test_empty_ssh_environment_exports_the_shared_socket(self):
+        source = ROOT / "home/.config/hypr/autostart.lua"
+        script = f'''local captured = nil
+os.getenv = function(name)
+    if name == "XDG_RUNTIME_DIR" then return "/run/user/1000" end
+    return ""
+end
+hl = {{ env = function(key, value) captured = value end, on = function() end }}
+assert(loadfile({json.dumps(str(source))}))()
+assert(captured == "/run/user/1000/shade-raid-ssh/agent.socket", "shared agent socket was not exported")
+'''
+        result = subprocess.run(["lua", "-"], input=script, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
