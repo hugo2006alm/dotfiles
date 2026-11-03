@@ -9,6 +9,9 @@ class PacmanSource(PackageSource):
     def is_available(self) -> bool:
         return shutil.which("pacman") is not None
 
+    def contains(self, package: str) -> bool:
+        return self._exec.query(["pacman", "-Si", "--", package], step="preflight:pacman").returncode == 0
+
     def install(self, packages: list[str]) -> None:
         if not packages:
             return
