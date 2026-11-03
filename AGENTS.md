@@ -30,6 +30,7 @@ All theme generation, linking, package installation, and reloading is managed by
 7. **Theme application:** Full theme changes use ThemePlanner and ThemeCoordinator. Generate/validate everything before a file transaction; update active state last. Do not write generated output into the repository or mutate runtime state from render().
 8. **Dry-run:** Never create directories, files, locks, logs, threads or subprocesses in a dry-run path. Preserve this contract on errors too.
 9. **Styles and sessions:** Declare compiled styles in the application spec. Compile before installing any theme artifact; reloaders never write CSS. Persistent app services use namespaced user units bound to Hyprland's native session target. Theme changes never restart portals; `dotfiles action portal` only ensures activation.
+10. **Diagnostics and repair:** Doctor and repair previews are read-only: no command logs, locks, writes, compiler runs or service activation. Dry-run also defers read-only subprocess queries. Apply only the reviewed plan ID and the fixed user-level recipes; package/root/permission repairs remain manual.
 
 ## Tech Stack
 - **WM:** Hyprland (0.55+ using Lua wrapper configuration)

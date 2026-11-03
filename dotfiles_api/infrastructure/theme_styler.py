@@ -1,5 +1,7 @@
 import shutil
 import tempfile
+import hashlib
+import json
 from pathlib import Path
 
 from dotfiles_api.application.validation import ArtifactValidator
@@ -18,6 +20,16 @@ class ThemeStyler:
         count = sum(len(spec.stylesheets) for spec in self.registry.specs)
         print(f"  Compile {count} stylesheets before installation (deferred in dry-run)")
 
+    @staticmethod
+    def source_digest(env, style, rendered):
+        source = env.source_home / style.source
+        inputs = {str(path.relative_to(source.parent)): hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in source.parent.rglob("*.scss") if path.is_file()}
+        for artifact_id in style.inputs:
+            item = rendered[artifact_id]
+            inputs[item.path.name] = hashlib.sha256(item.artifact.content.encode()).hexdigest()
+        return hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
+
     def compile(self, plan):
         if self.execution.dry_run:
             raise RuntimeError("Stylesheet compilation cannot run during dry-run")
@@ -35,7 +47,10 @@ class ThemeStyler:
                     output = Path(temp) / "compiled.css"
                     self.execution.execute(["sassc", str(directory / source.name), str(output)],
                                            step=f"compile:{spec.id}")
-                    content = output.read_text(encoding="utf-8")
+                    fingerprint = self.source_digest(self.env, style, rendered)
+                    payload = output.read_text(encoding="utf-8")
+                    digest = hashlib.sha256(payload.encode()).hexdigest()
+                    content = f"/* shade-raid-source: {fingerprint} */\n/* shade-raid-content: {digest} */\n" + payload
                 path = self.store.resolve_path(style.output, plan.theme_name)
                 self.env.validate_output_path(path)
                 ArtifactValidator().validate(path, content)

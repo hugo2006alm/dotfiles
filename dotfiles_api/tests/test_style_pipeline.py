@@ -81,3 +81,14 @@ class TestStylePipeline(unittest.TestCase):
         for cls in (WaybarReloadable, WlogoutReloadable):
             cls(ExecutionContext(False, executor)).reload()
         self.assertFalse(any(call.args[0][0] == "sassc" for call in executor.execute.call_args_list))
+
+    def test_source_fingerprint_is_pure_and_changes_with_generated_inputs(self):
+        before = snapshot(self.env.home_dir)
+        style = next(spec.stylesheets[0] for spec in self.registry.specs if spec.id == "waybar")
+        digests = []
+        for name in ("shade-raid", "shade-raid-dark"):
+            plan = self.planner.build(ThemeLoader(self.env).load(name), name)
+            rendered = {item.artifact.artifact_id: item for item in plan.artifacts}
+            digests.append(ThemeStyler.source_digest(self.env, style, rendered))
+        self.assertNotEqual(*digests)
+        self.assertEqual(snapshot(self.env.home_dir), before)

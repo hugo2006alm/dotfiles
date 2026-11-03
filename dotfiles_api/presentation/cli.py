@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import getpass
+import json
 from contextlib import nullcontext
 from dotfiles_api.presentation.argument_parser import CommandParser
 from pathlib import Path
@@ -54,6 +55,8 @@ from dotfiles_api.infrastructure.actions.browser import BrowserAction
 from dotfiles_api.infrastructure.actions.launch import LaunchAction
 from dotfiles_api.infrastructure.actions.clipboard import ClipboardAction
 from dotfiles_api.application.services.wayland_session import WaylandSessionService
+from dotfiles_api.application.services.doctor import DoctorService
+from dotfiles_api.application.services.repair import RepairService
 from dotfiles_api.infrastructure.actions.drawer import DrawerAction
 from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
 from dotfiles_api.infrastructure.actions.preview import PreviewAction
@@ -67,12 +70,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "rollback"):
+    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "rollback", "doctor", "repair"):
         command = commands.add_parser(name)
         # Suppressed defaults preserve options given before the subcommand.
         command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
         command.add_argument("--theme", default=argparse.SUPPRESS)
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
+        if name == "doctor":
+            command.add_argument("--json", action="store_true", help="Machine-readable diagnostic report")
+        if name == "repair":
+            mode = command.add_mutually_exclusive_group()
+            mode.add_argument("--plan", action="store_true", help="Read-only repair preview (default)")
+            mode.add_argument("--apply", action="store_true", help="Apply reviewed user-level operations")
+            command.add_argument("--plan-id", help="ID from a reviewed repair plan")
         if name in {"install", "apply-all", "setup"}:
             command.add_argument("--profile", dest="profiles", action="append", help="Composable software profile (repeatable)")
             command.add_argument("--package", dest="packages", action="append", help="Additional package (repeatable)")
@@ -88,6 +98,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "repair" and args.apply and not args.dry_run and not args.plan_id:
+        parser.error("Review repair --plan, then pass --apply --plan-id ID")
 
     home_dir = Path.home()
     dotfiles_dir = Path(os.environ.get("DOTFILES_DIR", Path(__file__).resolve().parents[2]))
@@ -210,7 +222,27 @@ def main(argv: list[str] | None = None) -> None:
             raise
 
     def dispatch():
-        if args.command == "install":
+        if args.command in {"doctor", "repair"}:
+            doctor = DoctorService(env, applications, planner, theme_store, executor.execute)
+            if args.command == "doctor":
+                report = doctor.run(dry_run=args.dry_run)
+                if args.json:
+                    print(json.dumps(report.to_dict(), indent=2))
+                else:
+                    report.describe()
+                return report.exit_code
+            repairs = RepairService(doctor, {
+                "configure": lambda words: apply_theme(words[-1]),
+                "link": lambda words: facade.link(),
+                "session": lambda words: session.start(),
+                "portal": lambda words: session.ensure_portals(),
+            })
+            if args.apply and not args.dry_run:
+                report = repairs.apply(args.plan_id)
+                report.describe()
+                return report.exit_code
+            repairs.plan(dry_run=args.dry_run).describe()
+        elif args.command == "install":
             facade.apply_profile(desktop_profile)
         elif args.command == "link":
             facade.link()
@@ -245,12 +277,13 @@ def main(argv: list[str] | None = None) -> None:
                 raise
 
     mutating = args.command in {"configure", "toggle", "apply-all", "install", "setup", "link", "rollback"}
+    mutating = mutating or (args.command == "repair" and args.apply)
     if not args.dry_run and mutating:
         env.validate_output_path(env.lock_dir / "configure.lock")
     lock = RuntimeLock(env.lock_dir / "configure.lock") if mutating and not args.dry_run else nullcontext()
     with lock:
-        dispatch()
+        return dispatch()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

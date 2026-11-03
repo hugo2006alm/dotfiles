@@ -1,6 +1,6 @@
 # Shade Raid v2 checkpoint
 
-Baseline: `5b95d81`. Steps 01–10 of the supplied 15-step roadmap are implemented.
+Baseline: `5b95d81`. Steps 01–13 of the supplied 15-step roadmap are implemented.
 Desktop acceptance checks remain pending; the full roadmap is not complete.
 
 | Step | Changes | Desktop acceptance still pending |
@@ -15,6 +15,9 @@ Desktop acceptance checks remain pending; the full roadmap is not complete.
 | 08 | Typed application registry; packages, dependency/output validation and CLI composition | Confirm installed application requirements |
 | 09 | Four staged Sass compilations, transactional CSS, native notification reload and unchanged-content refresh detection | Visual checks in each themed application |
 | 10 | Environment import before user services, native session target lifetime, one non-disruptive portal activation path | Login/logout, duplicate checks, file chooser and active screen-sharing through theme toggles |
+| 11 | Composable profiles, availability preflight, incremental installation and persisted successful selections | Clean Arch install, real repository/AUR availability and hardware |
+| 12 | Conflict-free bindings, active media, single controls, browser/ChatGPT entries, private clipboard editing, safe captures and session SSH agent | Daily smoke matrix in daily-desktop.md |
+| 13 | Read-only doctor, content/source freshness checks and reviewed plan-ID repairs; privileged fixes remain manual | Real desktop diagnosis, user-service repair and login recovery |
 
 See [application contracts](application-registry.md), [style compilation](theme-styling.md)
 and [session migration and live smoke tests](wayland-session.md).
@@ -41,9 +44,6 @@ overwriting external data, root ownership, mode 0644 and repeated application.
 
 ## Remaining steps
 
-11. Composable profiles and persisted selections.
-12. Daily desktop actions and ergonomics.
-13. Read-only doctor and explicit repair plans.
 14. Broader CI, integrations and graphical smoke matrix.
 15. Asset/code cleanup, documentation and safer push helper.
 
