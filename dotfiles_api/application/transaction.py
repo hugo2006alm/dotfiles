@@ -146,7 +146,7 @@ class ConfigTransaction:
             if path.is_symlink():
                 raise ValueError(f"Unsafe recovery manifest: {path}")
             manifest = json.loads(path.read_text())
-            if manifest["status"] in {"committed", "prepared"}:
+            if manifest["status"] in {"committed", "prepared", "rolling_back"}:
                 candidates.append((manifest["created_ns"], path.parent, manifest))
         if not candidates:
             raise ValueError("No recoverable theme transaction found.")
@@ -155,11 +155,11 @@ class ConfigTransaction:
             path = Path(record["path"])
             if record["artifact_id"] == "theme-preview":
                 continue
-            if manifest["status"] == "prepared" and path.is_symlink() and os.readlink(path) == record["link"]:
+            if manifest["status"] in {"prepared", "rolling_back"} and path.is_symlink() and os.readlink(path) == record["link"]:
                 continue
             digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
             expected = {record["after_digest"]}
-            if manifest["status"] == "prepared":
+            if manifest["status"] in {"prepared", "rolling_back"}:
                 backup = journal / "backups" / record["backup"]
                 expected.add(hashlib.sha256(backup.read_bytes()).hexdigest() if backup.is_file() else None)
             if path.is_symlink() or digest not in expected:
@@ -167,6 +167,8 @@ class ConfigTransaction:
         if dry_run:
             print(f"[DRY-RUN] Would restore {len(manifest['files'])} files from {journal}")
         else:
+            manifest["status"] = "rolling_back"
+            self._save_manifest(journal, manifest)
             self._restore(journal, manifest)
             manifest["status"] = "rolled_back"
             self._save_manifest(journal, manifest)

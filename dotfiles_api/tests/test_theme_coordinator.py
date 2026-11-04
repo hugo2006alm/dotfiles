@@ -161,6 +161,23 @@ class TestThemeCoordinator(unittest.TestCase):
         self.assertEqual(self.first.read_text(), "external edit")
         self.assertFalse(self.second.exists())
 
+    def test_failed_partial_rollback_can_be_retried_without_overwriting_edits(self):
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        restore = SystemFileWriter.write_bytes
+        def fail_first(writer, path, content):
+            if path == self.first and content == b"original":
+                raise OSError("injected restore failure")
+            return restore(writer, path, content)
+        with patch.object(SystemFileWriter, "write_bytes", fail_first):
+            with self.assertRaisesRegex(RuntimeError, "injected restore failure"):
+                coordinator.rollback()
+        self.assertFalse(self.second.exists())
+        self.assertEqual(self.first.read_text(), "changed")
+        coordinator.rollback()
+        self.assertEqual(self.first.read_text(), "original")
+        self.assertFalse(self.second.exists())
+
     def test_manual_rollback_dry_run_is_read_only(self):
         coordinator = self.coordinator()
         self.apply(coordinator)
