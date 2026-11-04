@@ -41,9 +41,12 @@ class DotfilesFacade:
     def reload(self) -> None:
         self._reload_service.reload_all()
 
-    def setup(self, setup_github: bool, enable_ssh_server: bool = False) -> None:
+    def setup(self, setup_github: bool, enable_ssh_server: bool = False, change_shell: bool = False) -> None:
         if self._setup_service:
-            self._setup_service.run_setup(setup_github, enable_ssh_server=enable_ssh_server)
+            if change_shell:
+                self._setup_service.run_setup(setup_github, enable_ssh_server=enable_ssh_server, change_shell=True)
+            else:
+                self._setup_service.run_setup(setup_github, enable_ssh_server=enable_ssh_server)
 
     def apply_all(self, profile: Profile, theme_name: str) -> None:
         self.apply_profile(profile)

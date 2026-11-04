@@ -86,8 +86,9 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--theme", default=argparse.SUPPRESS)
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
         if name == "setup":
+            command.add_argument("--change-shell", action="store_true", help="Explicitly set Fish as login shell")
             command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
-            command.add_argument("--ssh-server", action="store_true", help="Enable incoming SSH and open its firewall rule")
+            command.add_argument("--ssh-server", action="store_true", help="Enable the SSH server; configure firewall access separately")
         if name == "action":
             command.add_argument("action_name")
             command.add_argument("action_args", nargs=argparse.REMAINDER)
@@ -411,7 +412,10 @@ def main(argv: list[str] | None = None) -> None:
         release_lock_fn()
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":
-        facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False))
+        if getattr(args, "change_shell", False):
+            facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False), change_shell=True)
+        else:
+            facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False))
     elif args.command == "setup-login":
         LoginSetupService(exec_ctx, env).apply()
     elif args.command == "action":

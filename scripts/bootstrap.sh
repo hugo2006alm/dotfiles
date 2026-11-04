@@ -42,6 +42,7 @@ if [[ ! -f /etc/arch-release ]]; then
 fi
 
 bash "$PROJECT_ROOT/scripts/install-cli.sh" --preflight
+bash "$PROJECT_ROOT/scripts/check-desktop-prerequisites.sh"
 if "$upgrade_system"; then
     sudo pacman -Syu --noconfirm
 fi

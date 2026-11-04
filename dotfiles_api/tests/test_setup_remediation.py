@@ -14,6 +14,19 @@ from dotfiles_api.domain.contracts import CommandResult
 
 
 class TestSetupRemediation(unittest.TestCase):
+    def test_shell_change_requires_explicit_choice_and_is_idempotent(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as temp:
+            env = EnvironmentContext(Path(temp), Path(temp) / 'repo', 'tester')
+            executor = Mock()
+            executor.execute.return_value = CommandResult('configured', '', 0)
+            service = UserSetupService(ExecutionContext(False, executor), env)
+            with patch('pwd.getpwuid', return_value=SimpleNamespace(pw_shell='/usr/bin/fish')):
+                service.setup_user(change_shell=True)
+            self.assertFalse(any(call.args[0][0] == 'chsh' for call in executor.execute.call_args_list))
+            with patch('pwd.getpwuid', return_value=SimpleNamespace(pw_shell='/bin/bash')):
+                service.setup_user(change_shell=True)
+            self.assertEqual(sum(call.args[0][0] == 'chsh' for call in executor.execute.call_args_list), 1)
     def test_invalid_dotfiles_and_relative_xdg_are_rejected_before_execution(self):
         from dotfiles_api.presentation.cli import main
         cases = ({'DOTFILES_DIR': 'relative-repo'}, {'XDG_STATE_HOME': 'relative-state'})
@@ -85,6 +98,19 @@ class TestSetupRemediation(unittest.TestCase):
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(list(Path(temp).iterdir()), [])
+
+    def test_installer_preflight_rejects_file_in_data_path(self):
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            blocked = home / 'occupied'
+            blocked.write_text('personal')
+            result = subprocess.run(['bash', str(root / 'scripts/install-cli.sh'), '--preflight'],
+                                    env={**os.environ, 'HOME': temp, 'XDG_DATA_HOME': str(blocked / 'nested')},
+                                    capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(blocked.read_text(), 'personal')
+            self.assertFalse((home / '.local').exists())
     def test_setup_does_not_change_firewall_or_shell_or_execute_remote_scripts(self):
         with tempfile.TemporaryDirectory() as temp:
             env = EnvironmentContext(Path(temp), Path(temp) / 'repo', 'tester')
@@ -111,3 +137,17 @@ class TestSetupRemediation(unittest.TestCase):
                 service.setup_extras()
             commands = [call.args[0] for call in executor.execute.call_args_list]
             self.assertFalse(any('curl' in arg for cmd in commands for arg in cmd))
+
+    def test_multilib_preflight_uses_effective_pacman_configuration(self):
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as temp:
+            command = Path(temp) / 'pacman-conf'
+            command.write_text('#!/bin/sh\nprintf "%s\\n" core extra\n')
+            command.chmod(0o755)
+            env = {**os.environ, 'PATH': temp + os.pathsep + os.environ['PATH']}
+            result = subprocess.run(['bash', str(root / 'scripts/check-desktop-prerequisites.sh')], env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('multilib', result.stderr)
+            command.write_text('#!/bin/sh\nprintf "%s\\n" core extra multilib\n')
+            result = subprocess.run(['bash', str(root / 'scripts/check-desktop-prerequisites.sh')], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
