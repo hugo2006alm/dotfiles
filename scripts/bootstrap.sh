@@ -4,12 +4,14 @@ set -euo pipefail
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 setup_args=()
 dry_run=false
+upgrade_system=false
 for argument in "$@"; do
     case "$argument" in
         --dry-run) dry_run=true ;;
+        --upgrade-system) upgrade_system=true ;;
         --github|--ssh-server) setup_args+=("$argument") ;;
         -h|--help)
-            echo 'Usage: bash scripts/bootstrap.sh [--dry-run] [--github] [--ssh-server]'
+            echo 'Usage: bash scripts/bootstrap.sh [--dry-run] [--upgrade-system] [--github] [--ssh-server]'
             echo 'Run interactively as a normal Arch user. Login setup is a separate dotfiles setup-login command.'
             exit 0 ;;
         *) printf 'Unknown option: %s\n' "$argument" >&2; exit 2 ;;
@@ -17,7 +19,8 @@ for argument in "$@"; do
 done
 
 if "$dry_run"; then
-    echo 'PLAN: back up pacman.conf; enable multilib; full system upgrade; install bootstrap packages'
+    echo 'PLAN: preflight CLI destination; install bootstrap packages'
+    if "$upgrade_system"; then echo 'PLAN: perform explicitly requested full system upgrade'; fi
     echo 'PLAN: build yay in a private temporary directory if absent'
     echo 'PLAN: install CLI into a private Python venv; run dotfiles setup'
     printf 'Setup options: %s\n' "${setup_args[*]}"
@@ -38,13 +41,10 @@ if [[ ! -f /etc/arch-release ]]; then
     exit 1
 fi
 
-# Preserve the previous package configuration before the first system change.
-sudo cp -a --backup=numbered -- /etc/pacman.conf /etc/pacman.conf.shade-raid-backup
-sudo sed -i '/^#\[multilib\]/s/^#//' /etc/pacman.conf
-sudo sed -i '/^\[multilib\]/{n;s/^#//}' /etc/pacman.conf
-sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
-sudo sed -i 's/^#ParallelDownloads = 5$/ParallelDownloads = 5/' /etc/pacman.conf
-sudo pacman -Syu --noconfirm
+bash "$PROJECT_ROOT/scripts/install-cli.sh" --preflight
+if "$upgrade_system"; then
+    sudo pacman -Syu --noconfirm
+fi
 sudo pacman -S --needed --noconfirm git base-devel python python-pip
 
 if ! command -v yay >/dev/null 2>&1; then

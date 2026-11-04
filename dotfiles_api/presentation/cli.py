@@ -97,6 +97,18 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "setup" and os.geteuid() == 0:
+        raise RuntimeError("Run setup as a normal user, not root")
+
+    for variable in ("DOTFILES_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR"):
+        value = os.environ.get(variable)
+        if value and not Path(value).is_absolute():
+            raise ValueError(f"{variable} must be an absolute path")
+        if value and Path(value).exists() and not Path(value).is_dir():
+            raise ValueError(f"{variable} must name a directory")
+    explicit_root = os.environ.get("DOTFILES_DIR")
+    if explicit_root and not (Path(explicit_root) / "dotfiles_api" / "presentation" / "cli.py").is_file():
+        raise ValueError("DOTFILES_DIR must point to a complete dotfiles checkout")
 
     home_dir = Path.home()
     dotfiles_dir = Path(os.environ.get("DOTFILES_DIR", Path(__file__).resolve().parents[2]))

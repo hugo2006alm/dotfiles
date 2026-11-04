@@ -8,6 +8,9 @@ class ThemeService:
         self._store = store
         self._event_bus = event_bus
 
+    def get_active_theme(self) -> str:
+        return self._store.get_active_theme()
+
     def apply_theme(self, theme_name: str) -> None:
         tokens = self._loader.load(theme_name)
         self._store.set_active_theme(theme_name)

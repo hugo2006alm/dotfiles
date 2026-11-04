@@ -36,8 +36,7 @@ class TestBootstrapSafety(unittest.TestCase):
         ServicesSetupService(ExecutionContext(False, executor), Mock()).setup_services(enable_ssh_server=True)
         commands = [call.args[0] for call in executor.execute.call_args_list]
         self.assertIn(["sudo", "systemctl", "enable", "sshd"], commands)
-        self.assertLess(commands.index(["sudo", "ufw", "allow", "ssh"]),
-                        commands.index(["sudo", "ufw", "enable"]))
+        self.assertFalse(any("ufw" in command for command in commands))
 
     def test_facade_preserves_resolved_desktop_profile(self):
         profile = build_desktop_profile(optional_packages=["obs-studio"], graphics_packages=["vulkan-intel"])

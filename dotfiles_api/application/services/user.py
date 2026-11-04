@@ -33,7 +33,6 @@ class UserSetupService:
         pager = self._exec.query(["git", "config", "--global", "core.pager"])
         if not pager.stdout.strip():
             self._exec.execute(["git", "config", "--global", "core.pager", "delta"])
-        self._exec.execute(["chsh", "-s", "/usr/bin/fish"])
         self._exec.execute(["xdg-user-dirs-update"])
         self._exec.execute(["fc-cache", "-fv"])
 
@@ -64,11 +63,6 @@ file://{desktop_dir} Desktop
         else:
             gtk_dir.mkdir(parents=True, exist_ok=True)
             (gtk_dir / "bookmarks").write_text(bookmarks_content)
-
-        self._exec.execute([
-            "fish", "-c",
-            "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher && fisher update"
-        ])
 
         if setup_github:
             self._exec.execute(["gh", "auth", "login"])

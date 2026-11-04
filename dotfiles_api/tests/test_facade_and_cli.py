@@ -154,7 +154,8 @@ class TestCliCommands(unittest.TestCase):
         mock_facade = mock_facade_class.return_value
 
         from dotfiles_api.presentation.cli import main
-        main()
+        with patch("os.geteuid", return_value=1000):
+            main()
 
         mock_facade.setup.assert_called_once_with(setup_github=True, enable_ssh_server=False)
 
