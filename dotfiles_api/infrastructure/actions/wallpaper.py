@@ -4,6 +4,7 @@ from dotfiles_api.domain.contracts.action import Action
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.infrastructure.theme_wallpaper_resolver import ThemeWallpaperResolver
+from dotfiles_api.infrastructure.file_store import FileThemeStore
 
 class WallpaperAction(Action):
     def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
@@ -12,13 +13,7 @@ class WallpaperAction(Action):
         self._wallpapers = ThemeWallpaperResolver(env)
 
     def execute(self, args: list[str]) -> None:
-        theme_file = self._env.home_dir / ".config" / "themes" / "current"
-        theme = "shade-raid"
-        if theme_file.exists():
-            try:
-                theme = theme_file.read_text().strip()
-            except Exception:
-                pass
+        theme = FileThemeStore(self._env).get_active_theme()
         
         wp_dir = self._wallpapers.wallpaper_dir(theme)
 

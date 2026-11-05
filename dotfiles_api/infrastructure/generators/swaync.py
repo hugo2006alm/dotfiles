@@ -76,7 +76,7 @@ class SwayncGenerator(BaseGenerator):
 
         # 3. Read active preview theme name
         preview_theme = theme_name
-        preview_theme_path = Path("/tmp/dotfiles_preview_theme")
+        preview_theme_path = env.runtime_dir / "preview-theme"
         if preview_theme_path.is_file():
             try:
                 pt = preview_theme_path.read_text().strip()

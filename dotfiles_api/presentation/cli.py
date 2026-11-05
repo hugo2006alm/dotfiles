@@ -122,12 +122,14 @@ def main(argv: list[str] | None = None) -> None:
     except Exception:
         user = getpass.getuser()
 
-    env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user)
+    env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user,
+                             state_home=Path(os.environ["XDG_STATE_HOME"]) if os.environ.get("XDG_STATE_HOME") else None,
+                             runtime_home=Path(os.environ["XDG_RUNTIME_DIR"]) if os.environ.get("XDG_RUNTIME_DIR") else None)
 
     executor = SystemCommandExecutor()
     exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor,
                                 verbose=getattr(args, "verbose", False),
-                                log_path=env.home_dir / ".local/state/shade-raid/commands.jsonl")
+                                log_path=env.state_dir / "commands.jsonl")
 
     package_registry = PackageRegistry()
 
@@ -155,7 +157,7 @@ def main(argv: list[str] | None = None) -> None:
         "gtk4-settings": env.home_dir / ".config" / "gtk-4.0" / "settings.ini",
         "gtk3-css": env.home_dir / ".config" / "gtk-3.0" / "gtk.css",
         "gtk4-css": env.home_dir / ".config" / "gtk-4.0" / "gtk.css",
-        "plymouth-theme": env.dotfiles_dir / "plymouth-shade-raid" / "shade-raid.script",
+        "plymouth-theme": env.state_dir / "generated" / "plymouth" / "shade-raid.script",
     }
     artifact_store = ArtifactStore(mappings=artifact_paths)
 
@@ -260,7 +262,7 @@ def main(argv: list[str] | None = None) -> None:
 
     action_svc = ActionService()
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
-    action_svc.register("record", RecorderAction(exec_ctx))
+    action_svc.register("record", RecorderAction(exec_ctx, env))
     action_svc.register("portal", PortalAction(exec_ctx))
     action_svc.register("drawer", DrawerAction(exec_ctx, env))
     action_svc.register("wallpaper", WallpaperAction(exec_ctx, env))
@@ -280,15 +282,17 @@ def main(argv: list[str] | None = None) -> None:
     release_lock_fn = lambda: None
     if args.command in ["toggle", "configure", "apply-all", "install"]:
         import fcntl
+        env.validate_output_path(env.runtime_dir / "configure.lock")
+        env.runtime_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
 
-        lock_file_path = "/tmp/dotfiles.lock"
+        lock_file_path = str(env.runtime_dir / "configure.lock")
         try:
             global _lock_file
             _lock_file = open(lock_file_path, "w")
             fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
             if args.command == "toggle":
                 try:
-                    with open("/tmp/dotfiles_toggle.clicks", "w") as f:
+                    with open(str(env.runtime_dir / "toggle.clicks"), "w") as f:
                         f.write("1")
                 except Exception:
                     pass
@@ -302,8 +306,8 @@ def main(argv: list[str] | None = None) -> None:
                 except Exception:
                     pass
                 try:
-                    if os.path.exists("/tmp/dotfiles_toggle.clicks"):
-                        os.remove("/tmp/dotfiles_toggle.clicks")
+                    if os.path.exists(str(env.runtime_dir / "toggle.clicks")):
+                        os.remove(str(env.runtime_dir / "toggle.clicks"))
                 except Exception:
                     pass
 
@@ -313,7 +317,7 @@ def main(argv: list[str] | None = None) -> None:
             atexit.register(release_lock)
         except BlockingIOError:
             if args.command == "toggle":
-                clicks_path = "/tmp/dotfiles_toggle.clicks"
+                clicks_path = str(env.runtime_dir / "toggle.clicks")
                 clicks = 1
                 if os.path.exists(clicks_path):
                     try:
@@ -339,7 +343,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.link()
     elif args.command == "configure":
         try:
-            with open("/tmp/dotfiles_preview_theme", "w") as f:
+            with open(str(env.runtime_dir / "preview-theme"), "w") as f:
                 f.write(args.theme)
         except Exception:
             pass
@@ -353,7 +357,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.apply_profile(desktop_profile)
         facade.link()
         try:
-            with open("/tmp/dotfiles_preview_theme", "w") as f:
+            with open(str(env.runtime_dir / "preview-theme"), "w") as f:
                 f.write(args.theme)
         except Exception:
             pass
@@ -378,14 +382,14 @@ def main(argv: list[str] | None = None) -> None:
 
             print(f"Toggling theme from {active} to {next_theme}")
             try:
-                with open("/tmp/dotfiles_preview_theme", "w") as f:
+                with open(str(env.runtime_dir / "preview-theme"), "w") as f:
                     f.write(next_theme)
             except Exception:
                 pass
             facade.apply_theme(next_theme)
             toggles_performed += 1
 
-            clicks_path = "/tmp/dotfiles_toggle.clicks"
+            clicks_path = str(env.runtime_dir / "toggle.clicks")
             total_clicks = 1
             if os.path.exists(clicks_path):
                 try:

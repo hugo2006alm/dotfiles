@@ -93,7 +93,7 @@ class TestFileThemeStore(unittest.TestCase):
     def test_get_and_set_active_theme(self):
         # Arrange
         store = FileThemeStore(env=self.env)
-        theme_file = self.temp_dir / ".config" / "themes" / "current"
+        theme_file = self.env.state_dir / "active-theme"
 
         # Assert default
         self.assertEqual(store.get_active_theme(), "shade-raid")

@@ -26,6 +26,7 @@ class ConfigTransaction:
 
     def write_artifact(self, artifact: GeneratedArtifact) -> None:
         target_path = self._store.resolve_path(artifact.artifact_id, theme_name=self.theme_name)
+        self._env.validate_output_path(target_path)
         if self._dry_run:
             print(f"[DRY-RUN] Would write file {target_path} with content:\n{artifact.content}")
             return

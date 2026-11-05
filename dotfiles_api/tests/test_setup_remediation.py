@@ -179,7 +179,8 @@ class TestSetupRemediation(unittest.TestCase):
             home.mkdir()
             for path in ('.config/app/config', '.local/bin/tool', 'wallpapers/test.jpg',
                          '.github/workflows/ci.yml', 'setup.py', 'unknown-future-secret'):
-                destination = root / path
+                allowed = path.startswith(('.config/', '.local/', 'wallpapers/'))
+                destination = root / 'home' / path if allowed else root / path
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text(path)
             StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)

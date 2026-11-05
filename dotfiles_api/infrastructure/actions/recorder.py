@@ -3,11 +3,13 @@ from datetime import datetime
 from pathlib import Path
 from dotfiles_api.domain.contracts.action import Action
 from dotfiles_api.context.execution import ExecutionContext
+from dotfiles_api.context.environment import EnvironmentContext
 
 class RecorderAction(Action):
-    def __init__(self, exec_ctx: ExecutionContext) -> None:
+    def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext | None = None) -> None:
         self._exec = exec_ctx
-        self._pid_file = Path("/tmp/wf-recorder.pid")
+        env = env or EnvironmentContext(Path.home(), Path.home() / "dotfiles", "")
+        self._pid_file = env.runtime_dir / "recorder.pid"
 
     def execute(self, args: list[str]) -> None:
         is_running = False
@@ -64,6 +66,7 @@ class RecorderAction(Action):
             else:
                 import subprocess
                 proc = subprocess.Popen(["wf-recorder", "-f", str(file_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                self._pid_file.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
                 self._pid_file.write_text(str(proc.pid))
             
             self._exec.optional(["pkill", "-RTMIN+9", "waybar"])

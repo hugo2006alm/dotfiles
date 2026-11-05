@@ -23,7 +23,7 @@ function dotfiles_push
     end
     set -l old_pwd $PWD
     cd ~/dotfiles
-    stow . -t ~
+    dotfiles link; or return
     git add -A
     git commit -m "$message"
     git push
