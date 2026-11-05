@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""Wait briefly for Elephant's user socket before starting Walker."""
+import argparse
+import os
+import socket
+import sys
+import time
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--timeout', type=float, default=15.0)
+    args = parser.parse_args()
+    runtime = os.environ.get('XDG_RUNTIME_DIR', '')
+    if not runtime or not Path(runtime).is_absolute() or not 0 < args.timeout <= 60:
+        print('Elephant readiness requires an absolute XDG_RUNTIME_DIR and a bounded timeout.', file=sys.stderr)
+        return 1
+    # Elephant loads providers before listening on this socket.
+    # https://github.com/abenz1267/elephant/blob/master/internal/comm/comm.go
+    path = str(Path(runtime) / 'elephant/elephant.sock')
+    deadline = time.monotonic() + args.timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                client.settimeout(min(.2, max(.01, deadline - time.monotonic())))
+                client.connect(path)
+            return 0
+        except OSError:
+            time.sleep(min(.05, max(0, deadline - time.monotonic())))
+    print(f'Elephant is not accepting connections at {path}; Walker was not started.', file=sys.stderr)
+    return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

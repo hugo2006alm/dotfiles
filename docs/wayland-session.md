@@ -76,3 +76,9 @@ documented in `recovery.md`.
 - [systemd graphical session units](https://www.freedesktop.org/software/systemd/man/latest/systemd.special.html#graphical-session.target)
 - [Portal activation environment](https://flatpak.github.io/xdg-desktop-portal/docs/system-integration.html)
 - [Portal backend selection](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html)
+
+Walker waits up to 15 seconds for Elephant's Unix socket to accept a connection
+before starting. A timeout leaves Walker failed with an explicit journal message;
+inspect `systemctl --user status shade-raid-elephant.service shade-raid-walker.service`
+and retry after fixing Elephant. Socket readiness checks startup ordering, not
+provider functionality; verify clipboard and providers in a real session.
