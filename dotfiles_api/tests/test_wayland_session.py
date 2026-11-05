@@ -72,6 +72,7 @@ class TestWaylandSession(unittest.TestCase):
         import threading
         import time
         script = ROOT / 'home/.local/bin/shade-raid-wait-elephant'
+        self.assertTrue(os.access(script, os.X_OK))
         unit = (ROOT / 'home/.config/systemd/user/shade-raid-walker.service').read_text()
         self.assertIn('ExecStartPre=%h/.local/bin/shade-raid-wait-elephant', unit)
         with tempfile.TemporaryDirectory() as temp:
