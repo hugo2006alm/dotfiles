@@ -140,7 +140,10 @@ class DoctorService:
         try:
             name = self.theme_store.get_active_theme()
             planner = ThemePlanner(self.env, self.planner.store, generators, self.applications)
-            plan = planner.build(ThemeLoader(self.env).load(name), name)
+            def artifact_error(artifact, error):
+                findings.append(Diagnostic("output:" + artifact.artifact_id, "error",
+                    f"Cannot inspect output {artifact.artifact_id}: {error}"))
+            plan = planner.build(ThemeLoader(self.env).load(name), name, on_artifact_error=artifact_error)
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
             findings.append(Diagnostic("theme", "error", f"Cannot validate theme plan: {error}"))
             return
@@ -172,7 +175,7 @@ class DoctorService:
                     findings.append(Diagnostic("output:" + style.output, "ok" if current else "error",
                         f"{'Current' if current else 'Missing/outdated'} compiled stylesheet: {path}",
                         () if current else ("configure", "--theme", name), evidence=hashlib.sha256(content.encode()).hexdigest() + expected))
-                except (OSError, ValueError) as error:
+                except (OSError, ValueError, KeyError) as error:
                     findings.append(Diagnostic("output:" + style.output, "error", f"Stylesheet validation failed: {error}",
                                               ("configure", "--theme", name)))
 

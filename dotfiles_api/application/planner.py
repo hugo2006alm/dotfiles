@@ -13,7 +13,7 @@ class ThemePlanner:
         self.env, self.store, self.generators = env, store, generators
         self.registry = registry
 
-    def build(self, tokens, theme_name: str) -> ThemePlan:
+    def build(self, tokens, theme_name: str, on_artifact_error=None) -> ThemePlan:
         items, targets = [], set()
         for generator in self.generators:
             previous = generator.transaction.theme_name
@@ -25,16 +25,21 @@ class ThemePlanner:
             if self.registry:
                 self.registry.validate_artifacts(generator.name, artifacts)
             for artifact in artifacts:
-                path = self.store.resolve_path(artifact.artifact_id, theme_name)
-                self.env.validate_output_path(path)
-                if path.resolve() in targets:
-                    raise ValueError(f"Duplicate generated destination: {path}")
-                targets.add(path.resolve())
-                if self.registry:
-                    self.registry.validate_content(generator.name, path, artifact.content)
-                else:
-                    ArtifactValidator().validate(path, artifact.content)
-                original = read_regular_file(path)
-                link = str(path.readlink()) if path.is_symlink() else None
-                items.append(PlannedArtifact(generator.name, artifact, path, original, link))
+                try:
+                    path = self.store.resolve_path(artifact.artifact_id, theme_name)
+                    self.env.validate_output_path(path)
+                    if path.resolve() in targets:
+                        raise ValueError(f"Duplicate generated destination: {path}")
+                    targets.add(path.resolve())
+                    if self.registry:
+                        self.registry.validate_content(generator.name, path, artifact.content)
+                    else:
+                        ArtifactValidator().validate(path, artifact.content)
+                    original = read_regular_file(path)
+                    link = str(path.readlink()) if path.is_symlink() else None
+                    items.append(PlannedArtifact(generator.name, artifact, path, original, link))
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    if on_artifact_error is None:
+                        raise
+                    on_artifact_error(artifact, error)
         return ThemePlan(theme_name, tuple(items))

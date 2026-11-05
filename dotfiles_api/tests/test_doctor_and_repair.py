@@ -160,6 +160,29 @@ finally:
         result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=5)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_bad_generated_output_does_not_hide_other_outputs(self):
+        import dataclasses
+        from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
+        spec = dataclasses.replace(next(s for s in APPLICATIONS if s.id == "waybar"), dependencies=())
+        registry = ApplicationRegistry((spec,))
+        store = ArtifactStore(registry.artifact_paths(self.env))
+        tx = ConfigTransaction(self.env, store, SystemFileWriter())
+        self.doctor.applications = registry
+        self.doctor.planner = ThemePlanner(self.env, store, registry.generators(tx, EventBus()), registry)
+        path = store.resolve_path("waybar-colors")
+        path.parent.mkdir(parents=True)
+        os.mkfifo(path)
+        tokens = ThemeLoader(self.env).load("shade-raid")
+        with self.assertRaises(ValueError):
+            self.doctor.planner.build(tokens, "shade-raid")
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        by_id = {item.id: item for item in report.findings}
+        self.assertEqual(by_id["output:waybar-colors"].severity, "error")
+        self.assertIn("output:waybar-variables", by_id)
+        self.assertIn("output:waybar-style", by_id)
+
     def test_bad_stow_source_does_not_hide_later_missing_link(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
