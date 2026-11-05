@@ -299,6 +299,33 @@ class TestThemeCoordinator(unittest.TestCase):
         journal = next((self.env.state_dir / "transactions").glob("*/manifest.json"))
         self.assertEqual((journal.parent / "backups/0").read_bytes(), b"original")
 
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_fifo_replacing_output_after_plan_is_rejected_without_blocking(self):
+        import subprocess, sys
+        script = """
+import os
+from unittest.mock import Mock, patch
+from dotfiles_api.tests.test_theme_coordinator import TestThemeCoordinator
+case = TestThemeCoordinator(); case.setUp()
+try:
+    coordinator = case.coordinator()
+    plan = case.planner.build(Mock(), 'shade-raid-dark')
+    case.first.unlink()
+    os.mkfifo(case.first)
+    with patch.object(case.planner, 'build', return_value=plan):
+        try:
+            case.apply(coordinator)
+        except (ValueError, RuntimeError):
+            pass
+        else:
+            raise AssertionError('unsafe replacement was accepted')
+    assert not case.second.exists()
+finally:
+    case.doCleanups()
+"""
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_fifo_destination_is_rejected_without_reading(self):
         self.first.unlink()
         os.mkfifo(self.first)
