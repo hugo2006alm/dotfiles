@@ -100,12 +100,14 @@ class HomeMigration:
             else:
                 raise ValueError(f"Unsupported legacy file: {child}")
 
+    def preflight(self) -> None:
+        for destination, raw, old, directory in self.links:
+            self._validate_overlap(old, destination.relative_to(self.target))
+
     def __enter__(self):
         if not self.links:
             return self
-        # Inspect every overlap before unlinking any fold.
-        for destination, raw, old, directory in self.links:
-            self._validate_overlap(old, destination.relative_to(self.target))
+        self.preflight()
         # Keep recovery data outside old folds, including ~/.local itself.
         base = self.target / ".shade-raid-backups"
         if base.is_symlink() or base.resolve().is_relative_to(self.source.resolve()):
