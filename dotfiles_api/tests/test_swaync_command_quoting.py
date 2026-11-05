@@ -32,7 +32,7 @@ class TestSwayncCommandQuoting(unittest.TestCase):
             preview_file = env.runtime_dir / "preview-theme"
             preview_file.parent.mkdir(parents=True, exist_ok=True)
             preview_file.write_text(selected)
-            artifacts = SwayncGenerator(transaction=Mock(env=env)).render(tokens, "active")
+            artifacts = SwayncGenerator(transaction=Mock(env=env, theme_name="")).render(tokens, "active")
             config = json.loads(next(item.content for item in artifacts if item.artifact_id == "swaync-config"))
             controls = config["widget-config"]["buttons-grid#theme-preview-controls"]["actions"]
             expected = {0: ["action", "preview", "prev"], 2: ["action", "preview", "next"],
