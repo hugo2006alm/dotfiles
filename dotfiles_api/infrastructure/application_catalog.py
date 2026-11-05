@@ -101,7 +101,7 @@ APPLICATIONS = (
         ),
         reload_factory=_reload(WlogoutReloadable), reload_strategy="application",
     ),
-    ApplicationSpec('vesktop', packages=('vesktop-bin',), capabilities=(),
+    ApplicationSpec('vesktop', packages=('vesktop-bin',), runtime_executables=('vesktop',), capabilities=(),
         package_sources=(('vesktop-bin', 'yay'),),
         generator=VesktopGenerator,
         required=False,

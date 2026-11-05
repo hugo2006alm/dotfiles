@@ -14,7 +14,7 @@ def build_desktop_profile(
 
     registry = ApplicationRegistry(APPLICATIONS)
     features = [Feature(name=spec.id, packages=list(spec.packages), capabilities=list(spec.capabilities))
-                for spec in registry.specs if spec.required and "desktop" in spec.profiles]
+                for spec in registry.installation_specs(["desktop"], optional_packages or [])]
     features.append(Feature(name="graphics", packages=selected_graphics, capabilities=["graphics"]))
 
     selected = list(optional_packages or [])
