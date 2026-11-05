@@ -4,6 +4,7 @@ from dotfiles_api.application.transaction import ConfigTransaction
 from dotfiles_api.application.preview_transaction import restore_preview, preview_projection
 from dotfiles_api.domain.artifacts import GeneratedArtifact
 from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 
 
 class ThemeCoordinator:
@@ -31,7 +32,7 @@ class ThemeCoordinator:
             if self.styler:
                 self.styler.verify_sources(plan)
             for item in plan.artifacts:
-                current = item.path.read_bytes() if item.path.exists() else None
+                current = read_regular_file(item.path)
                 link = str(item.path.readlink()) if item.path.is_symlink() else None
                 if current != item.original or link != item.original_link:
                     raise RuntimeError(f"Generated destination changed after planning: {item.path}")
