@@ -8,4 +8,4 @@ class StowLinker(Linker):
 
     def link(self, source_dir: Path, target_dir: Path) -> None:
         args = ["stow", "-d", str(source_dir), "-t", str(target_dir), "."]
-        self._exec.execute(args)
+        self._exec.execute(args, step="link:stow")

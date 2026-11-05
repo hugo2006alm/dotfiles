@@ -13,4 +13,4 @@ class PacmanSource(PackageSource):
         if not packages:
             return
         args = ["sudo", "pacman", "-S", "--needed", "--noconfirm"] + packages
-        self._exec.execute(args)
+        self._exec.execute(args, step="install:pacman")

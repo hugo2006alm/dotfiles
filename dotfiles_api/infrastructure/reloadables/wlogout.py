@@ -14,9 +14,9 @@ class WlogoutReloadable(EventReloadable):
 
     def reload(self) -> None:
         self.compile_styles()
-        res = self._exec.execute(["pgrep", "-x", "wlogout"])
+        res = self._exec.query(["pgrep", "-x", "wlogout"])
         if res.returncode == 0:
-            self._exec.execute(["pkill", "-x", "wlogout"])
+            self._exec.query(["pkill", "-x", "wlogout"])
             self._exec.execute(["hyprctl", "dispatch", "hl.dsp.exec_cmd('power-menu')"])
 
     def supports(self, generator_name: str) -> bool:

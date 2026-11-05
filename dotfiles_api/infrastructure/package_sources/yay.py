@@ -13,4 +13,4 @@ class YaySource(PackageSource):
         if not packages:
             return
         args = ["yay", "-S", "--needed", "--noconfirm"] + packages
-        self._exec.execute(args)
+        self._exec.execute(args, step="install:yay")

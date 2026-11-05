@@ -6,7 +6,7 @@ class GhosttyReloadable(EventReloadable):
         self._exec = exec_ctx
 
     def reload(self) -> None:
-        self._exec.execute(["pkill", "-USR2", "ghostty"])
+        self._exec.query(["pkill", "-USR2", "ghostty"])
 
     def supports(self, generator_name: str) -> bool:
         return generator_name == "ghostty"

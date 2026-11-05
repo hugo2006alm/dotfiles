@@ -110,7 +110,9 @@ def main(argv: list[str] | None = None) -> None:
     env = EnvironmentContext(home_dir=home_dir, dotfiles_dir=dotfiles_dir, user=user)
 
     executor = SystemCommandExecutor()
-    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor, verbose=getattr(args, "verbose", False))
+    exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor,
+                                verbose=getattr(args, "verbose", False),
+                                log_path=env.home_dir / ".local/state/shade-raid/commands.jsonl")
 
     package_registry = PackageRegistry()
 
@@ -239,22 +241,6 @@ def main(argv: list[str] | None = None) -> None:
         setup_service=setup_svc,
     )
 
-    def run_reload_detached(verbose: bool = False) -> None:
-        import subprocess
-
-        cmd = [sys.executable, "-m", "dotfiles_api.presentation.cli", "reload"]
-        if verbose:
-            cmd.append("--verbose")
-        try:
-            subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-        except Exception:
-            pass
-
     action_svc = ActionService()
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
     action_svc.register("record", RecorderAction(exec_ctx))
@@ -343,7 +329,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "reload":
         facade.reload()
     elif args.command == "apply-all":
@@ -357,7 +343,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "toggle":
         toggles_performed = 0
         while True:
@@ -395,7 +381,7 @@ def main(argv: list[str] | None = None) -> None:
                 break
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
     elif args.command in {"setup-login", "repair-login-permissions"}:

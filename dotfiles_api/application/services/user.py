@@ -11,8 +11,8 @@ class UserSetupService:
         self._env = env
 
     def setup_user(self, setup_github: bool = False) -> None:
-        name_res = self._exec.execute(["git", "config", "--global", "user.name"])
-        email_res = self._exec.execute(["git", "config", "--global", "user.email"])
+        name_res = self._exec.query(["git", "config", "--global", "user.name"])
+        email_res = self._exec.query(["git", "config", "--global", "user.email"])
 
         git_name = name_res.stdout.strip()
         git_email = email_res.stdout.strip()

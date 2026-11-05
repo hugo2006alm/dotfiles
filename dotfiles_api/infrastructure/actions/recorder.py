@@ -17,14 +17,14 @@ class RecorderAction(Action):
             try:
                 pid = self._pid_file.read_text().strip()
                 if pid:
-                    res = self._exec.execute(["kill", "-0", pid])
+                    res = self._exec.query(["kill", "-0", pid])
                     if res.returncode == 0:
                         is_running = True
             except Exception:
                 pass
 
         if not is_running:
-            res_pgrep = self._exec.execute(["pgrep", "-f", "wf-recorder"])
+            res_pgrep = self._exec.query(["pgrep", "-f", "wf-recorder"])
             if res_pgrep.returncode == 0:
                 is_running = True
                 pid = res_pgrep.stdout.strip().split("\n")[0]
@@ -36,15 +36,15 @@ class RecorderAction(Action):
                     self._pid_file.unlink()
                 except Exception:
                     pass
-            self._exec.execute(["pkill", "-RTMIN+9", "waybar"])
-            self._exec.execute([
+            self._exec.optional(["pkill", "-RTMIN+9", "waybar"])
+            self._exec.optional([
                 "notify-send",
                 "-i", "camera-video",
                 "Screen Recording",
                 "Recording stopped and saved"
             ])
         else:
-            videos_res = self._exec.execute(["xdg-user-dir", "VIDEOS"])
+            videos_res = self._exec.optional(["xdg-user-dir", "VIDEOS"])
             videos_dir = Path(videos_res.stdout.strip() or os.path.expanduser("~/Videos"))
             record_dir = videos_dir / "Recordings"
             
@@ -66,8 +66,8 @@ class RecorderAction(Action):
                 proc = subprocess.Popen(["wf-recorder", "-f", str(file_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 self._pid_file.write_text(str(proc.pid))
             
-            self._exec.execute(["pkill", "-RTMIN+9", "waybar"])
-            self._exec.execute([
+            self._exec.optional(["pkill", "-RTMIN+9", "waybar"])
+            self._exec.optional([
                 "notify-send",
                 "-i", "camera-video",
                 "Screen Recording",
