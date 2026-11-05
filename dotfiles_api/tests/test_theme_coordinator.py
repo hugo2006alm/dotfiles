@@ -174,6 +174,12 @@ class TestThemeCoordinator(unittest.TestCase):
                 coordinator.rollback()
         self.assertFalse(self.second.exists())
         self.assertEqual(self.first.read_text(), "changed")
+        journal = next((self.env.state_dir / "transactions").glob("*/manifest.json"))
+        manifest = json.loads(journal.read_text())
+        self.assertEqual(manifest["status"], "rolling_back")
+        states = {record["artifact_id"]: record.get("recovery") for record in manifest["files"]}
+        self.assertEqual(states["first"], "restoring")
+        self.assertEqual(states["second"], "restored")
         coordinator.rollback()
         self.assertEqual(self.first.read_text(), "original")
         self.assertFalse(self.second.exists())
