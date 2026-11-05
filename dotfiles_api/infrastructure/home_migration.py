@@ -12,6 +12,7 @@ class HomeMigration:
         self.source, self.target = source.absolute(), target.absolute()
         self.package = self.source / "home"
         self.legacy = self.source / "templates/legacy"
+        self.seeds = self.source / "seeds"
         self.links = []
         self.backup = None
         self._changed = []
@@ -21,6 +22,8 @@ class HomeMigration:
         names = {p.name for p in self.package.iterdir()}
         if self.legacy.is_dir():
             names.update(p.name for p in self.legacy.iterdir())
+        if self.seeds.is_dir():
+            names.update(p.name for p in self.seeds.iterdir())
         for name in sorted(names):
             self._inspect(Path(name))
         for item in self.package.rglob("*"):
@@ -30,26 +33,42 @@ class HomeMigration:
 
     def _inspect(self, relative: Path) -> None:
         destination = self.target / relative
-        static, fallback = self.package / relative, self.legacy / relative
+        static, fallback, seed = self.package / relative, self.legacy / relative, self.seeds / relative
         if destination.is_symlink():
             raw = os.readlink(destination)
             resolved = Path(os.path.abspath(destination.parent / raw))
-            if resolved == self.source / relative or (static.is_dir() and resolved == static):
-                directory = static.is_dir() or resolved.is_dir() or fallback.is_dir()
+            if resolved in (self.source / relative, static, seed):
+                directory = static.is_dir() or resolved.is_dir() or fallback.is_dir() or seed.is_dir()
                 self.links.append((destination, raw, resolved, directory))
-            elif static.is_dir() or fallback.is_dir():
+            elif static.is_dir() or fallback.is_dir() or seed.is_dir():
                 raise ValueError(f"Refusing unmanaged directory symlink: {destination}")
             return
         if not destination.is_dir():
             return
         names = set()
-        for candidate in (static, fallback):
+        for candidate in (static, fallback, seed):
             if candidate.is_dir():
                 names.update(p.name for p in candidate.iterdir())
         if len(relative.parts) >= 2:
             names.update(p.name for p in destination.iterdir())
         for name in sorted(names):
             self._inspect(relative / name)
+
+    def _validate_overlap(self, source: Path, relative: Path) -> None:
+        """Refuse to replace old content unless it matches the declarative file."""
+        static = self.package / relative
+        if not (static.exists() or static.is_symlink()):
+            return
+        if source.is_symlink() or static.is_symlink():
+            if not (source.is_symlink() and static.is_symlink() and
+                    os.path.realpath(source) == os.path.realpath(static)):
+                raise ValueError(f"Legacy content conflicts with declarative file: {source}")
+        elif source.is_dir() and static.is_dir():
+            for child in source.iterdir():
+                self._validate_overlap(child, relative / child.name)
+        elif not (source.is_file() and static.is_file() and
+                  source.read_bytes() == static.read_bytes()):
+            raise ValueError(f"Legacy content conflicts with declarative file: {source}")
 
     def _copy_unmanaged(self, source: Path, destination: Path, relative: Path) -> None:
         if not source.is_dir():
@@ -58,24 +77,37 @@ class HomeMigration:
             target = destination / child.name
             child_relative = relative / child.name
             static = self.package / child_relative
-            if static.exists() or static.is_symlink():
-                if child.is_dir() and not child.is_symlink() and static.is_dir():
-                    target.mkdir(parents=True, exist_ok=True)
-                    self._copy_unmanaged(child, target, child_relative)
+            if child.is_dir() and not child.is_symlink():
+                if static.exists() and not static.is_dir():
+                    continue
+                created = not target.exists()
+                if created:
+                    target.mkdir(mode=child.stat().st_mode & 0o777)
+                    target.chmod(child.stat().st_mode & 0o777)
+                self._copy_unmanaged(child, target, child_relative)
+                if created:
+                    shutil.copystat(child, target, follow_symlinks=False)
+            elif static.exists() or static.is_symlink() or target.exists() or target.is_symlink():
                 continue
-            if target.exists() or target.is_symlink():
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if child.is_symlink():
-                target.symlink_to(os.readlink(child))
-            elif child.is_dir():
-                shutil.copytree(child, target, symlinks=True)
-            else:
+            elif child.is_symlink():
+                raw = os.readlink(child)
+                if not os.path.isabs(raw):
+                    resolved = os.path.abspath(child.parent / raw)
+                    raw = os.path.relpath(resolved, target.parent)
+                target.symlink_to(raw)
+            elif child.is_file():
                 shutil.copy2(child, target)
+            else:
+                raise ValueError(f"Unsupported legacy file: {child}")
+
+    def preflight(self) -> None:
+        for destination, raw, old, directory in self.links:
+            self._validate_overlap(old, destination.relative_to(self.target))
 
     def __enter__(self):
         if not self.links:
             return self
+        self.preflight()
         # Keep recovery data outside old folds, including ~/.local itself.
         base = self.target / ".shade-raid-backups"
         if base.is_symlink() or base.resolve().is_relative_to(self.source.resolve()):
@@ -102,11 +134,14 @@ class HomeMigration:
                 destination.unlink()
                 self._changed.append((destination, raw))
                 if directory:
-                    destination.mkdir()
+                    destination.mkdir(mode=old.stat().st_mode & 0o777 if old.is_dir() else 0o700)
+                    if old.is_dir():
+                        destination.chmod(old.stat().st_mode & 0o777)
                     self._copy_unmanaged(old, destination, relative)
                     self._copy_unmanaged(self.legacy / relative, destination, relative)
                 elif not (self.package / relative).exists():
-                    material = old if old.is_file() else self.legacy / relative
+                    material = next((item for item in (old, self.legacy / relative, self.seeds / relative)
+                                     if item.is_file()), old)
                     if not material.is_file():
                         raise ValueError(f"Cannot recover legacy generated file: {destination}")
                     shutil.copy2(material, destination)
@@ -132,14 +167,10 @@ class HomeMigration:
         failures = []
         for destination, raw in reversed(self._changed):
             try:
-                if destination.is_symlink() or destination.is_file():
-                    destination.unlink()
-                elif destination.exists():
-                    if self.backup is not None:
-                        saved = self.backup / "failed-contents" / destination.relative_to(self.target)
-                        saved.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copytree(destination, saved, symlinks=True)
-                    shutil.rmtree(destination)
+                if destination.exists() or destination.is_symlink():
+                    saved = self.backup / "failed-contents" / destination.relative_to(self.target)
+                    saved.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    os.replace(destination, saved)
                 destination.symlink_to(raw)
             except OSError as error:
                 failures.append(f"{destination}: {error}")

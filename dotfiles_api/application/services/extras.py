@@ -31,11 +31,6 @@ class ExtrasSetupService:
 
         if self._exec.optional(["spicetify", "backup", "apply"]).returncode:
             return
-        if self._exec.optional([
-            "bash", "-c",
-            "set -o pipefail; curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | bash"
-        ]).returncode:
-            return
         if self._exec.optional(["spicetify", "refresh", "-a", "-e"]).returncode:
             return
         self._exec.optional(["spicetify", "apply"])

@@ -13,9 +13,5 @@ class ServicesSetupService:
             self._exec.execute(["sudo", "systemctl", "enable", service])
         self._exec.execute(["systemctl", "--user", "enable", "--now",
                             "pipewire", "pipewire-pulse", "wireplumber"])
-        self._exec.execute(["sudo", "ufw", "default", "deny", "incoming"])
-        self._exec.execute(["sudo", "ufw", "default", "allow", "outgoing"])
         if enable_ssh_server:
-            self._exec.execute(["sudo", "ufw", "allow", "ssh"])
             self._exec.execute(["sudo", "systemctl", "enable", "sshd"])
-        self._exec.execute(["sudo", "ufw", "enable"])
