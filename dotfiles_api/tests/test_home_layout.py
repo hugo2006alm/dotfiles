@@ -239,6 +239,25 @@ class TestHomeLayout(unittest.TestCase):
             self.assertTrue((home / '.config').is_symlink())
             self.assertEqual((home / '.config/app/settings').read_text(), 'personal settings')
 
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_cli_link_can_unfold_legacy_local_before_registry_output_validation(self):
+        import os
+        from dotfiles_api.presentation.cli import main
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('preserve me')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            with patch.dict(os.environ, {'DOTFILES_DIR': str(repo)}, clear=True), \
+                    patch('pathlib.Path.home', return_value=home):
+                main(['link'])
+            self.assertFalse((home / '.local').is_symlink())
+            self.assertEqual((home / '.local/personal').read_text(), 'preserve me')
+            self.assertEqual((legacy / 'personal').read_text(), 'preserve me')
+
     def test_theme_output_paths_never_target_repository(self):
         source = (ROOT / "dotfiles_api/presentation/cli.py").read_text()
         self.assertFalse('env.dotfiles_dir / "plymouth-shade-raid"' in source,

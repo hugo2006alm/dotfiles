@@ -17,9 +17,8 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertIn("DesktopProfileResolver", source)
 
     def test_global_reload_includes_xdg_portals(self) -> None:
-        source = (ROOT / "dotfiles_api" / "presentation" / "cli.py").read_text()
-
-        self.assertIn("portal_reload,", source)
+        from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
+        self.assertTrue(next(spec for spec in APPLICATIONS if spec.id == "portal").reload_factory)
 
     def test_hyprland_uses_python_drawer_action(self) -> None:
         autostart = (ROOT / "home/.config/hypr/autostart.lua").read_text()
