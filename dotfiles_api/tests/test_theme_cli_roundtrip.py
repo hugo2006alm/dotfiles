@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import re
 from pathlib import Path
 from unittest.mock import patch
 
@@ -52,6 +53,19 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                 main(["rollback"])
                 self.assertEqual((home / ".config/ghostty/colors.conf").read_bytes(), light)
                 self.assertEqual((home / ".state/shade-raid/active-theme").read_text().strip(), "shade-raid")
+                css = home / ".config/waybar/style.css"
+                expected_css = css.read_bytes()
+                css.unlink()
+                (home / ".state/shade-raid/installation.json").write_text('{"version":2,"requested_profiles":["desktop"],"explicit_packages":[]}')
+                before_diagnosis = snapshot(home)
+                with contextlib.redirect_stdout(io.StringIO()) as diagnosis:
+                    main(["repair", "--plan"])
+                self.assertEqual(snapshot(home), before_diagnosis)
+                plan_id = re.search(r"REPAIR PLAN ([0-9a-f]{64})", diagnosis.getvalue()).group(1)
+                with patch("dotfiles_api.infrastructure.actions.wallpaper.WallpaperAction.execute") as wallpaper:
+                    main(["repair", "--apply", "--plan-id", plan_id])
+                wallpaper.assert_not_called()
+                self.assertEqual(css.read_bytes(), expected_css)
                 self.assertTrue(all(call.args[0][0] == "sassc" for call in process.call_args_list))
             for app in ("waybar", "wlogout", "swayosd"):
                 self.assertTrue((home / ".config" / app / "style.css").is_file())

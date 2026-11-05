@@ -3,9 +3,12 @@ import os
 import stat
 import shutil
 import tempfile
+import hashlib
+import json
 from pathlib import Path
 
 from dotfiles_api.application.validation import ArtifactValidator
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 from dotfiles_api.domain.artifacts import GeneratedArtifact
 from dotfiles_api.domain.models.planned_artifact import PlannedArtifact
 from dotfiles_api.domain.models.theme_plan import ThemePlan
@@ -20,6 +23,18 @@ class ThemeStyler:
     def describe(self):
         count = sum(len(spec.stylesheets) for spec in self.registry.specs)
         print(f"  Compile {count} stylesheets before installation (deferred in dry-run)")
+
+    @staticmethod
+    def source_digest(env, style, rendered):
+        snapshot = ThemeStyler(env, None, None, None)._source_snapshot()
+        inputs = {"source:" + name: digest.hex() for name, digest in snapshot.items()}
+        inputs["stylesheet"] = style.source
+        mappings = dict(style.input_paths)
+        for artifact_id in style.inputs:
+            item = rendered[artifact_id]
+            name = mappings.get(artifact_id, item.path.name)
+            inputs["generated:" + artifact_id + ":" + name] = hashlib.sha256(item.artifact.content.encode()).hexdigest()
+        return hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
 
     def _source_snapshot(self):
         root = self.env.source_home
@@ -70,13 +85,14 @@ class ThemeStyler:
                     output = Path(temp) / "compiled.css"
                     self.execution.execute(["sassc", str(scratch_source), str(output)],
                                            step=f"compile:{spec.id}")
-                    content = output.read_text(encoding="utf-8")
+                    fingerprint = self.source_digest(self.env, style, rendered)
+                    payload = output.read_text(encoding="utf-8")
+                    digest = hashlib.sha256(payload.encode()).hexdigest()
+                    content = f"/* shade-raid-source: {fingerprint} */\n/* shade-raid-content: {digest} */\n" + payload
                 path = self.store.resolve_path(style.output, plan.theme_name)
                 self.env.validate_output_path(path)
                 ArtifactValidator().validate(path, content)
-                if path.exists() and not path.is_file():
-                    raise ValueError(f"Stylesheet destination is not a regular file: {path}")
-                original = path.read_bytes() if path.exists() else None
+                original = read_regular_file(path)
                 link = str(path.readlink()) if path.is_symlink() else None
                 items.append(PlannedArtifact(spec.id, GeneratedArtifact(style.output, content), path, original, link))
         if self._source_snapshot() != before:

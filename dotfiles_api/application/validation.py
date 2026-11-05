@@ -16,7 +16,10 @@ class ArtifactValidator:
         elif path.suffix == ".toml":
             tomllib.loads(content)
         elif path.suffix == ".ini":
-            configparser.ConfigParser(interpolation=None).read_string(content)
+            try:
+                configparser.ConfigParser(interpolation=None).read_string(content)
+            except configparser.Error as error:
+                raise ValueError(f"Invalid INI: {path}: {error}") from error
         elif path.suffix in {".css", ".scss"}:
             text = re.sub(r"/\*.*?\*/", "", content, flags=re.S)
             stack, quote, escaped = [], None, False

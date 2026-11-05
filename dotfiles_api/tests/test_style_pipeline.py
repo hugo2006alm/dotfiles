@@ -127,7 +127,8 @@ class TestStylePipeline(unittest.TestCase):
             (ref_source.parent / "nested").mkdir()
             (ref_source.parent / "nested/_palette.scss").write_text("$tone: #123456;\n")
             expected = subprocess.run(["sassc", str(ref_source)], check=True, capture_output=True, text=True).stdout
-            self.assertEqual(output, expected)
+            self.assertTrue(output.startswith("/* shade-raid-source: "))
+            self.assertEqual(output.split("\n", 2)[2], expected)
             self.assertEqual(snapshot(env.source_home), before)
             self.assertFalse(store.resolve_path("css").exists())
 
@@ -173,3 +174,23 @@ class TestStylePipeline(unittest.TestCase):
         for cls in (WaybarReloadable, WlogoutReloadable):
             cls(ExecutionContext(False, executor)).reload()
         self.assertFalse(any(call.args[0][0] == "sassc" for call in executor.execute.call_args_list))
+
+    def test_fingerprint_tracks_stylesheet_imports_in_parent_directories(self):
+        with tempfile.TemporaryDirectory() as temp:
+            env, registry, store, source, shared, plan = self.nested_fixture(Path(temp))
+            style = registry.specs[0].stylesheets[0]
+            rendered = {item.artifact.artifact_id: item for item in plan.artifacts}
+            before = ThemeStyler.source_digest(env, style, rendered)
+            shared.write_text('$spacing: 99px;\n')
+            self.assertNotEqual(before, ThemeStyler.source_digest(env, style, rendered))
+
+    def test_source_fingerprint_is_pure_and_changes_with_generated_inputs(self):
+        before = snapshot(self.env.home_dir)
+        style = next(spec.stylesheets[0] for spec in self.registry.specs if spec.id == "waybar")
+        digests = []
+        for name in ("shade-raid", "shade-raid-dark"):
+            plan = self.planner.build(ThemeLoader(self.env).load(name), name)
+            rendered = {item.artifact.artifact_id: item for item in plan.artifacts}
+            digests.append(ThemeStyler.source_digest(self.env, style, rendered))
+        self.assertNotEqual(*digests)
+        self.assertEqual(snapshot(self.env.home_dir), before)

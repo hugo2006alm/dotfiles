@@ -3,7 +3,8 @@
 -- Shared agent socket for compositor children and D-Bus activation; preserve an
 -- agent supplied by a session manager. The unit starts one foreground agent.
 local runtime = os.getenv("XDG_RUNTIME_DIR")
-if runtime and not os.getenv("SSH_AUTH_SOCK") then
+local agent = os.getenv("SSH_AUTH_SOCK")
+if runtime and runtime ~= "" and (not agent or agent == "") then
     hl.env("SSH_AUTH_SOCK", runtime .. "/shade-raid-ssh/agent.socket")
 end
 
