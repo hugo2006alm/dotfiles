@@ -88,7 +88,24 @@ python -m dotfiles_api.presentation.cli [OPTIONS] COMMAND
 
 ### Options
 - `--dry-run`: Runs the transaction simulation, printing what files would be written and what reload commands would execute, without making any changes to your filesystem or running processes.
-- `--theme`: The theme name to apply (default: `shade-raid`).
+- `--theme`: Theme for `configure` or `apply-all` (default: `shade-raid`).
+- `--github`: GitHub authentication during `setup` only.
+
+`--dry-run` and `--verbose` work before or after the command and action arguments.
+Help (`--help` / `-h`) exits before environment setup or action execution. An explicit
+`--` ends CLI option handling and forwards later tokens literally to an action:
+
+```bash
+dotfiles action screenshot --region --dry-run
+dotfiles action screenshot --help
+dotfiles action screenshot -- --help
+```
+
+Declared option values are preserved; use `--theme=--dry-run` for a theme whose
+name begins with a reserved flag. Repeated boolean flags are idempotent. Repeated
+`--theme` accepts the same value, but conflicting values are an error. Options
+without meaning for a command are errors; for example, `reload --theme dark` and
+`configure --github` are rejected before doing any work.
 
 ### Commands
 - `install`: Installs the system packages defined in the active profile.
@@ -199,3 +216,6 @@ We welcome bug reports and feature requests!
 This repository is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
 
 Copyright (c) 2026 Hugo Almeida.
+
+Login installation and legacy permission remediation are explicit interactive operations.
+See [login preflight, backups and TTY recovery](docs/login-recovery.md).
