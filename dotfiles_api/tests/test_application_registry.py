@@ -100,6 +100,16 @@ class TestApplicationRegistry(unittest.TestCase):
                 registry.validate_outputs(generators, tokens, theme)
             self.assertEqual({g.name for g in generators}, {s.id for s in APPLICATIONS if s.generator})
 
+    def test_stylesheet_input_mapping_rejects_escapes_and_collisions(self):
+        from dotfiles_api.domain.models.stylesheet_spec import StylesheetSpec
+        for mappings in ((("input", "../outside.scss"),), (("input", "/etc/passwd"),),
+                         (("input", "style.scss"),), (("other", "nested.scss"),),
+                         (("input", "a.scss"), ("input", "b.scss"))):
+            style = StylesheetSpec("dir/style.scss", "css", ("input",), mappings)
+            spec = ApplicationSpec("app", outputs=(OutputSpec("input", "input.scss"), OutputSpec("css", "style.css")), stylesheets=(style,))
+            with self.subTest(mappings=mappings), self.assertRaisesRegex(ValueError, "input mapping"):
+                ApplicationRegistry((spec,))
+
     def test_generator_cannot_silently_omit_or_add_outputs(self):
         from types import SimpleNamespace
         spec = ApplicationSpec("a", outputs=(OutputSpec("expected", "expected"),))
@@ -107,3 +117,12 @@ class TestApplicationRegistry(unittest.TestCase):
         generator = SimpleNamespace(name="a", render=lambda tokens, theme: [])
         with self.assertRaisesRegex(ValueError, "outputs"):
             registry.validate_outputs([generator], None, "test")
+
+    def test_rejects_invalid_stylesheet_contracts(self):
+        from dotfiles_api.domain.models.stylesheet_spec import StylesheetSpec
+        for style in (StylesheetSpec("../escape.scss", "css", ("scss",)),
+                      StylesheetSpec("style.scss", "missing", ("scss",)),
+                      StylesheetSpec("style.scss", "css", ("missing",))):
+            with self.subTest(style=style), self.assertRaises(ValueError):
+                ApplicationRegistry((ApplicationSpec("a", outputs=(OutputSpec("scss", "colors.scss"),
+                    OutputSpec("css", "style.css")), stylesheets=(style,)),))

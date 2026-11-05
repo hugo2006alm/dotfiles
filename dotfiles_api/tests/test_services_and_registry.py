@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 import tempfile
 import shutil
 from pathlib import Path
@@ -304,10 +305,9 @@ class TestInfrastructureImplementations(unittest.TestCase):
         reloadable.reload()
 
         # Assert
-        self.assertEqual(len(executor.commands), 3)
-        self.assertIn("sassc", executor.commands[0])
-        self.assertIn("pkill -USR2 waybar", executor.commands[1])
-        self.assertIn("pgrep -x waybar", executor.commands[2])
+        self.assertEqual(len(executor.commands), 2)
+        self.assertIn("pkill -USR2 waybar", executor.commands[0])
+        self.assertIn("pgrep -x waybar", executor.commands[1])
 
     def test_waybar_reloadable_restarts_when_waybar_missing(self):
         # Arrange
@@ -336,8 +336,8 @@ class TestInfrastructureImplementations(unittest.TestCase):
 
         # Assert
         self.assertEqual(len(executor.commands), 2)
-        self.assertEqual(executor.commands[0], "pkill -x swaync")
-        self.assertEqual(executor.commands[1], "hyprctl dispatch hl.dsp.exec_cmd('swaync')")
+        self.assertEqual(executor.commands[0], "swaync-client -R")
+        self.assertEqual(executor.commands[1], "swaync-client -rs")
 
     def test_walker_launcher_capability(self):
         # Arrange
@@ -385,8 +385,8 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
         r = WlogoutReloadable(exec_ctx=exec_ctx)
         r.reload()
-        # sassc should run
-        self.assertTrue(any("sassc" in cmd for cmd in executor.commands))
+        # Compilation is complete before refresh.
+        self.assertFalse(any("sassc" in cmd for cmd in executor.commands))
         # wlogout relaunch commands should NOT run
         self.assertFalse(any("pkill" in cmd and "wlogout" in cmd for cmd in executor.commands))
 
@@ -397,8 +397,8 @@ class TestInfrastructureImplementations(unittest.TestCase):
         from dotfiles_api.infrastructure.reloadables.wlogout import WlogoutReloadable
         r = WlogoutReloadable(exec_ctx=exec_ctx)
         r.reload()
-        # sassc should run
-        self.assertTrue(any("sassc" in cmd for cmd in executor.commands))
+        # Compilation is complete before refresh.
+        self.assertFalse(any("sassc" in cmd for cmd in executor.commands))
         # wlogout relaunch commands should run
         self.assertTrue(any("pkill" in cmd and "wlogout" in cmd for cmd in executor.commands))
         self.assertTrue(any("hyprctl" in cmd and "power-menu" in cmd for cmd in executor.commands))

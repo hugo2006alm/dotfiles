@@ -6,6 +6,7 @@ from dotfiles_api.domain.models.planned_artifact import PlannedArtifact
 class ThemePlan:
     theme_name: str
     artifacts: tuple[PlannedArtifact, ...]
+    source_snapshot: tuple[tuple[str, bytes], ...] | None = None
 
     @property
     def changed_generators(self) -> frozenset[str]:

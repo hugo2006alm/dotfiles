@@ -20,7 +20,7 @@ from dotfiles_api.tests.test_dry_run_safety import snapshot
 ROOT = Path(__file__).resolve().parents[2]
 
 
-@unittest.skipUnless(shutil.which("stow"), "Requires real GNU Stow")
+@unittest.skipUnless(shutil.which("stow") and shutil.which("sassc"), "Requires real GNU Stow and sassc")
 class TestThemeCliRoundtrip(unittest.TestCase):
     def test_real_cli_applies_light_dark_and_rollback_without_changing_source(self):
         from dotfiles_api.presentation.cli import main
@@ -30,14 +30,19 @@ class TestThemeCliRoundtrip(unittest.TestCase):
             StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(ROOT, home)
             variables = {"DOTFILES_DIR": str(ROOT), "XDG_STATE_HOME": str(home / ".state"),
                          "XDG_RUNTIME_DIR": str(home / ".runtime")}
+            real_execute = SystemCommandExecutor().execute
+            def execute(args, cwd=None):
+                return real_execute(args, cwd) if args[0] == "sassc" else CommandResult("", "", 0)
             with patch.dict(os.environ, variables), patch("pathlib.Path.home", return_value=home), \
-                    patch.object(SystemCommandExecutor, "execute", return_value=CommandResult("", "", 0)) as executor, \
-                    patch("subprocess.Popen") as process, contextlib.redirect_stdout(io.StringIO()):
+                    patch.object(SystemCommandExecutor, "execute", side_effect=execute) as executor, \
+                    patch("subprocess.Popen", wraps=subprocess.Popen) as process, contextlib.redirect_stdout(io.StringIO()):
                 main(["configure", "--theme", "shade-raid"])
                 light = (home / ".config/ghostty/colors.conf").read_bytes()
-                calls = executor.call_count
+                def refreshes():
+                    return [call for call in executor.call_args_list if call.args[0][0] != "sassc"]
+                calls = len(refreshes())
                 main(["configure", "--theme", "shade-raid"])
-                self.assertEqual(executor.call_count, calls, "Unchanged theme should not refresh applications or wallpaper")
+                self.assertEqual(len(refreshes()), calls, "Unchanged theme should not refresh applications or wallpaper")
                 main(["configure", "--theme", "shade-raid-dark"])
                 self.assertNotEqual((home / ".config/ghostty/colors.conf").read_bytes(), light)
                 main(["action", "preview", "next"])
@@ -47,14 +52,10 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                 main(["rollback"])
                 self.assertEqual((home / ".config/ghostty/colors.conf").read_bytes(), light)
                 self.assertEqual((home / ".state/shade-raid/active-theme").read_text().strip(), "shade-raid")
-                process.assert_not_called()
-            if shutil.which("sassc"):
-                for app in ("waybar", "wlogout"):
-                    directory = home / ".config" / app
-                    result = subprocess.run(["sassc", str(directory / "style.scss"), str(directory / "style.css")],
-                                            capture_output=True, text=True)
-                    self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertTrue((directory / "style.css").is_file())
+                self.assertTrue(all(call.args[0][0] == "sassc" for call in process.call_args_list))
+            for app in ("waybar", "wlogout", "swayosd"):
+                self.assertTrue((home / ".config" / app / "style.css").is_file())
+            self.assertTrue((home / ".config/walker/themes/shade-raid/style.css").is_file())
         self.assertEqual(snapshot(ROOT / "home"), before_source)
 
     def test_real_cli_apply_preview_then_rollback_restores_previous_theme(self):
@@ -64,8 +65,11 @@ class TestThemeCliRoundtrip(unittest.TestCase):
             StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(ROOT, home)
             variables = {"DOTFILES_DIR": str(ROOT), "XDG_STATE_HOME": str(home / ".state"),
                          "XDG_RUNTIME_DIR": str(home / ".runtime")}
+            real_execute = SystemCommandExecutor().execute
+            def execute(args, cwd=None):
+                return real_execute(args, cwd) if args[0] == "sassc" else CommandResult("", "", 0)
             with patch.dict(os.environ, variables), patch("pathlib.Path.home", return_value=home), \
-                    patch.object(SystemCommandExecutor, "execute", return_value=CommandResult("", "", 0)), \
+                    patch.object(SystemCommandExecutor, "execute", side_effect=execute), \
                     contextlib.redirect_stdout(io.StringIO()):
                 main(["configure", "--theme", "shade-raid"])
                 light = (home / ".config/swaync/config.json").read_bytes()

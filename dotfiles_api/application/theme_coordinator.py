@@ -4,25 +4,35 @@ from dotfiles_api.application.transaction import ConfigTransaction
 from dotfiles_api.application.preview_transaction import restore_preview, preview_projection
 from dotfiles_api.domain.artifacts import GeneratedArtifact
 from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 
 
 class ThemeCoordinator:
-    def __init__(self, env: EnvironmentContext, planner: ThemePlanner, transaction: ConfigTransaction) -> None:
+    def __init__(self, env: EnvironmentContext, planner: ThemePlanner, transaction: ConfigTransaction, styler=None) -> None:
         self.env, self.planner, self.transaction = env, planner, transaction
+        self.styler = styler
 
     def apply(self, tokens, theme_name: str, dry_run: bool = False):
         # Fail rendering/validation before creating locks or touching state.
         plan = self.planner.build(tokens, theme_name)
         if dry_run:
             plan.describe()
+            if self.styler:
+                self.styler.describe()
             print("No changes applied.")
             return plan
+        if self.styler:
+            plan = self.styler.compile(plan)
+        plan.describe()
         with RuntimeLock(self.env.lock_dir / "configure.lock"):
             if restore_preview(self.env):
                 plan = self.planner.build(tokens, theme_name)
-            plan.describe()
+                if self.styler:
+                    plan = self.styler.compile(plan)
+            if self.styler:
+                self.styler.verify_sources(plan)
             for item in plan.artifacts:
-                current = item.path.read_bytes() if item.path.exists() else None
+                current = read_regular_file(item.path)
                 link = str(item.path.readlink()) if item.path.is_symlink() else None
                 if current != item.original or link != item.original_link:
                     raise RuntimeError(f"Generated destination changed after planning: {item.path}")

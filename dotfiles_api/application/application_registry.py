@@ -57,6 +57,23 @@ class ApplicationRegistry:
                     raise ValueError(f"Duplicate application output: {output}")
                 output_ids.add(output.id)
                 paths.add((output.scope, path))
+            declared = {output.id for output in spec.outputs}
+            compiled = set()
+            for style in spec.stylesheets:
+                if (Path(style.source).is_absolute() or ".." in Path(style.source).parts
+                        or style.output not in declared or not set(style.inputs) <= declared
+                        or style.output in compiled or style.output in style.inputs):
+                    raise ValueError(f"Invalid stylesheet contract in {spec.id}: {style}")
+                mapped, targets = set(), set()
+                for artifact_id, relative in style.input_paths:
+                    path = Path(relative)
+                    if (artifact_id not in style.inputs or artifact_id in mapped or path.is_absolute()
+                            or not path.parts or ".." in path.parts or path == Path(Path(style.source).name)
+                            or path in targets):
+                        raise ValueError(f"Invalid stylesheet input mapping in {spec.id}: {artifact_id}, {relative}")
+                    mapped.add(artifact_id)
+                    targets.add(path)
+                compiled.add(style.output)
         self.package_sources()
 
     def artifact_paths(self, env, validate=True):
@@ -123,7 +140,9 @@ class ApplicationRegistry:
         return declared
 
     def validate_artifacts(self, name, artifacts):
-        expected = {output.id for output in self._by_id[name].outputs}
+        spec = self._by_id[name]
+        compiled = {style.output for style in spec.stylesheets}
+        expected = {output.id for output in spec.outputs} - compiled
         actual = [artifact.artifact_id for artifact in artifacts]
         if set(actual) != expected or len(actual) != len(expected):
             raise ValueError(f"Application {name} outputs differ: expected {sorted(expected)}, got {actual}")
