@@ -1,4 +1,6 @@
 from pathlib import Path
+from contextlib import nullcontext
+from dotfiles_api.infrastructure.login_lock import login_inputs_lock
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.contracts.linker import Linker
@@ -33,10 +35,12 @@ class DotfilesFacade:
         self._install_service.install_profile(profile)
 
     def apply_theme(self, theme_name: str):
-        return self._theme_service.apply_theme(theme_name)
+        with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+            return self._theme_service.apply_theme(theme_name)
 
     def rollback(self):
-        return self._theme_service.rollback()
+        with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+            return self._theme_service.rollback()
 
     def link(self) -> None:
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
@@ -44,9 +48,15 @@ class DotfilesFacade:
     def reload(self) -> None:
         self._reload_service.reload_all()
 
-    def setup(self, setup_github: bool, enable_ssh_server: bool = False) -> None:
+    def setup(self, setup_github: bool, enable_ssh_server: bool = False, change_shell: bool = False, theme_name: str | None = None) -> None:
         if self._setup_service:
-            self._setup_service.run_setup(setup_github, enable_ssh_server=enable_ssh_server)
+            with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+                options = {"enable_ssh_server": enable_ssh_server}
+                if change_shell:
+                    options["change_shell"] = True
+                if theme_name is not None:
+                    options["theme_name"] = theme_name
+                self._setup_service.run_setup(setup_github, **options)
 
     def apply_all(self, profile: Profile, theme_name: str) -> None:
         self.apply_profile(profile)

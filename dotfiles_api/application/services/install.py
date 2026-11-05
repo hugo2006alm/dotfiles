@@ -3,6 +3,7 @@ from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.application.registry import PackageRegistry
 from dotfiles_api.domain.contracts.package_source import PackageSource
 from dotfiles_api.domain.models.profile import Profile
+from dotfiles_api.application.installation_error import InstallationError
 
 class InstallService:
     def __init__(
@@ -29,10 +30,15 @@ class InstallService:
             
         for source_id, pkgs in grouped.items():
             if source_id not in self._sources:
-                raise RuntimeError(f"Package source '{source_id}' is not configured: {', '.join(pkgs)}")
+                raise RuntimeError(f"Source preflight failed; no installation commands attempted. Package source '{source_id}' is not configured: {', '.join(pkgs)}")
             source = self._sources[source_id]
-            if not source.is_available() and not (self._exec and self._exec.dry_run):
-                raise RuntimeError(f"Package source '{source_id}' is unavailable: {', '.join(pkgs)}")
+            if not (self._exec and self._exec.dry_run) and not source.is_available():
+                raise RuntimeError(f"Source preflight failed; no installation commands attempted. Package source '{source_id}' is unavailable: {', '.join(pkgs)}")
         # Check every source before installing any group.
+        completed = []
         for source_id, pkgs in grouped.items():
-            self._sources[source_id].install(pkgs)
+            try:
+                self._sources[source_id].install(pkgs)
+            except Exception as error:
+                raise InstallationError(tuple(completed), source_id) from error
+            completed.append((source_id, tuple(pkgs)))

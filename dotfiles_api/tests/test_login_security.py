@@ -75,35 +75,25 @@ class TestLoginSecurity(unittest.TestCase):
                 LoginSetupService(self.ctx, self.env).apply()
         self.executor.execute.assert_not_called()
 
-    def test_login_uses_private_staging_root_ownership_and_recoverable_backup(self):
+    def test_login_passes_immutable_snapshot_to_interactive_helper(self):
+        import json
         from dotfiles_api.application.services.login import LoginSetupService
 
-        source = self.home / ".config/greetd"
-        source.mkdir(parents=True)
-        for name, content in {"regreet.toml": "[GTK]\napplication_prefer_dark_theme = true\n",
-                              "regreet.css": "window {}",
-                              "hyprland-greet.conf": "exec-once = regreet"}.items():
-            (source / name).write_text(content)
-        staged_modes = []
-
-        def record(args, cwd=None):
-            if args[:2] == ["sudo", "install"] and "-T" in args:
-                staged_modes.append(Path(args[-2]).stat().st_mode & 0o777)
-            return CommandResult("", "", 0)
-
-        self.executor.execute.side_effect = record
-        with patch("sys.stdin.isatty", return_value=True):
-            backup = LoginSetupService(self.ctx, self.env).apply()
-        commands = [call.args[0] for call in self.executor.execute.call_args_list]
-        self.assertTrue(str(backup).startswith("/var/backups/shade-raid/"))
-        self.assertTrue(staged_modes)
-        self.assertEqual(set(staged_modes), {0o600})
-        for command in commands:
-            self.assertNotIn("666", command)
-            if command[:2] == ["sudo", "install"]:
-                self.assertIn("root", command)
-        self.assertTrue(any("cp -a" in " ".join(command) for command in commands))
-        self.assertFalse(any("NOPASSWD" in " ".join(command) for command in commands))
+        payload = {'version': 1, 'permissions_only': False, 'user': 'tester',
+                   'home': str(self.home), 'files': {}}
+        preflight = Mock(root=Path('/'))
+        preflight.build.side_effect = lambda **kwargs: dict(payload)
+        runner = Mock(return_value=Mock(returncode=0))
+        with patch('sys.stdin.isatty', return_value=True):
+            backup = LoginSetupService(self.ctx, self.env, preflight=preflight, run=runner,
+                                       installer_preflight=Mock()).apply()
+        args, options = runner.call_args
+        self.assertEqual(args[0][:4], ['sudo', '/usr/bin/python3', '-I', '-c'])
+        self.assertEqual(options, {})  # Keep authentication prompts on the terminal.
+        self.assertEqual(json.loads(args[0][-1])['home'], str(self.home))
+        compile(args[0][-2], '<login-helper>', 'exec')  # Parse only; never run privileged code.
+        self.assertTrue(str(backup).startswith('/var/backups/shade-raid/login-'))
+        self.executor.execute.assert_not_called()
 
 
 if __name__ == "__main__":

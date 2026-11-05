@@ -2,6 +2,7 @@ import dataclasses
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from dotfiles_api.application.application_registry import ApplicationRegistry
 from dotfiles_api.domain.models.application_spec import ApplicationSpec
@@ -37,6 +38,49 @@ class TestApplicationRegistry(unittest.TestCase):
             self.assertEqual(registry.artifact_paths(env)["custom-output"], Path(temp) / ".config/custom/result.css")
         self.assertEqual(registry.packages("desktop"), ["custom-package"])
         self.assertEqual(registry.package_sources(), {"custom-package": "yay"})
+
+    def test_install_dependencies_are_added_for_selected_optional_application(self):
+        dependency = ApplicationSpec("engine", packages=("engine",), required=False, profiles=())
+        runtime = ApplicationSpec("session", packages=("session",), required=False, profiles=())
+        app = ApplicationSpec("optional", packages=("optional",), dependencies=("engine",),
+                              runtime_dependencies=("session",), required=False, profiles=())
+        specs = (dependency, runtime, app)
+        registry = ApplicationRegistry(specs)
+        self.assertEqual([spec.id for spec in registry.installation_specs([], ["optional"])], ["engine", "optional"])
+        with patch("dotfiles_api.infrastructure.application_catalog.APPLICATIONS", specs):
+            from dotfiles_api.application.profiles.desktop import build_desktop_profile
+            profile = build_desktop_profile(optional_packages=["optional"], graphics_packages=["mesa"])
+        self.assertIn("engine", profile.get_packages())
+        self.assertIn("optional", profile.get_packages())
+        self.assertNotIn("session", profile.get_packages())
+
+    def test_rejects_conflicting_sources_unless_explicitly_overridden(self):
+        a = ApplicationSpec("a", packages=("x",))
+        b = ApplicationSpec("b", packages=("x",), package_sources=(("x", "yay"),))
+        with self.assertRaisesRegex(ValueError, "Conflicting package sources"):
+            ApplicationRegistry((a, b))
+        self.assertEqual(ApplicationRegistry((a, b), source_overrides={"x": "yay"}).package_sources(), {"x": "yay"})
+
+    def test_reload_contract_rejects_invalid_strategies(self):
+        factory = lambda *args: object()
+        cases = (ApplicationSpec("a", reload_strategy="typo"),
+                 ApplicationSpec("a", reload_factory=factory),
+                 ApplicationSpec("a", reload_strategy="application"),
+                 ApplicationSpec("a", reload_strategy="systemd-user-restart"),
+                 ApplicationSpec("a", user_unit="../../unsafe.service"))
+        for spec in cases:
+            with self.subTest(spec=spec), self.assertRaises(ValueError):
+                ApplicationRegistry((spec,))
+        ApplicationRegistry((ApplicationSpec("a", user_unit="example.service", reload_strategy="systemd-user-restart"),))
+
+    def test_uninstalled_optional_app_does_not_get_a_reload_handler(self):
+        optional = ApplicationSpec("optional", required=False, runtime_executables=("absent-app",),
+                                   reload_factory=lambda *args: "handler", reload_strategy="application")
+        registry = ApplicationRegistry((optional,))
+        with patch("dotfiles_api.application.application_registry.shutil.which", return_value=None):
+            self.assertEqual(registry.reloadables(None, None, None, None), [])
+        with patch("dotfiles_api.application.application_registry.shutil.which", return_value="/usr/bin/absent-app"):
+            self.assertEqual(registry.reloadables(None, None, None, None), ["handler"])
 
     def test_catalog_covers_actual_generator_outputs_for_both_themes(self):
         from dotfiles_api.application.loader import ThemeLoader
