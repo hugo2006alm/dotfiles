@@ -2,6 +2,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from dotfiles_api.context.execution import ExecutionContext
@@ -63,7 +64,7 @@ class TestHomeLayout(unittest.TestCase):
             home.mkdir()
             old = root / ".config/example"
             old.mkdir(parents=True)
-            (old / "static.conf").write_text("old static")
+            (old / "static.conf").write_text("new static")
             (old / "personal.conf").write_text("personal data")
             source = root / "home/.config/example"
             source.mkdir(parents=True)
@@ -100,6 +101,235 @@ class TestHomeLayout(unittest.TestCase):
             self.assertEqual((target / "static.conf").read_text(), "personal conflict")
             self.assertEqual((old / "old-command").read_text(), "personal command")
 
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_legacy_conflicting_overlap_preserved_before_unfolding(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            old = root / ".config/example"
+            old.mkdir(parents=True)
+            (old / "value").write_text("personal")
+            new = root / "home/.config/example"
+            new.mkdir(parents=True)
+            (new / "value").write_text("default")
+            (home / ".config").symlink_to(root / ".config")
+            with self.assertRaisesRegex(ValueError, "conflicts"):
+                StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            self.assertTrue((home / ".config").is_symlink())
+            self.assertEqual((home / ".config/example/value").read_text(), "personal")
+            self.assertFalse((home / ".shade-raid-backups").exists())
+
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_unfold_preserves_private_modes_and_relative_link_target(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            old = root / ".config/private"
+            old.mkdir(parents=True)
+            (root / ".config").chmod(0o700)
+            old.chmod(0o700)
+            external = root / "outside"
+            external.write_text("secret")
+            (old / "link").symlink_to("../../outside")
+            (root / "home/.config/private").mkdir(parents=True)
+            (home / ".config").symlink_to(root / ".config")
+            StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            self.assertEqual((home / ".config").stat().st_mode & 0o777, 0o700)
+            self.assertEqual((home / ".config/private").stat().st_mode & 0o777, 0o700)
+            self.assertEqual((home / ".config/private/link").resolve(), external)
+            self.assertEqual((home / ".config/private/link").read_text(), "secret")
+
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_seeds_are_personal_files_and_never_replace_existing_values(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            (root / "home/.config/app").mkdir(parents=True)
+            seed = root / "seeds/.config/app/preferences"
+            seed.parent.mkdir(parents=True)
+            seed.write_text("default")
+            linker = StowLinker(ExecutionContext(False, SystemCommandExecutor()))
+            linker.link(root, home)
+            installed = home / ".config/app/preferences"
+            self.assertFalse(installed.is_symlink())
+            installed.write_text("personal")
+            linker.link(root, home)
+            self.assertEqual(installed.read_text(), "personal")
+            self.assertEqual(seed.read_text(), "default")
+
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_existing_mutable_repo_link_becomes_independent_personal_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            (home / ".config").mkdir(parents=True)
+            (root / "home/.config").mkdir(parents=True)
+            old = root / ".config/mimeapps.list"
+            old.parent.mkdir(parents=True)
+            old.write_text("personal")
+            seed = root / "seeds/.config/mimeapps.list"
+            seed.parent.mkdir(parents=True)
+            seed.write_text("default")
+            (home / ".config/mimeapps.list").symlink_to(old)
+            StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            installed = home / ".config/mimeapps.list"
+            self.assertFalse(installed.is_symlink())
+            self.assertEqual(installed.read_text(), "personal")
+            installed.write_text("new personal")
+            self.assertEqual(old.read_text(), "personal")
+
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_interrupted_seed_copy_leaves_no_partial_personal_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            (root / "home/.config").mkdir(parents=True)
+            seed = root / "seeds/.config/preferences"
+            seed.parent.mkdir(parents=True)
+            seed.write_text("default")
+            def fail(source, out):
+                out.write(b"partial")
+                raise OSError("disk full")
+            with patch("dotfiles_api.infrastructure.linker.shutil.copyfileobj", fail):
+                with self.assertRaisesRegex(OSError, "disk full"):
+                    StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            self.assertFalse((home / ".config/preferences").exists())
+            self.assertEqual(list((home / ".config").glob(".shade-raid-seed-*")), [])
+
+    def test_failure_retains_data_written_during_unfolding(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            (root / ".local").mkdir(parents=True)
+            (root / ".local/old").write_text("old")
+            (root / "home/.local").mkdir(parents=True)
+            (home / ".local").symlink_to(root / ".local")
+            class FailAfterWrite:
+                dry_run = False
+                def execute(self, *args, **kwargs):
+                    (home / ".local/new-data").write_text("must survive")
+                    raise RuntimeError("stow failed")
+            with self.assertRaisesRegex(RuntimeError, "stow failed"):
+                StowLinker(FailAfterWrite()).link(root, home)
+            self.assertTrue((home / ".local").is_symlink())
+            saved = list(home.glob(".shade-raid-backups/stow-*/failed-contents/.local/new-data"))
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0].read_text(), "must survive")
+
+    def test_setup_checks_legacy_conflict_before_package_install(self):
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.context.environment import EnvironmentContext
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / 'repo', Path(temp) / 'user'
+            (root / 'home/.config/app').mkdir(parents=True)
+            (root / 'home/.config/app/settings').write_text('new defaults')
+            (root / '.config/app').mkdir(parents=True)
+            (root / '.config/app/settings').write_text('personal settings')
+            home.mkdir()
+            (home / '.config').symlink_to(root / '.config')
+            executor, installer = Mock(), Mock()
+            env = EnvironmentContext(home, root, 'tester')
+            linker = StowLinker(ExecutionContext(False, executor))
+            setup = SetupService(env, ExecutionContext(False, executor), installer, linker,
+                                 Mock(), Mock(), Mock(), Mock(), graphics_package_detector=lambda: [])
+            with patch('os.geteuid', return_value=1000), patch('sys.stdin.isatty', return_value=False):
+                with self.assertRaisesRegex(ValueError, 'conflicts'):
+                    setup.run_setup()
+            installer.install_profile.assert_not_called()
+            self.assertTrue((home / '.config').is_symlink())
+            self.assertEqual((home / '.config/app/settings').read_text(), 'personal settings')
+
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_cli_link_can_unfold_legacy_local_before_registry_output_validation(self):
+        import os
+        from dotfiles_api.presentation.cli import main
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('preserve me')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            with patch.dict(os.environ, {'DOTFILES_DIR': str(repo)}, clear=True), \
+                    patch('pathlib.Path.home', return_value=home):
+                main(['link'])
+            self.assertFalse((home / '.local').is_symlink())
+            self.assertEqual((home / '.local/personal').read_text(), 'preserve me')
+            self.assertEqual((legacy / 'personal').read_text(), 'preserve me')
+
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_setup_unfolds_legacy_local_before_recording_install_state(self):
+        import os
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.services.install import InstallService
+        from dotfiles_api.application.registry import PackageRegistry
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.domain.models.profile import Profile
+        from dotfiles_api.domain.models.feature import Feature
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('keep')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            env = EnvironmentContext(home, repo, 'tester')
+            package_source = Mock()
+            package_source.is_available.return_value = package_source.contains.return_value = True
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {'pacman': package_source}, inventory=lambda: set())
+            resolver = Mock()
+            resolver.resolve.return_value = Profile('test', [Feature('test', ['fakepkg'], [])])
+            linker = StowLinker(ExecutionContext(False, SystemCommandExecutor()))
+            theme = Mock()
+            theme.get_active_theme.return_value = 'shade-raid'
+            setup = SetupService(env, ExecutionContext(False, Mock()), install, linker, theme,
+                                 Mock(), Mock(), Mock(), profile_resolver=resolver)
+            with patch('os.geteuid', return_value=1000):
+                setup.run_setup()
+            self.assertFalse((home / '.local').is_symlink())
+            self.assertEqual((home / '.local/personal').read_text(), 'keep')
+            self.assertTrue((home / '.local/state/shade-raid/installation.json').is_file())
+            self.assertFalse((legacy / 'state/shade-raid/installation.json').exists())
+
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_failed_legacy_setup_restores_fold_and_retains_status_backup(self):
+        import json
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.services.install import InstallService
+        from dotfiles_api.application.registry import PackageRegistry
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.domain.models.profile import Profile
+        from dotfiles_api.domain.models.feature import Feature
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('keep')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            env = EnvironmentContext(home, repo, 'tester')
+            package_source = Mock()
+            package_source.is_available.return_value = package_source.contains.return_value = True
+            package_source.install.side_effect = KeyboardInterrupt()
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {'pacman': package_source}, inventory=lambda: set())
+            resolver = Mock()
+            resolver.resolve.return_value = Profile('test', [Feature('test', ['fakepkg'], [])])
+            setup = SetupService(env, ExecutionContext(False, Mock()), install,
+                StowLinker(ExecutionContext(False, SystemCommandExecutor())), Mock(), Mock(), Mock(), Mock(), profile_resolver=resolver)
+            with patch('os.geteuid', return_value=1000), self.assertRaises(KeyboardInterrupt):
+                setup.run_setup()
+            self.assertTrue((home / '.local').is_symlink())
+            self.assertEqual((legacy / 'personal').read_text(), 'keep')
+            self.assertFalse((legacy / 'state/shade-raid/installation.json').exists())
+            saved = list((home / '.shade-raid-backups').glob('*/failed-contents/.local/state/shade-raid/installation.json'))
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(json.loads(saved[0].read_text())['package_status'], 'failed_or_partial')
+
     def test_theme_output_paths_never_target_repository(self):
         source = (ROOT / "dotfiles_api/presentation/cli.py").read_text()
         self.assertFalse('env.dotfiles_dir / "plymouth-shade-raid"' in source,
@@ -116,11 +346,12 @@ class TestHomeLayout(unittest.TestCase):
             (home / ".local").symlink_to(root / ".local")
             env = EnvironmentContext(home, root, "tester")
             executor = Mock()
+            from dotfiles_api.domain.contracts import CommandResult
+            executor.execute.return_value = CommandResult("", "", 0)
             context = ExecutionContext(False, executor, log_path=env.state_dir / "commands.jsonl",
                                        output_guard=env.validate_output_path)
-            with self.assertRaisesRegex(ValueError, "repository"):
-                context.execute(["notify-send", "example"])
-            executor.execute.assert_not_called()
+            context.execute(["notify-send", "example"])
+            executor.execute.assert_called_once()
             self.assertFalse((root / ".local/state").exists())
 
     def test_failed_migration_retains_new_diagnostics_before_restoring_fold(self):

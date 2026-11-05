@@ -7,6 +7,18 @@ local style = dofile(os.getenv("HOME") .. "/.config/hypr/style.lua")
 
 -- Environment variables
 hl.env("PATH", os.getenv("PATH") .. ":" .. os.getenv("HOME") .. "/.local/bin")
+-- Keep an available external agent. Otherwise export the systemd-owned socket
+-- before applications inherit the compositor environment.
+local function ssh_agent_available()
+    local socket = os.getenv("SSH_AUTH_SOCK")
+    if not socket or socket == "" then return false end
+    local ok, reason, code = os.execute("ssh-add -l >/dev/null 2>&1")
+    return ok == true or ok == 0 or ok == 256 or (reason == "exit" and code == 1)
+end
+local runtime = os.getenv("XDG_RUNTIME_DIR")
+if not ssh_agent_available() and runtime and runtime:sub(1, 1) == "/" then
+    hl.env("SSH_AUTH_SOCK", runtime .. "/shade-raid-ssh/agent.socket")
+end
 hl.env("XCURSOR_THEME", style.cursor_theme)
 hl.env("XCURSOR_SIZE", tostring(style.cursor_size))
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")

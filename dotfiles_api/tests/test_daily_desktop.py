@@ -43,14 +43,15 @@ class TestDailyDesktop(unittest.TestCase):
             executor = MockCommandExecutor()
             with patch("shutil.which", return_value=installed):
                 ControlAction(ExecutionContext(False, executor), "volume", "up").execute([])
-            self.assertEqual(len(executor.commands), 1)
-            self.assertEqual(executor.commands[0].split()[0], "swayosd-client" if installed else "wpctl")
+            mutations = [command for command in executor.commands if not command.startswith("systemctl ")]
+            self.assertEqual(len(mutations), 1)
+            self.assertEqual(mutations[0].split()[0], "swayosd-client" if installed else "wpctl")
 
     def test_browser_uses_installed_fallback_and_chatgpt_passes_one_url(self):
-        executor = MockCommandExecutor()
+        execution = Mock(dry_run=False)
         with patch("shutil.which", side_effect=lambda app: "/usr/bin/firefox" if app == "firefox" else None):
-            BrowserAction(ExecutionContext(False, executor), chatgpt=True).execute([])
-        self.assertEqual(executor.commands, ["firefox https://chatgpt.com/"])
+            BrowserAction(execution, chatgpt=True).execute([])
+        execution.spawn.assert_called_once_with(["firefox", "https://chatgpt.com/"], step="launch:browser", sensitive=True)
 
     def test_missing_optional_application_reports_requirement(self):
         from dotfiles_api.infrastructure.actions.launch import LaunchAction
@@ -68,17 +69,6 @@ class TestDailyDesktop(unittest.TestCase):
             ScreenshotAction(ExecutionContext(False, executor)).execute(["--region"])
             self.assertEqual(list(Path(temp).iterdir()), [])
 
-    def test_screenshot_filename_is_passed_as_a_separate_shell_argument(self):
-        from dotfiles_api.infrastructure.actions.screenshot import ScreenshotAction
-        executor = Mock()
-        with tempfile.TemporaryDirectory(prefix="pictures with spaces ") as temp:
-            executor.execute.return_value = CommandResult(temp, "", 0)
-            ScreenshotAction(ExecutionContext(False, executor)).execute([])
-            commands = [call.args[0] for call in executor.execute.call_args_list]
-            copy = next(command for command in commands if command[0] == "sh")
-            self.assertEqual(copy[2], 'wl-copy --type image/png < "$1"')
-            self.assertTrue(copy[-1].startswith(temp))
-
     def test_browser_notifications_are_visible_and_ssh_agent_is_not_per_shell(self):
         from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
         from dotfiles_api.application.loader import ThemeLoader
@@ -95,15 +85,14 @@ class TestDailyDesktop(unittest.TestCase):
         from dotfiles_api.infrastructure.actions.clipboard import ClipboardAction
         from dotfiles_api.context.environment import EnvironmentContext
         executor = MockCommandExecutor()
-        executor.mock_results = {"wl-paste": ("sensitive clipboard text", "", 0)}
+        executor.mock_results = {"wl-paste --list-types": ("text/plain", "", 0), "wl-paste --type": ("sensitive clipboard text", "", 0)}
         with tempfile.TemporaryDirectory() as temp, patch("shutil.which", return_value="/usr/bin/tool"):
             env = EnvironmentContext(Path(temp), ROOT, "tester")
             with contextlib.redirect_stdout(io.StringIO()):
                 ClipboardAction(ExecutionContext(True, executor), env, edit=True).execute([])
             self.assertEqual(list(Path(temp).iterdir()), [])
             ClipboardAction(ExecutionContext(False, executor), env, edit=True).execute([])
-            content = next(env.runtime_dir.glob("clipboard-*.txt"))
-            self.assertEqual(content.stat().st_mode & 0o777, 0o600)
+            self.assertFalse(env.runtime_dir.exists())
             self.assertNotIn("sensitive clipboard text", "\n".join(executor.commands))
 
     def test_recorder_never_signals_an_unrelated_pid(self):
@@ -118,7 +107,7 @@ class TestDailyDesktop(unittest.TestCase):
             with patch.object(action, "_identity", return_value="different"), \
                     patch("subprocess.Popen") as process:
                 process.return_value.wait.return_value = 1
-                with self.assertRaisesRegex(RuntimeError, "Recorder exited"):
+                with self.assertRaisesRegex(RuntimeError, "Previous recorder is no longer active"):
                     action.execute([])
             self.assertFalse(any(command.startswith("kill ") for command in executor.commands))
             self.assertFalse(action._pid_file.exists())
@@ -130,7 +119,7 @@ class TestDailyDesktop(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             env = EnvironmentContext(Path(temp), ROOT, "tester")
             action = RecorderAction(ExecutionContext(False, MockCommandExecutor()), env)
-            with patch("subprocess.Popen") as process, patch.object(action, "_identity", return_value="owned"), \
+            with patch("subprocess.Popen") as process, patch.object(action, "_identity", return_value="owned"), patch.object(action, "_wait_ready"), \
                     patch("dotfiles_api.infrastructure.actions.recorder.SystemFileWriter.write", side_effect=OSError("disk full")):
                 process.return_value.pid = 12345
                 process.return_value.wait.side_effect = subprocess.TimeoutExpired("wf-recorder", 0.2)

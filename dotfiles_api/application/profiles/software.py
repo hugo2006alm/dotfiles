@@ -38,13 +38,16 @@ class SoftwareProfileResolver:
                 visit(dependency)
             visiting.remove(name)
             ordered.append(name)
-        for name in names or ["desktop"]:
+        requested = ["desktop"] if names is None else list(names)
+        for name in requested:
             visit(name)
-        features = [Feature(spec.id, list(spec.packages), list(spec.capabilities))
-                    for spec in self.applications if set(spec.profiles) & set(ordered)]
+        from dotfiles_api.application.application_registry import ApplicationRegistry
+        registry = ApplicationRegistry(self.applications)
+        specs = registry.installation_specs(ordered, optional_packages or (), include_profile_optional=True)
+        features = [Feature(spec.id, list(spec.packages), list(spec.capabilities)) for spec in specs]
         if "desktop" in ordered and graphics_packages:
             features.append(Feature("graphics", list(graphics_packages), ["graphics"]))
         selected = tuple(dict.fromkeys(optional_packages or []))
         if selected:
             features.append(Feature("optional", list(selected), []))
-        return Profile("+".join(names or ["desktop"]), features, tuple(ordered), selected)
+        return Profile("+".join(requested), features, tuple(ordered), selected, tuple(dict.fromkeys(requested)))

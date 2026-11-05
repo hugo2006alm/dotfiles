@@ -15,4 +15,4 @@ class LaunchAction(Action):
             requirement = ", ".join(spec.packages)
             self.execution.optional(["notify-send", "Application unavailable", f"{spec.id}: install {requirement}"])
             raise RuntimeError(f"{spec.id} requires {requirement}")
-        self.execution.execute([*spec.launch, *args[1:]], step=f"launch:{spec.id}")
+        self.execution.spawn([*spec.launch, *args[1:]], step=f"launch:{spec.id}", sensitive=True)

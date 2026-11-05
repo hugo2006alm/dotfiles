@@ -9,8 +9,15 @@ if status is-login
 end
 
 # ── SSH Agent ─────────────────────────────────────────
-if test -z "$SSH_AUTH_SOCK"
-    if test -n "$XDG_RUNTIME_DIR"
+set -l ssh_agent_status 2
+if test -n "$SSH_AUTH_SOCK"
+    command ssh-add -l >/dev/null 2>&1
+    set ssh_agent_status $status
+end
+# ssh-add returns 1 for a working agent with no identities.
+if test "$ssh_agent_status" -ne 0; and test "$ssh_agent_status" -ne 1
+    set -e SSH_AUTH_SOCK
+    if string match -q '/*' -- "$XDG_RUNTIME_DIR"
         set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/shade-raid-ssh/agent.socket"
     end
 end

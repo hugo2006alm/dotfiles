@@ -1,4 +1,5 @@
 import os
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
@@ -38,8 +39,18 @@ class ScreenshotAction(Action):
             if not self._exec.dry_run:
                 file_path.unlink(missing_ok=True)
             raise
-        self._exec.execute(["sh", "-c", 'wl-copy --type image/png < "$1"', "shade-raid-screenshot", str(file_path)],
-                           step="screenshot:clipboard")
+        if self._exec.dry_run:
+            print("[DRY-RUN] Would copy screenshot to clipboard")
+            return
+        try:
+            with file_path.open("rb") as image:
+                result = subprocess.run(["wl-copy", "--type", "image/png"], stdin=image,
+                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                        check=False, timeout=15)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise RuntimeError("Screenshot saved, but clipboard copy failed") from error
+        if result.returncode:
+            raise RuntimeError(f"Screenshot saved, but clipboard copy failed ({result.returncode})")
         self._exec.optional([
             "notify-send",
             "-i", str(file_path),

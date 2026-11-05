@@ -30,6 +30,14 @@ class TestSoftwareProfiles(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unknown profile"):
             resolver.resolve(["typo"])
 
+    def test_composed_profiles_include_application_install_dependencies(self):
+        from dotfiles_api.domain.models.application_spec import ApplicationSpec
+        from dotfiles_api.domain.models.profile_spec import ProfileSpec
+        dependency = ApplicationSpec('dependency', packages=('dependency-pkg',), profiles=())
+        consumer = ApplicationSpec('consumer', packages=('consumer-pkg',), profiles=('core',), dependencies=('dependency',))
+        profile = SoftwareProfileResolver(applications=(consumer, dependency), profiles=(ProfileSpec('core'),)).resolve(['core'])
+        self.assertEqual(profile.get_packages(), ['dependency-pkg', 'consumer-pkg'])
+
     def test_install_is_incremental_and_persists_successful_selections(self):
         with tempfile.TemporaryDirectory() as temp:
             env = EnvironmentContext(Path(temp), Path(temp) / "repo", "tester")
@@ -94,6 +102,7 @@ class TestSoftwareProfiles(unittest.TestCase):
         from dotfiles_api.infrastructure.package_inventory import PackageInventory
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
+            (root / "ALPM_DB_VERSION").write_text("9\n")
             (root / "git-1-1").mkdir()
             (root / "git-1-1/desc").write_text("%NAME%\ngit\n\n%VERSION%\n1-1\n")
             self.assertEqual(PackageInventory(root).names(), {"git"})
@@ -109,7 +118,7 @@ class TestSoftwareProfiles(unittest.TestCase):
             source.is_available.return_value = source.contains.return_value = True
             source.install.side_effect = RuntimeError("installation interrupted")
             service = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {"pacman": source}, inventory=lambda: set())
-            with self.assertRaisesRegex(RuntimeError, "interrupted"), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError, "Installation failed"), contextlib.redirect_stdout(io.StringIO()):
                 service.install_profile(Profile("test", [Feature("test", ["uv"], [])]))
             self.assertEqual(state.read_text(), previous)
 
@@ -132,5 +141,6 @@ class TestSoftwareProfiles(unittest.TestCase):
         service = SetupService(env, ExecutionContext(True, Mock()), install, Mock(), Mock(), Mock(), Mock(), Mock(),
                                profile_resolver=DesktopProfileResolver(lambda: []), selected_profiles=["core"])
         with self.assertRaisesRegex(ValueError, "install --profile"):
-            service.run_setup()
+            with patch("os.geteuid", return_value=1000):
+                service.run_setup()
         install.install_profile.assert_not_called()

@@ -11,10 +11,11 @@ class MediaAction(Action):
         if self.execution.dry_run:
             print(f"[DRY-RUN] Would select the playing MPRIS player and {self.command}")
             return
-        players = self.execution.query(["playerctl", "-l"], step="media:list").stdout.splitlines()
+        listing = self.execution.optional(["playerctl", "-l"], step="media:list")
+        players = listing.stdout.splitlines() if listing.returncode == 0 else []
         candidates = []
         for player in players:
-            status = self.execution.query(["playerctl", "--player", player, "status"], step="media:status")
+            status = self.execution.optional(["playerctl", "--player", player, "status"], step="media:status")
             if status.returncode == 0:
                 candidates.append((status.stdout.strip() != "Playing", player))
         if not candidates:

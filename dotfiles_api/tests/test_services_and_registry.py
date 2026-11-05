@@ -147,7 +147,8 @@ class TestInstallService(unittest.TestCase):
             env=None,
             exec_ctx=None,
             registry=registry,
-            sources=sources
+            sources=sources,
+            inventory=lambda: set()
         )
 
         f1 = Feature(name="launcher", packages=["walker"], capabilities=[])
@@ -204,9 +205,7 @@ class TestReloadService(unittest.TestCase):
         reload_svc = self.service(reloadables=[r1, r2])
 
         # Act
-        threads = reload_svc.reload_all()
-        for t in threads:
-            t.join()
+        self.assertIsNone(reload_svc.reload_all())
 
         # Assert
         self.assertTrue(r1.reloaded)
@@ -218,9 +217,7 @@ class TestReloadService(unittest.TestCase):
         reload_svc = self.service(reloadables=[r])
 
         # Act
-        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
-        for t in threads:
-            t.join()
+        self.assertIsNone(reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar")))
 
         # Assert
         self.assertTrue(r.reloaded)
@@ -233,9 +230,7 @@ class TestReloadService(unittest.TestCase):
         reload_svc = self.service(reloadables=[r_waybar, r_swaync, r_portal])
 
         # Act
-        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
-        for t in threads:
-            t.join()
+        self.assertIsNone(reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar")))
 
         # Assert
         self.assertTrue(r_waybar.reloaded)
@@ -247,17 +242,13 @@ class TestReloadService(unittest.TestCase):
         r = MockEventReloadable("waybar")
         reload_svc = self.service(reloadables=[r], verbose=True)
         
-        threads = reload_svc.reload_all()
-        for t in threads:
-            t.join()
+        self.assertIsNone(reload_svc.reload_all())
             
-        threads = reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar"))
-        for t in threads:
-            t.join()
+        self.assertIsNone(reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar")))
             
         # Assert printing was called
-        mock_print.assert_any_call("[VERBOSE] Reloading all 1 reloadables in parallel threads")
-        mock_print.assert_any_call("[VERBOSE] Spawning reload thread for: MockEventReloadable")
+        mock_print.assert_any_call("[VERBOSE] Reloading all 1 reloadables synchronously")
+        mock_print.assert_any_call("[VERBOSE] Reloading: MockEventReloadable")
 
 
 class TestInfrastructureImplementations(unittest.TestCase):

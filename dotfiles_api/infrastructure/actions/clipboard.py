@@ -1,7 +1,6 @@
+import os
 import shutil
-from uuid import uuid4
 from dotfiles_api.domain.contracts.action import Action
-from dotfiles_api.infrastructure.file_writer import SystemFileWriter
 
 
 class ClipboardAction(Action):
@@ -19,16 +18,32 @@ class ClipboardAction(Action):
         if missing:
             raise RuntimeError("Clipboard requires: " + ", ".join(missing))
         if not self.edit:
-            self.execution.execute(["walker", "--provider", "clipboard"], step="clipboard:history")
+            self.execution.spawn(["walker", "--provider", "clipboard"], step="clipboard:history", sensitive=True)
             return
-        content = self.execution.execute(["wl-paste", "--no-newline"], step="clipboard:read").stdout
-        path = self.env.runtime_dir / f"clipboard-{uuid4().hex}.txt"
-        self.env.validate_output_path(path)
-        SystemFileWriter().write(path, content)
-        script = 'trap \'rm -f -- "$1"\' EXIT; nvim -- "$1" && wl-copy < "$1"'
+        mime_types = self.execution.execute(["wl-paste", "--list-types"], step="clipboard:types", sensitive=True).stdout.splitlines()
+        plain_text = next((mime.strip() for mime in mime_types if mime.strip().lower().split(";", 1)[0] == "text/plain"), None)
+        if not plain_text:
+            raise ValueError("Clipboard does not offer plain text")
+        content = self.execution.execute(["wl-paste", "--type", plain_text, "--no-newline"],
+                                         step="clipboard:read", sensitive=True).stdout
+        if not content:
+            raise ValueError("Clipboard is empty")
+        # Keep clipboard text in anonymous memory. No on-disk temp, swap or backup.
+        if not hasattr(os, "memfd_create"):
+            raise RuntimeError("Clipboard editor requires Linux anonymous memory support")
+        fd = os.memfd_create("shade-raid-clipboard", flags=os.MFD_CLOEXEC)
         try:
-            self.execution.execute(["ghostty", "-e", "sh", "-c", script, "shade-raid-clipboard", str(path)],
-                                   step="clipboard:edit")
-        except BaseException:
-            path.unlink(missing_ok=True)
-            raise
+            os.fchmod(fd, 0o600)
+            data = content.encode("utf-8")
+            while data:
+                count = os.write(fd, data)
+                if count <= 0:
+                    raise OSError("Unable to prepare clipboard buffer")
+                data = data[count:]
+            path = f"/proc/{os.getpid()}/fd/{fd}"
+            script = ('nvim -u NONE -i NONE -n --noplugin --cmd "set noswapfile nobackup nowritebackup noundofile backupcopy=yes" '
+                      '-- "$1" && wl-copy < "$1"')
+            self.execution.execute(["ghostty", "-e", "sh", "-c", script, "shade-raid-clipboard", path],
+                                   step="clipboard:edit", sensitive=True)
+        finally:
+            os.close(fd)
