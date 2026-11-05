@@ -1,6 +1,7 @@
 import tomllib
 from pathlib import Path
 from dotfiles_api.context.environment import EnvironmentContext
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 from dotfiles_api.domain.tokens.color_tokens import ColorTokens
 from dotfiles_api.domain.tokens.metric_tokens import MetricTokens
 from dotfiles_api.domain.tokens.typography_tokens import TypographyTokens
@@ -19,8 +20,7 @@ class ThemeLoader:
         if not theme_path.exists():
             raise FileNotFoundError(f"Theme file '{theme_path}' does not exist.")
             
-        with open(theme_path, "rb") as f:
-            colors_data = tomllib.load(f)
+        colors_data = tomllib.loads(read_regular_file(theme_path).decode("utf-8"))
             
         style_path = self._env.home_dir / ".config" / "themes" / "style.toml"
         if not style_path.exists():
@@ -29,8 +29,7 @@ class ThemeLoader:
         typography_data = {}
         
         if style_path.exists():
-            with open(style_path, "rb") as f:
-                style_data = tomllib.load(f)
+            style_data = tomllib.loads(read_regular_file(style_path).decode("utf-8"))
             for k, v in style_data.items():
                 if k.startswith("font_"):
                     typography_data[k] = v

@@ -161,6 +161,98 @@ finally:
             self.assertTrue(any(item.severity == "unknown" and "a-broken" in item.id for item in findings))
             self.assertTrue(any(item.severity == "error" and "z-valid" in item.id for item in findings))
 
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_doctor_special_input_files_never_block_and_report_error(self):
+        import subprocess, sys
+        script = '''
+import os
+from unittest.mock import patch
+from dotfiles_api.tests.test_doctor_and_repair import TestDoctorAndRepair
+for relative in (".local/state/shade-raid/installation.json", ".local/state/shade-raid/active-theme", ".config/themes/shade-raid/colors.toml", ".config/themes/style.toml"):
+    case = TestDoctorAndRepair(); case.setUp()
+    try:
+        path = case.env.home_dir / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        os.mkfifo(path)
+        with patch.dict(os.environ, {}, clear=True):
+            report = case.doctor.run()
+        assert any(item.severity == "error" for item in report.findings), relative
+    finally:
+        case.doCleanups()
+'''
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_active_portal_is_unknown_without_backend_and_interface_checks(self):
+        with patch.dict(os.environ, {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland"}):
+            report = self.doctor.run()
+        finding = next(item for item in report.findings if item.id == "service:xdg-desktop-portal.service")
+        self.assertEqual(finding.severity, "unknown")
+        self.assertIn("backend", finding.message.lower())
+
+    def test_clean_tracked_files_claim_does_not_claim_untracked_are_clean(self):
+        self.doctor.query = Mock(return_value=CommandResult("", "", 0))
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        finding = next(item for item in report.findings if item.id == "git")
+        self.assertIn("tracked", finding.message.lower())
+
+    def test_private_state_audit_finds_symlinks_and_public_modes(self):
+        state = self.env.state_dir
+        state.mkdir(parents=True)
+        state.chmod(0o755)
+        backup = state / "transactions/one/backups"
+        backup.mkdir(parents=True, mode=0o700)
+        secret = backup / "0"
+        secret.write_text("private")
+        secret.chmod(0o644)
+        (state / "preview-theme").symlink_to("missing")
+        findings = []
+        self.doctor._permissions(findings)
+        messages = "\n".join(item.message for item in findings)
+        self.assertIn(str(state), messages)
+        self.assertIn(str(secret), messages)
+        self.assertIn(str(state / "preview-theme"), messages)
+
+    def test_login_audit_flags_broken_symlink_and_insecure_background(self):
+        self.doctor.login_dir.mkdir(parents=True)
+        broken = self.doctor.login_dir / "config.toml"
+        broken.symlink_to("gone")
+        background = self.doctor.login_dir / "regreet-background.jpg"
+        background.write_bytes(b"fake")
+        background.chmod(0o666)
+        findings = []
+        self.doctor._permissions(findings)
+        self.assertTrue(any(item.id == "login:config.toml" and item.severity == "error" for item in findings))
+        self.assertTrue(any(item.id == "login:regreet-background.jpg" and item.severity == "error" for item in findings))
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_real_doctor_json_reports_fifo_with_matching_exit_status(self):
+        import json, subprocess, sys
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            state = home / ".local/state/shade-raid"
+            state.mkdir(parents=True)
+            os.mkfifo(state / "installation.json")
+            env = {**os.environ, "HOME": temp, "DOTFILES_DIR": str(ROOT),
+                   "XDG_STATE_HOME": str(home / ".local/state"), "XDG_RUNTIME_DIR": str(home / ".runtime")}
+            env.pop("WAYLAND_DISPLAY", None)
+            result = subprocess.run([sys.executable, "-m", "dotfiles_api.presentation.cli", "doctor", "--json"],
+                                    env=env, capture_output=True, text=True, timeout=15)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["exit_code"], 1)
+            self.assertEqual(result.returncode, report["exit_code"])
+            self.assertTrue(any(item["id"] == "selection" and item["severity"] == "error" for item in report["findings"]))
+
+    def test_query_io_failure_becomes_unknown_without_aborting_json_report(self):
+        self.doctor.query = Mock(side_effect=OSError("not available"))
+        with patch.dict(os.environ, {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland"}):
+            report = self.doctor.run()
+        by_id = {item.id: item for item in report.findings}
+        self.assertEqual(by_id["service:shade-raid-ghostty.service"].severity, "unknown")
+        self.assertEqual(by_id["git"].severity, "unknown")
+        self.assertEqual(report.to_dict()["version"], 1)
+
     def test_repair_rechecks_next_operation_after_prior_action(self):
         from dotfiles_api.domain.models.diagnostic import Diagnostic
         from dotfiles_api.domain.models.diagnostic_report import DiagnosticReport

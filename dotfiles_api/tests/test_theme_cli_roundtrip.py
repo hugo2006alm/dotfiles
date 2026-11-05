@@ -57,7 +57,9 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                     main(["repair", "--plan"])
                 self.assertEqual(snapshot(home), before_diagnosis)
                 plan_id = re.search(r"REPAIR PLAN ([0-9a-f]{64})", diagnosis.getvalue()).group(1)
-                main(["repair", "--apply", "--plan-id", plan_id])
+                with patch("dotfiles_api.infrastructure.actions.wallpaper.WallpaperAction.execute") as wallpaper:
+                    main(["repair", "--apply", "--plan-id", plan_id])
+                wallpaper.assert_not_called()
                 self.assertEqual(css.read_bytes(), expected_css)
                 self.assertTrue(all(call.args[0][0] == "sassc" for call in process.call_args_list))
             for app in ("waybar", "wlogout", "swayosd"):

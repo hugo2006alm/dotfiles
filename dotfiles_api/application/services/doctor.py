@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path
 
 from dotfiles_api.application.loader import ThemeLoader
@@ -27,15 +28,18 @@ class DoctorService:
                                    "Wayland session detected" if wayland else "Outside Wayland: live service checks deferred"))
         selected, optional, desired = ["desktop"], [], None
         selection = self.env.state_dir / "installation.json"
-        if selection.exists():
-            try:
-                data = json.loads(selection.read_text())
+        try:
+            raw_selection = read_regular_file(selection)
+            if raw_selection is None:
+                findings.append(Diagnostic("selection", "unknown", "No saved installation selection; setup status is unknown"))
+            else:
+                data = json.loads(raw_selection)
                 for key in ("profiles", "packages", "optional_packages"):
                     if not isinstance(data.get(key, []), list) or not all(isinstance(value, str) for value in data.get(key, [])):
                         raise ValueError(f"invalid {key}")
                 selected, optional, desired = data.get("profiles") or selected, data.get("optional_packages", []), data.get("packages", [])
-            except (OSError, ValueError, AttributeError) as error:
-                findings.append(Diagnostic("selection", "error", f"Invalid saved installation selection: {error}"))
+        except (OSError, ValueError, AttributeError) as error:
+            findings.append(Diagnostic("selection", "error", f"Invalid saved installation selection: {error}"))
         try:
             profile = SoftwareProfileResolver(self.applications.specs).resolve(selected)
         except ValueError as error:
@@ -71,11 +75,17 @@ class DoctorService:
             units = [spec.user_unit for spec in active_specs if spec.user_unit
                      and not (spec.id == "ssh-agent" and external_agent and not external_agent.endswith("/shade-raid-ssh/agent.socket"))]
             for unit in [*units, "xdg-desktop-portal.service"]:
-                result = self.query(["systemctl", "--user", "is-active", unit])
+                try:
+                    result = self.query(["systemctl", "--user", "is-active", unit])
+                except OSError as error:
+                    findings.append(Diagnostic("service:" + unit, "unknown", f"Cannot inspect {unit}: {error}"))
+                    continue
                 active = result.returncode == 0 and result.stdout.strip() == "active"
                 unknown = result.returncode not in {0, 1, 3}
-                findings.append(Diagnostic("service:" + unit, "unknown" if unknown else "ok" if active else "error",
-                    f"{unit}: {result.stdout.strip() or result.stderr.strip() or 'status unavailable'}",
+                portal_unverified = active and unit == "xdg-desktop-portal.service"
+                findings.append(Diagnostic("service:" + unit, "unknown" if unknown or portal_unverified else "ok" if active else "error",
+                    (f"{unit}: frontend active; backend and interface health not verified" if portal_unverified else
+                     f"{unit}: {result.stdout.strip() or result.stderr.strip() or 'status unavailable'}"),
                     () if active or unknown else ("portal",) if unit.startswith("xdg-desktop-portal") else ("session",),
                     evidence=str(result.returncode)))
         elif dry_run:
@@ -83,12 +93,16 @@ class DoctorService:
         if dry_run:
             findings.append(Diagnostic("git", "unknown", "Git query deferred in dry-run"))
         else:
-            result = self.query(["git", "--no-optional-locks", "-c", "core.fsmonitor=false", "-C", str(self.env.dotfiles_dir),
-                                 "status", "--porcelain", "--untracked-files=no"])
-            severity = "unknown" if result.returncode else "warning" if result.stdout.strip() else "ok"
-            findings.append(Diagnostic("git", severity, "Git status unavailable" if result.returncode else
-                                      "Git working tree has tracked changes" if result.stdout.strip() else "Git working tree clean",
-                                      evidence=result.stdout))
+            try:
+                result = self.query(["git", "--no-optional-locks", "-c", "core.fsmonitor=false", "-C", str(self.env.dotfiles_dir),
+                                     "status", "--porcelain", "--untracked-files=no"])
+            except OSError as error:
+                findings.append(Diagnostic("git", "unknown", f"Git status unavailable: {error}"))
+            else:
+                severity = "unknown" if result.returncode else "warning" if result.stdout.strip() else "ok"
+                findings.append(Diagnostic("git", severity, "Git status unavailable" if result.returncode else
+                                          "Git working tree has tracked changes" if result.stdout.strip() else "Git tracked working tree clean; untracked files not checked",
+                                          evidence=result.stdout))
         return DiagnosticReport(tuple(findings))
 
     def _outputs(self, findings, active_specs):
@@ -151,16 +165,53 @@ class DoctorService:
                 findings.append(Diagnostic("link:" + str(source), "unknown", f"Cannot inspect Stow entry {source}: {error}"))
 
     def _permissions(self, findings):
-        for name in ("commands.jsonl", "installation.json", "active-theme"):
-            path = self.env.state_dir / name
-            if path.exists() and path.stat().st_mode & 0o077:
-                findings.append(Diagnostic("permissions:" + name, "error", f"Private state has broad permissions: {path}",
-                                          ("chmod", "600", str(path)), evidence=oct(path.stat().st_mode & 0o777)))
-        for name in ("config.toml", "regreet.toml", "regreet.css", "hyprland-greet.conf"):
+        seen = set()
+        def inspect(path):
+            if path in seen:
+                return False
+            seen.add(path)
+            try:
+                info = path.lstat()
+            except FileNotFoundError:
+                return False
+            except OSError as error:
+                findings.append(Diagnostic("permissions:" + str(path), "unknown", f"Cannot inspect private path {path}: {error}"))
+                return False
+            if stat.S_ISLNK(info.st_mode):
+                findings.append(Diagnostic("permissions:" + str(path), "error", f"Private state path is a symlink: {path}", evidence="symlink"))
+                return False
+            directory = stat.S_ISDIR(info.st_mode)
+            if not directory and not stat.S_ISREG(info.st_mode):
+                findings.append(Diagnostic("permissions:" + str(path), "error", f"Private state path is not a regular file: {path}", evidence=str(info.st_mode)))
+                return False
+            if info.st_mode & 0o077:
+                findings.append(Diagnostic("permissions:" + str(path), "error", f"Private state has broad permissions: {path}",
+                                           ("chmod", "700" if directory else "600", str(path)), evidence=oct(info.st_mode & 0o777)))
+            return directory
+
+        state = self.env.state_dir
+        inspect(state)
+        for name in ("commands.jsonl", "installation.json", "active-theme", "preview-theme"):
+            inspect(state / name)
+        for root in (state / "transactions", self.env.runtime_dir):
+            if not inspect(root):
+                continue
+            def onerror(error):
+                findings.append(Diagnostic("permissions:" + str(error.filename), "unknown", f"Cannot inspect private path: {error}"))
+            for directory, dirs, files in os.walk(root, followlinks=False, onerror=onerror):
+                for name in list(dirs):
+                    if not inspect(Path(directory) / name):
+                        dirs.remove(name)
+                for name in files:
+                    inspect(Path(directory) / name)
+        for name in ("config.toml", "regreet.toml", "regreet.css", "hyprland-greet.conf", "regreet-background.jpg"):
             path = self.login_dir / name
             try:
-                if path.exists() and (path.is_symlink() or path.stat().st_uid != 0 or path.stat().st_mode & 0o022):
+                info = path.lstat()
+                if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
                     findings.append(Diagnostic("login:" + name, "error", f"Insecure login configuration: {path}",
-                                              ("setup-login",), privileged=True, evidence=str(path.stat().st_mode)))
+                                              ("setup-login",), privileged=True, evidence=str(info.st_mode)))
+            except FileNotFoundError:
+                continue
             except OSError as error:
                 findings.append(Diagnostic("login:" + name, "unknown", f"Cannot inspect login permissions: {error}"))

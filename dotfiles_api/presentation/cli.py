@@ -232,7 +232,7 @@ def main(argv: list[str] | None = None) -> None:
                     report.describe()
                 return report.exit_code
             repairs = RepairService(doctor, {
-                "configure": lambda words: apply_theme(words[-1]),
+                "configure": lambda words: facade.apply_theme(words[-1]),
                 "link": lambda words: facade.link(),
                 "session": lambda words: session.start(),
                 "portal": lambda words: session.ensure_portals(),
