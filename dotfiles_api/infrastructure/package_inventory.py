@@ -22,12 +22,19 @@ class PackageInventory:
                 if directory.is_symlink():
                     raise ValueError(f"linked package database entry: {directory}")
                 path = directory / "desc"
+                if path.is_symlink():
+                    raise ValueError(f"linked package metadata: {path}")
                 lines = path.read_text(encoding="utf-8").splitlines()
                 if lines.count("%NAME%") != 1:
                     raise ValueError(f"missing or duplicated NAME: {path}")
                 index = lines.index("%NAME%") + 1
                 if index >= len(lines) or not re.fullmatch(r"[a-zA-Z0-9@_+][a-zA-Z0-9@_.+-]*", lines[index]):
                     raise ValueError(f"invalid NAME: {path}")
+                if lines.count("%VERSION%") != 1:
+                    raise ValueError(f"missing or duplicated VERSION: {path}")
+                version_index = lines.index("%VERSION%") + 1
+                if version_index >= len(lines) or not lines[version_index] or lines[version_index].startswith("%"):
+                    raise ValueError(f"invalid VERSION: {path}")
                 name = lines[index]
                 if name in names:
                     raise ValueError(f"duplicated package: {name}")

@@ -48,7 +48,9 @@ class SetupService:
 
     def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False) -> None:
         selected_optional_packages: list[str] = []
-        if self._interactive and sys.stdin.isatty() and not self._exec.dry_run:
+        if self._interactive and not self._exec.dry_run and not sys.stdin.isatty():
+            raise RuntimeError("Interactive setup requires a terminal")
+        if self._interactive and not self._exec.dry_run:
             selected_optional_packages = self._optional_package_selector.select(OPTIONAL_PACKAGES)
 
         selected_optional_packages.extend(self._selected_packages or [])
@@ -57,9 +59,11 @@ class SetupService:
         if self._selected_profiles and "desktop" not in desktop_profile.selected_profiles:
             raise ValueError("setup requires a desktop profile; use install --profile for isolated/headless profiles")
 
-        self._install_service.install_profile(desktop_profile)
+        if isinstance(self._install_service, InstallService):
+            self._install_service.install_profile(desktop_profile, setup=True)
+        else:
+            self._install_service.install_profile(desktop_profile)
         recorder = self._install_service.record_setup_status if isinstance(self._install_service, InstallService) else lambda status: None
-        recorder("in_progress")
         try:
             self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
             if enable_ssh_server:

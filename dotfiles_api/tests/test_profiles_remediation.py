@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -104,3 +105,94 @@ class ProfilesRemediationTests(unittest.TestCase):
             self.assertEqual(state["package_status"], "complete")
             self.assertEqual(state["desktop_configuration_status"], "failed")
             self.assertEqual(state["session_status"], "not_checked")
+
+    def test_interrupted_install_reports_partial_and_retains_legacy_selection(self):
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / "repo", "tester")
+            path = env.state_dir / "installation.json"
+            path.parent.mkdir(parents=True)
+            original = {"version": 1, "profiles": ["core"], "packages": ["old"], "optional_packages": ["chosen"]}
+            path.write_text(json.dumps(original))
+            source = Mock()
+            source.is_available.return_value = source.contains.return_value = True
+            def interrupt(packages):
+                current = json.loads(path.read_text())
+                self.assertEqual(current["package_status"], "in_progress")
+                self.assertEqual(current["desktop_configuration_status"], "in_progress")
+                raise KeyboardInterrupt()
+            source.install.side_effect = interrupt
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(),
+                                     {"pacman": source, "yay": source}, inventory=lambda: set())
+            svc = SetupService(env, ExecutionContext(False, Mock()), install, Mock(), Mock(), Mock(), Mock(), Mock(),
+                               profile_resolver=DesktopProfileResolver(lambda: []))
+            with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(KeyboardInterrupt):
+                svc.run_setup()
+            after = json.loads(path.read_text())
+            self.assertEqual(after["package_status"], "failed_or_partial")
+            self.assertEqual(after["desktop_configuration_status"], "failed")
+            self.assertEqual(after["profiles"], ["core"])
+            self.assertEqual(after["optional_packages"], ["chosen"])
+
+    def test_interrupted_configuration_is_not_marked_complete(self):
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / "repo", "tester")
+            source = Mock()
+            source.is_available.return_value = source.contains.return_value = True
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(),
+                                     {"pacman": source, "yay": source}, inventory=lambda: set())
+            linker = Mock()
+            linker.link.side_effect = KeyboardInterrupt()
+            svc = SetupService(env, ExecutionContext(False, Mock()), install, linker, Mock(), Mock(), Mock(), Mock(),
+                               profile_resolver=DesktopProfileResolver(lambda: []))
+            with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(KeyboardInterrupt):
+                svc.run_setup()
+            after = json.loads((env.state_dir / "installation.json").read_text())
+            self.assertEqual(after["package_status"], "complete")
+            self.assertEqual(after["desktop_configuration_status"], "failed")
+
+    def test_state_write_failure_keeps_last_complete_json(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / "repo", "tester")
+            path = env.state_dir / "installation.json"
+            path.parent.mkdir(parents=True)
+            before = '{"version": 2, "desktop_configuration_status": "complete"}\n'
+            path.write_text(before)
+            service = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {}, inventory=lambda: set())
+            with patch("dotfiles_api.infrastructure.file_writer.os.replace", side_effect=OSError("disk full")):
+                with self.assertRaisesRegex(OSError, "disk full"):
+                    service.record_setup_status("failed")
+            self.assertEqual(path.read_text(), before)
+            self.assertEqual(list(path.parent.glob(".shade-raid-*")), [])
+
+    def test_explicit_interaction_requires_terminal_before_install(self):
+        from dotfiles_api.application.services.setup import SetupService
+        install = Mock()
+        svc = SetupService(Mock(), ExecutionContext(False, Mock()), install, Mock(), Mock(), Mock(), Mock(), Mock(), interactive=True)
+        with patch("sys.stdin.isatty", return_value=False), self.assertRaisesRegex(RuntimeError, "requires a terminal"):
+            svc.run_setup()
+        install.install_profile.assert_not_called()
+
+    def test_unsafe_state_file_is_rejected_without_reading(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / "repo", "tester")
+            path = env.state_dir / "installation.json"
+            path.parent.mkdir(parents=True)
+            os.mkfifo(path)
+            service = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {}, inventory=lambda: set())
+            with self.assertRaisesRegex(ValueError, "Unsafe installation state"):
+                service.install_profile(Profile("test", []))
+            path.unlink()
+            private = home / "private"
+            private.write_text("secret")
+            path.symlink_to(private)
+            with self.assertRaisesRegex(ValueError, "Unsafe installation state"):
+                service.install_profile(Profile("test", []))
+            self.assertEqual(private.read_text(), "secret")
