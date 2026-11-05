@@ -1,4 +1,5 @@
 import sys
+import os
 from collections.abc import Callable
 
 from dotfiles_api.context.environment import EnvironmentContext
@@ -41,7 +42,9 @@ class SetupService:
         self._optional_package_selector = optional_package_selector or OptionalPackageSelectionService()
         self._profile_resolver = profile_resolver or DesktopProfileResolver(graphics_package_detector)
 
-    def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False) -> None:
+    def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False, change_shell: bool = False, theme_name: str | None = None) -> None:
+        if os.geteuid() == 0:
+            raise RuntimeError("Run setup as a normal user, not root")
         selected_optional_packages: list[str] = []
         if sys.stdin.isatty():
             selected_optional_packages = self._optional_package_selector.select(OPTIONAL_PACKAGES)
@@ -54,6 +57,9 @@ class SetupService:
             self._services.setup_services(enable_ssh_server=True)
         else:
             self._services.setup_services()
-        self._user.setup_user(setup_github=setup_github)
-        self._theme_service.apply_theme("shade-raid")
+        if change_shell:
+            self._user.setup_user(setup_github=setup_github, change_shell=True)
+        else:
+            self._user.setup_user(setup_github=setup_github)
+        self._theme_service.apply_theme(theme_name or self._theme_service.get_active_theme() or "shade-raid")
         self._extras.setup_extras()

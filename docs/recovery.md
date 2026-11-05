@@ -1,5 +1,12 @@
 # Installation and login recovery
 
+Bootstrap checks the CLI destination before package operations. It leaves
+pacman.conf and firewall policy unchanged; `--upgrade-system` explicitly requests
+a full upgrade. Review repository configuration and network access yourself.
+Enabling the SSH server does not alter firewall rules. Setup preserves the current
+login shell and does not download or execute Fisher/marketplace scripts. Choose
+and install shell plugins separately after reviewing their source.
+
 ## Before changing a desktop
 
 Record the Git revision, `pacman -Q`, `systemctl is-enabled greetd`,
