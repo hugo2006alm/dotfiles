@@ -46,7 +46,7 @@ class TestDryRunSafety(unittest.TestCase):
             with patch.dict(os.environ, {"DOTFILES_DIR": str(ROOT),
                                         "XDG_RUNTIME_DIR": str(home / ".runtime"),
                                         "XDG_STATE_HOME": str(home / ".state")}), \
-                    patch("pathlib.Path.home", return_value=home), \
+                    patch("os.geteuid", return_value=1000), patch("pathlib.Path.home", return_value=home), \
                     patch("subprocess.Popen") as process, \
                     patch("threading.Thread.start") as thread, contextlib.redirect_stdout(io.StringIO()) as output:
                 main(["setup", "--dry-run"])
@@ -72,7 +72,7 @@ class TestDryRunSafety(unittest.TestCase):
                 before = snapshot(home)
                 variables = {"DOTFILES_DIR": str(ROOT), "XDG_STATE_HOME": str(home / ".local/state"),
                              "XDG_RUNTIME_DIR": str(home / ".runtime")}
-                with patch.dict(os.environ, variables), patch("pathlib.Path.home", return_value=home), \
+                with patch.dict(os.environ, variables), patch("os.geteuid", return_value=1000), patch("pathlib.Path.home", return_value=home), \
                         patch("subprocess.Popen") as process, \
                         patch("threading.Thread.start") as thread, \
                         patch("dotfiles_api.infrastructure.executor.SystemCommandExecutor.execute") as executor, \
