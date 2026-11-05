@@ -9,7 +9,12 @@ class ControlAction(Action):
     def execute(self, args):
         if args:
             raise ValueError("Volume and brightness actions take no arguments")
+        osd_active = False
         if shutil.which("swayosd-client"):
+            status = self.execution.query(["systemctl", "--user", "is-active", "--quiet", "shade-raid-swayosd.service"],
+                                          allowed_returncodes=(0, 1, 3, 4, 127), step="control:osd-status")
+            osd_active = status.returncode == 0
+        if osd_active:
             flag = "--output-volume" if self.kind == "volume" else "--brightness"
             value = {"up": "raise", "down": "lower", "mute": "mute-toggle"}[self.direction]
             command = ["swayosd-client", flag, value]

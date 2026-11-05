@@ -19,16 +19,23 @@ class ClipboardAction(Action):
         if missing:
             raise RuntimeError("Clipboard requires: " + ", ".join(missing))
         if not self.edit:
-            self.execution.execute(["walker", "--provider", "clipboard"], step="clipboard:history")
+            self.execution.spawn(["walker", "--provider", "clipboard"], step="clipboard:history", sensitive=True)
             return
-        content = self.execution.execute(["wl-paste", "--no-newline"], step="clipboard:read").stdout
+        mime_types = self.execution.execute(["wl-paste", "--list-types"], step="clipboard:types", sensitive=True).stdout.splitlines()
+        plain_text = next((mime.strip() for mime in mime_types if mime.strip().lower().split(";", 1)[0] == "text/plain"), None)
+        if not plain_text:
+            raise ValueError("Clipboard does not offer plain text")
+        content = self.execution.execute(["wl-paste", "--type", plain_text, "--no-newline"],
+                                         step="clipboard:read", sensitive=True).stdout
+        if not content:
+            raise ValueError("Clipboard is empty")
         path = self.env.runtime_dir / f"clipboard-{uuid4().hex}.txt"
         self.env.validate_output_path(path)
         SystemFileWriter().write(path, content)
         script = 'trap \'rm -f -- "$1"\' EXIT; nvim -- "$1" && wl-copy < "$1"'
         try:
             self.execution.execute(["ghostty", "-e", "sh", "-c", script, "shade-raid-clipboard", str(path)],
-                                   step="clipboard:edit")
+                                   step="clipboard:edit", sensitive=True)
         except BaseException:
             path.unlink(missing_ok=True)
             raise

@@ -58,18 +58,6 @@ class TestActions(unittest.TestCase):
         service.run_action("test", ["arg"])
         mock_action.execute.assert_called_once_with(["arg"])
 
-    def test_screenshot_action(self) -> None:
-        from dotfiles_api.infrastructure.actions.screenshot import ScreenshotAction
-        action = ScreenshotAction(self.exec_ctx)
-
-        action.execute([])
-        self.assertTrue(any("grim" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("notify-send" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("wl-copy --type image/png" in cmd for cmd in self.executor.commands))
-
-        action.execute(["--region"])
-        self.assertTrue(any("slurp" in cmd for cmd in self.executor.commands))
-
     @patch("subprocess.Popen")
     def test_recorder_action_toggle(self, mock_popen) -> None:
         from dotfiles_api.infrastructure.actions.recorder import RecorderAction

@@ -19,4 +19,4 @@ class BrowserAction(Action):
                 return
             self.execution.optional(["notify-send", "Browser unavailable", "Install a browser or the daily profile"])
             raise RuntimeError("No supported browser installed; install the daily profile or Firefox/Chromium")
-        self.execution.execute([browser, *urls], step="launch:browser")
+        self.execution.spawn([browser, *urls], step="launch:browser", sensitive=True)
