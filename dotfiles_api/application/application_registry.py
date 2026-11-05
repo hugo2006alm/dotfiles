@@ -59,14 +59,15 @@ class ApplicationRegistry:
                 paths.add((output.scope, path))
         self.package_sources()
 
-    def artifact_paths(self, env):
+    def artifact_paths(self, env, validate=True):
         paths = {"active-theme": env.state_dir / "active-theme", "theme-preview": env.preview_file}
         for spec in self.specs:
             for output in spec.outputs:
                 if output.id in paths:
                     raise ValueError(f"Reserved output ID: {output.id}")
                 target = (env.home_dir if output.scope == "home" else env.state_dir) / output.path
-                env.validate_output_path(target)
+                if validate:
+                    env.validate_output_path(target)
                 paths[output.id] = target
         return paths
 

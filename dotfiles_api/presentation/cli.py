@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> None:
     package_registry = PackageRegistry()
 
     applications = ApplicationRegistry(APPLICATIONS)
-    artifact_store = ArtifactStore(applications.artifact_paths(env))
+    artifact_store = ArtifactStore(applications.artifact_paths(env, validate=args.command not in {"link", "setup"}))
 
     file_writer = SystemFileWriter()
     theme_store = FileThemeStore(env=env)

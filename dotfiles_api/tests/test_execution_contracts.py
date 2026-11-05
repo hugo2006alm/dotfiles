@@ -189,7 +189,7 @@ class TestExecutionContracts(unittest.TestCase):
         first, second = Mock(), Mock()
         first.is_available.return_value = True
         second.is_available.return_value = False
-        service = InstallService(None, None, PackageRegistry({"extra": "other"}), {"pacman": first, "other": second})
+        service = InstallService(None, None, PackageRegistry({"extra": "yay"}), {"pacman": first, "yay": second})
         with self.assertRaisesRegex(RuntimeError, "no installation commands attempted"):
             service.install_profile(Profile("test", [Feature("test", ["git", "extra"], [])]))
         first.install.assert_not_called()
@@ -231,12 +231,12 @@ class TestExecutionContracts(unittest.TestCase):
         first, second = Mock(), Mock()
         first.is_available.return_value = second.is_available.return_value = True
         second.install.side_effect = RuntimeError("fake manager failure")
-        service = InstallService(None, None, PackageRegistry({"extra": "other"}), {"pacman": first, "other": second})
+        service = InstallService(None, None, PackageRegistry({"extra": "yay"}), {"pacman": first, "yay": second})
         profile = Profile("test", [Feature("test", ["git", "extra"], [])])
         with self.assertRaises(RuntimeError) as error:
             service.install_profile(profile)
         first.install.assert_called_once_with(["git"])
         self.assertEqual(error.exception.completed_groups, (("pacman", ("git",)),))
-        self.assertEqual(error.exception.failed_source, "other")
+        self.assertEqual(error.exception.failed_source, "yay")
         self.assertIn("may have partial effects", str(error.exception))
         self.assertIn("not rolled back", str(error.exception))
