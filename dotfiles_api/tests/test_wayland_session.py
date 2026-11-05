@@ -66,6 +66,37 @@ class TestWaylandSession(unittest.TestCase):
             self.assertTrue(pending.exists())
             reloads.reload_all.assert_not_called()
 
+    @unittest.skipUnless(shutil.which('python3'), 'Requires Python')
+    def test_walker_waits_for_elephant_socket_and_fails_when_not_ready(self):
+        import socket
+        import threading
+        import time
+        script = ROOT / 'home/.local/bin/shade-raid-wait-elephant'
+        unit = (ROOT / 'home/.config/systemd/user/shade-raid-walker.service').read_text()
+        self.assertIn('ExecStartPre=%h/.local/bin/shade-raid-wait-elephant', unit)
+        with tempfile.TemporaryDirectory() as temp:
+            env = {**os.environ, 'XDG_RUNTIME_DIR': temp}
+            missing = subprocess.run(['python3', str(script), '--timeout', '0.1'], env=env,
+                                     capture_output=True, text=True, timeout=3)
+            self.assertNotEqual(missing.returncode, 0)
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            path = Path(temp) / 'elephant/elephant.sock'
+            path.parent.mkdir()
+            server.bind(str(path))
+            def listen_later():
+                time.sleep(.1)
+                server.listen(1)
+                connection, _ = server.accept()
+                connection.close()
+            thread = threading.Thread(target=listen_later, daemon=True)
+            thread.start()
+            ready = subprocess.run(['python3', str(script), '--timeout', '2'], env=env,
+                                   capture_output=True, text=True, timeout=3)
+            thread.join(3)
+            server.close()
+            self.assertEqual(ready.returncode, 0, ready.stderr)
+            self.assertFalse(thread.is_alive())
+
     def test_environment_import_precedes_idempotent_service_start(self):
         with patch.dict(os.environ, SESSION, clear=True):
             self.service.start()
@@ -140,6 +171,7 @@ class TestWaylandSession(unittest.TestCase):
                 content = source.read_text()
                 for binary in ("waybar", "swaync", "swayosd-server", "walker", "elephant", "ssh-agent"):
                     content = content.replace(f"/usr/bin/{binary}", str(stub))
+                content = content.replace("%h/.local/bin/shade-raid-wait-elephant", str(stub))
                 path = units / source.name
                 path.write_text(content)
                 paths.append(str(path))
