@@ -204,7 +204,7 @@ class TestGenerators(unittest.TestCase):
         typography = TypographyTokens(typography={"font_mono": "SpaceMono"})
         tokens = DesignTokens(colors=colors, metrics=metrics, typography=typography)
 
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory(prefix="home with spaces ") as temp_dir:
             home = Path(temp_dir)
             env = EnvironmentContext(home_dir=home, dotfiles_dir=home / "dotfiles", user="user")
             themes_dir = home / ".config" / "themes"
@@ -234,6 +234,9 @@ class TestGenerators(unittest.TestCase):
         self.assertEqual(actions[3]["label"], "Select")
         self.assertIn("configure --theme ember", actions[3]["command"])
         self.assertIn(f"{home}/.local/bin/dotfiles", actions[3]["command"])
+        import shlex
+        self.assertEqual(shlex.split(actions[3]["command"]),
+                         [f"{home}/.local/bin/dotfiles", "configure", "--theme", "ember"])
 
     def test_swaync_preview_wallpaper_uses_base_theme_for_dark_variant(self):
         colors = ColorTokens(colors={"background": "#16130F", "background2": "#201C17", "foreground": "#F4EFE4", "border": "#F4EFE4"})

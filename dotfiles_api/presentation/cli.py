@@ -4,6 +4,7 @@ import os
 import getpass
 from pathlib import Path
 
+from dotfiles_api.presentation.argument_parser import CommandParser
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.infrastructure.executor import SystemCommandExecutor
@@ -72,17 +73,32 @@ from dotfiles_api.infrastructure.actions.wallpaper import WallpaperAction
 from dotfiles_api.infrastructure.actions.preview import PreviewAction
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Modular Dotfiles API CLI Manager")
+def build_parser() -> argparse.ArgumentParser:
+    parser = CommandParser(description="Modular Dotfiles API CLI Manager", allow_abbrev=False)
+    parser.set_defaults(github=False)
     parser.add_argument("--dry-run", action="store_true", help="Log commands instead of running them")
     parser.add_argument("--theme", default="shade-raid", help="The name of the theme to apply")
-    parser.add_argument("command", choices=["install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions"], help="Command to execute")
-    parser.add_argument("action_name", nargs="?", help="Action name to run (required for action command)")
-    parser.add_argument("action_args", nargs=argparse.REMAINDER, help="Arguments passed to the action")
-    parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions"):
+        command = commands.add_parser(name, allow_abbrev=False)
+        # Suppressed defaults preserve options given before the subcommand.
+        command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
+        if name in {"configure", "apply-all"}:
+            command.add_argument("--theme", default=argparse.SUPPRESS)
+        command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
+        if name == "setup":
+            command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
+        if name == "action":
+            command.add_argument("action_name")
+            command.add_argument("action_args", nargs=argparse.REMAINDER)
+    return parser
 
-    args = parser.parse_args()
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     home_dir = Path.home()
     dotfiles_dir = home_dir / "dotfiles"
