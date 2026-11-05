@@ -32,6 +32,9 @@ class TestDoctorAndRepair(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.env = EnvironmentContext(Path(self.temp.name), ROOT, "tester")
+        selection = self.env.state_dir / "installation.json"
+        selection.parent.mkdir(parents=True)
+        selection.write_text('{"version": 2, "requested_profiles": ["desktop"], "explicit_packages": []}')
         self.registry = ApplicationRegistry((ApplicationSpec("ghostty", packages=("ghostty",),
             generator=GhosttyGenerator, outputs=(OutputSpec("ghostty-colors", ".config/ghostty/colors.conf"),),
             user_unit="shade-raid-ghostty.service"),))
@@ -61,8 +64,8 @@ class TestDoctorAndRepair(unittest.TestCase):
         with patch.dict(os.environ, {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland"}):
             report = self.doctor.run()
         finding = next(item for item in report.findings if item.id == "service:shade-raid-ghostty.service")
-        self.assertEqual(finding.severity, "error")
-        self.assertEqual(finding.repair, ("session",))
+        self.assertEqual(finding.severity, "unknown")
+        self.assertEqual(finding.repair, ())
 
     def test_plan_id_rejects_new_content_changes_before_apply(self):
         actions = {"configure": Mock()}
@@ -173,6 +176,7 @@ for relative in (".local/state/shade-raid/installation.json", ".local/state/shad
     try:
         path = case.env.home_dir / relative
         path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists(): path.unlink()
         os.mkfifo(path)
         with patch.dict(os.environ, {}, clear=True):
             report = case.doctor.run()
@@ -199,7 +203,7 @@ for relative in (".local/state/shade-raid/installation.json", ".local/state/shad
 
     def test_private_state_audit_finds_symlinks_and_public_modes(self):
         state = self.env.state_dir
-        state.mkdir(parents=True)
+        state.mkdir(parents=True, exist_ok=True)
         state.chmod(0o755)
         backup = state / "transactions/one/backups"
         backup.mkdir(parents=True, mode=0o700)
@@ -252,6 +256,78 @@ for relative in (".local/state/shade-raid/installation.json", ".local/state/shad
         self.assertEqual(by_id["service:shade-raid-ghostty.service"].severity, "unknown")
         self.assertEqual(by_id["git"].severity, "unknown")
         self.assertEqual(report.to_dict()["version"], 1)
+
+    def test_installation_selection_uses_current_profiles_and_explicit_packages(self):
+        import json
+        selection = self.env.state_dir / "installation.json"
+        selection.parent.mkdir(parents=True, exist_ok=True)
+        selection.write_text(json.dumps({"version": 2, "requested_profiles": ["core"],
+                                         "explicit_packages": [], "profiles": ["desktop"],
+                                         "packages": ["obsolete-package"], "optional_packages": []}))
+        from dataclasses import replace
+        spec = replace(self.registry.specs[0], profiles=("core",))
+        self.doctor.applications = ApplicationRegistry((spec,))
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        ids = {item.id for item in report.findings}
+        self.assertIn("package:ghostty", ids)
+        self.assertNotIn("package:obsolete-package", ids)
+
+    def test_fresh_home_does_not_claim_desktop_is_installed_and_broken(self):
+        (self.env.state_dir / "installation.json").unlink()
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        self.assertTrue(any(item.id == "selection" and item.severity == "unknown" for item in report.findings))
+        self.assertFalse(any(item.id.startswith(("package:", "output:", "link:")) for item in report.findings))
+
+    def test_inactive_service_is_unknown_without_reason_or_unsafe_repair(self):
+        def query(command):
+            return CommandResult("inactive", "", 3) if command[0] == "systemctl" else CommandResult("", "", 0)
+        self.doctor.query = query
+        with patch.dict(os.environ, {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland"}):
+            report = self.doctor.run()
+        finding = next(item for item in report.findings if item.id == "service:shade-raid-ghostty.service")
+        self.assertEqual(finding.severity, "unknown")
+        self.assertEqual(finding.repair, ())
+
+    def test_login_audit_flags_legacy_sudoers_and_incomplete_installation(self):
+        etc = self.doctor.login_dir.parent
+        self.doctor.login_dir.mkdir(parents=True)
+        (self.doctor.login_dir / "regreet.toml").write_text("[background]\n")
+        sudoers = etc / "sudoers.d"
+        sudoers.mkdir()
+        (sudoers / "shade-raid").symlink_to("missing")
+        findings = []
+        self.doctor._permissions(findings)
+        by_id = {item.id: item for item in findings}
+        self.assertEqual(by_id["login:config.toml"].severity, "error")
+        self.assertEqual(by_id["sudoers:shade-raid"].severity, "error")
+        self.assertTrue(by_id["sudoers:shade-raid"].privileged)
+
+    def test_repair_plan_describes_automatic_operation_effects_and_paths(self):
+        with patch.dict(os.environ, {}, clear=True):
+            plan = RepairService(self.doctor, {}).plan()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            plan.describe()
+        text = output.getvalue()
+        self.assertIn(str(self.store.resolve_path("ghostty-colors")), text)
+        self.assertIn(str(self.env.state_dir / "transactions"), text)
+        self.assertIn("refresh", text.lower())
+        self.assertIn("wallpaper", text.lower())
+
+    def test_incomplete_setup_is_not_reported_as_complete(self):
+        import json
+        selection = self.env.state_dir / "installation.json"
+        selection.write_text(json.dumps({"version": 2, "requested_profiles": ["desktop"],
+                                         "explicit_packages": [], "package_status": "failed_or_partial",
+                                         "desktop_configuration_status": "in_progress"}))
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        by_id = {item.id: item for item in report.findings}
+        self.assertEqual(by_id["setup:packages"].severity, "error")
+        self.assertIn("failed_or_partial", by_id["setup:packages"].message)
+        self.assertEqual(by_id["setup:configuration"].severity, "error")
 
     def test_repair_rechecks_next_operation_after_prior_action(self):
         from dotfiles_api.domain.models.diagnostic import Diagnostic
@@ -322,7 +398,7 @@ for relative in (".local/state/shade-raid/installation.json", ".local/state/shad
     def test_core_only_selection_does_not_diagnose_absent_desktop_outputs(self):
         import json
         selection = self.env.state_dir / "installation.json"
-        selection.parent.mkdir(parents=True)
+        selection.parent.mkdir(parents=True, exist_ok=True)
         selection.write_text(json.dumps({"profiles": ["core"], "packages": [], "optional_packages": []}))
         with patch.dict(os.environ, {}, clear=True):
             report = self.doctor.run(dry_run=True)
@@ -334,7 +410,7 @@ for relative in (".local/state/shade-raid/installation.json", ".local/state/shad
         optional = dataclasses.replace(self.registry.specs[0], profiles=("daily",), required=False)
         self.doctor.applications = ApplicationRegistry((optional,))
         selection = self.env.state_dir / "installation.json"
-        selection.parent.mkdir(parents=True)
+        selection.parent.mkdir(parents=True, exist_ok=True)
         selection.write_text(json.dumps({"profiles": ["desktop"], "packages": ["ghostty"], "optional_packages": ["ghostty"]}))
         with patch.dict(os.environ, {}, clear=True):
             report = self.doctor.run(dry_run=True)

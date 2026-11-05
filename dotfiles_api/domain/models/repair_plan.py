@@ -32,4 +32,7 @@ class RepairPlan:
             if item.repair[0] == "chmod":
                 command = item.repair
             print(f"  {'apply' if automatic else 'manual'}: {shlex.join(command)}")
+            if automatic:
+                for effect in self.report.effects.get(item.repair[0], ()):
+                    print(f"    effect: {effect}")
         print(f"Review first, then: dotfiles repair --apply --plan-id {self.id}")

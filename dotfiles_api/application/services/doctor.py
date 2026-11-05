@@ -26,7 +26,7 @@ class DoctorService:
         wayland = bool(os.environ.get("WAYLAND_DISPLAY") and os.environ.get("XDG_CURRENT_DESKTOP"))
         findings.append(Diagnostic("session", "ok" if wayland else "unknown",
                                    "Wayland session detected" if wayland else "Outside Wayland: live service checks deferred"))
-        selected, optional, desired = ["desktop"], [], None
+        selected, optional, desired = [], [], []
         selection = self.env.state_dir / "installation.json"
         try:
             raw_selection = read_regular_file(selection)
@@ -34,20 +34,33 @@ class DoctorService:
                 findings.append(Diagnostic("selection", "unknown", "No saved installation selection; setup status is unknown"))
             else:
                 data = json.loads(raw_selection)
-                for key in ("profiles", "packages", "optional_packages"):
+                for key in ("profiles", "packages", "optional_packages", "requested_profiles", "explicit_packages"):
                     if not isinstance(data.get(key, []), list) or not all(isinstance(value, str) for value in data.get(key, [])):
                         raise ValueError(f"invalid {key}")
-                selected, optional, desired = data.get("profiles") or selected, data.get("optional_packages", []), data.get("packages", [])
+                selected = data.get("requested_profiles", data.get("profiles", []))
+                optional = data.get("explicit_packages", data.get("optional_packages", []))
+                if not selected and not optional:
+                    findings.append(Diagnostic("selection", "unknown", "Saved installation has no recorded profile or package choices"))
+                for field, finding_id in (("package_status", "setup:packages"),
+                                          ("desktop_configuration_status", "setup:configuration")):
+                    status = data.get(field, "not_recorded")
+                    if status in {"in_progress", "failed", "failed_or_partial"}:
+                        findings.append(Diagnostic(finding_id, "error", f"Setup {field}: {status}; inspect and retry manually"))
+                    elif status != "complete":
+                        findings.append(Diagnostic(finding_id, "unknown", f"Setup {field}: {status}"))
         except (OSError, ValueError, AttributeError) as error:
             findings.append(Diagnostic("selection", "error", f"Invalid saved installation selection: {error}"))
-        try:
-            profile = SoftwareProfileResolver(self.applications.specs).resolve(selected)
-        except ValueError as error:
-            findings.append(Diagnostic("profiles", "error", f"Invalid selected profiles: {error}"))
-            profile = SoftwareProfileResolver(self.applications.specs).resolve(["desktop"])
-        if desired is None:
-            desired = profile.get_packages()
-        active_specs = [spec for spec in self.applications.specs if set(spec.profiles) & set(profile.selected_profiles)
+        profile = None
+        if selected:
+            try:
+                profile = SoftwareProfileResolver(self.applications.specs).resolve(selected, optional_packages=optional)
+                desired = profile.get_packages()
+            except ValueError as error:
+                findings.append(Diagnostic("profiles", "error", f"Invalid selected profiles: {error}"))
+        elif optional:
+            desired = list(dict.fromkeys(optional))
+        active_profiles = set(profile.selected_profiles) if profile else set()
+        active_specs = [spec for spec in self.applications.specs if set(spec.profiles) & active_profiles
                         or set(spec.packages) & set(desired)]
         install = ["install"]
         for profile_name in selected:
@@ -64,13 +77,13 @@ class DoctorService:
         except OSError as error:
             findings.append(Diagnostic("packages", "unknown", f"Cannot inspect package inventory: {error}"))
         self._outputs(findings, active_specs)
-        if "desktop" in profile.selected_profiles:
+        if "desktop" in active_profiles:
             try:
                 self._links(findings)
             except OSError as error:
                 findings.append(Diagnostic("links", "unknown", f"Cannot inspect all Stow links: {error}"))
         self._permissions(findings)
-        if wayland and not dry_run and "desktop" in profile.selected_profiles:
+        if wayland and not dry_run and "desktop" in active_profiles:
             external_agent = os.environ.get("SSH_AUTH_SOCK", "")
             units = [spec.user_unit for spec in active_specs if spec.user_unit
                      and not (spec.id == "ssh-agent" and external_agent and not external_agent.endswith("/shade-raid-ssh/agent.socket"))]
@@ -81,12 +94,12 @@ class DoctorService:
                     findings.append(Diagnostic("service:" + unit, "unknown", f"Cannot inspect {unit}: {error}"))
                     continue
                 active = result.returncode == 0 and result.stdout.strip() == "active"
-                unknown = result.returncode not in {0, 1, 3}
+                unknown = result.returncode not in {0, 1, 3} or (not active and result.stdout.strip() != "failed")
                 portal_unverified = active and unit == "xdg-desktop-portal.service"
                 findings.append(Diagnostic("service:" + unit, "unknown" if unknown or portal_unverified else "ok" if active else "error",
                     (f"{unit}: frontend active; backend and interface health not verified" if portal_unverified else
                      f"{unit}: {result.stdout.strip() or result.stderr.strip() or 'status unavailable'}"),
-                    () if active or unknown else ("portal",) if unit.startswith("xdg-desktop-portal") else ("session",),
+                    (),
                     evidence=str(result.returncode)))
         elif dry_run:
             findings.append(Diagnostic("services", "unknown", "Service queries deferred in dry-run"))
@@ -103,7 +116,21 @@ class DoctorService:
                 findings.append(Diagnostic("git", severity, "Git status unavailable" if result.returncode else
                                           "Git working tree has tracked changes" if result.stdout.strip() else "Git tracked working tree clean; untracked files not checked",
                                           evidence=result.stdout))
-        return DiagnosticReport(tuple(findings))
+        outputs = tuple(item.message for item in findings if item.id.startswith("output:"))
+        units = tuple(spec.user_unit for spec in active_specs if spec.user_unit)
+        effects = {
+            "configure": (*outputs,
+                f"May create transaction journals and backups under {self.env.state_dir / 'transactions'}",
+                f"May update {self.env.state_dir / 'active-theme'} and {self.env.preview_file}",
+                f"May append command logs to {self.env.state_dir / 'commands.jsonl'} and use {self.env.lock_dir}",
+                "May run Sass and refresh affected desktop applications; does not change wallpaper"),
+            "link": (f"May create or migrate Stow links under {self.env.home_dir}",
+                     f"May create migration backups under {self.env.home_dir / '.shade-raid-backups'}"),
+            "session": ("Imports session environment and may start user units: " + ", ".join(units),
+                        "May start xdg-desktop-portal.service"),
+            "portal": ("Imports session environment and may start xdg-desktop-portal.service",),
+        }
+        return DiagnosticReport(tuple(findings), effects)
 
     def _outputs(self, findings, active_specs):
         active_ids = {spec.id for spec in active_specs}
@@ -204,7 +231,9 @@ class DoctorService:
                         dirs.remove(name)
                 for name in files:
                     inspect(Path(directory) / name)
-        for name in ("config.toml", "regreet.toml", "regreet.css", "hyprland-greet.conf", "regreet-background.jpg"):
+        login_files = ("config.toml", "regreet.toml", "regreet.css", "hyprland-greet.conf", "regreet-background.jpg")
+        installation_detected = any(os.path.lexists(self.login_dir / name) for name in login_files[1:])
+        for name in login_files:
             path = self.login_dir / name
             try:
                 info = path.lstat()
@@ -212,6 +241,19 @@ class DoctorService:
                     findings.append(Diagnostic("login:" + name, "error", f"Insecure login configuration: {path}",
                                               ("setup-login",), privileged=True, evidence=str(info.st_mode)))
             except FileNotFoundError:
-                continue
+                if installation_detected and name in {"config.toml", "regreet.toml", "regreet.css", "hyprland-greet.conf", "regreet-background.jpg"}:
+                    findings.append(Diagnostic("login:" + name, "error", f"Incomplete login installation, missing: {path}",
+                                              ("setup-login",), privileged=True))
             except OSError as error:
                 findings.append(Diagnostic("login:" + name, "unknown", f"Cannot inspect login permissions: {error}"))
+        for name in ("shade-raid", "plymouth_sync", "regreet-theme"):
+            path = self.login_dir.parent / "sudoers.d" / name
+            try:
+                info = path.lstat()
+            except FileNotFoundError:
+                continue
+            except OSError as error:
+                findings.append(Diagnostic("sudoers:" + name, "unknown", f"Cannot inspect legacy sudoers path {path}: {error}", privileged=True))
+                continue
+            findings.append(Diagnostic("sudoers:" + name, "error", f"Legacy sudoers entry requires manual review: {path}",
+                                       privileged=True, evidence=str(info.st_mode)))

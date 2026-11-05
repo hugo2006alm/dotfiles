@@ -52,6 +52,7 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                 css = home / ".config/waybar/style.css"
                 expected_css = css.read_bytes()
                 css.unlink()
+                (home / ".state/shade-raid/installation.json").write_text('{"version":2,"requested_profiles":["desktop"],"explicit_packages":[]}')
                 before_diagnosis = snapshot(home)
                 with contextlib.redirect_stdout(io.StringIO()) as diagnosis:
                     main(["repair", "--plan"])
