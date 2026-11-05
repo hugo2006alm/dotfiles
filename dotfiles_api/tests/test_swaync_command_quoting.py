@@ -29,12 +29,10 @@ class TestSwayncCommandQuoting(unittest.TestCase):
                 (directory / "colors.toml").write_text("[colors]\n")
             env = EnvironmentContext(home, Path(temporary) / "repo", "tester")
             tokens = DesignTokens(ColorTokens({}), MetricTokens({}), TypographyTokens({}))
-            preview_file = Path("/tmp/dotfiles_preview_theme")
-            is_file, read_text = Path.is_file, Path.read_text
-            with patch.object(Path, "is_file", lambda path: True if path == preview_file else is_file(path)), \
-                    patch.object(Path, "read_text", lambda path, *a, **kw:
-                                 selected if path == preview_file else read_text(path, *a, **kw)):
-                artifacts = SwayncGenerator(transaction=Mock(env=env)).render(tokens, "active")
+            preview_file = env.runtime_dir / "preview-theme"
+            preview_file.parent.mkdir(parents=True, exist_ok=True)
+            preview_file.write_text(selected)
+            artifacts = SwayncGenerator(transaction=Mock(env=env)).render(tokens, "active")
             config = json.loads(next(item.content for item in artifacts if item.artifact_id == "swaync-config"))
             controls = config["widget-config"]["buttons-grid#theme-preview-controls"]["actions"]
             expected = {0: ["action", "preview", "prev"], 2: ["action", "preview", "next"],
