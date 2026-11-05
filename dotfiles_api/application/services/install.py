@@ -3,6 +3,7 @@ import stat
 from dotfiles_api.application.installation_planner import InstallationPlanner
 from dotfiles_api.infrastructure.file_writer import SystemFileWriter
 from dotfiles_api.infrastructure.package_inventory import PackageInventory
+from dotfiles_api.application.installation_error import InstallationError
 
 
 class InstallService:
@@ -41,9 +42,14 @@ class InstallService:
             started["desktop_configuration_status"] = "in_progress"
             started.setdefault("session_status", "not_checked")
             SystemFileWriter().write(path, json.dumps(started, indent=2) + "\n")
+        completed = []
         try:
             for source_id, packages in plan.groups:
-                self._sources[source_id].install(list(packages))
+                try:
+                    self._sources[source_id].install(list(packages))
+                except Exception as error:
+                    raise InstallationError(tuple(completed), source_id) from error
+                completed.append((source_id, tuple(packages)))
         except BaseException:
             if path and setup:
                 try:

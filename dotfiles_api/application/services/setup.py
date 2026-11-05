@@ -1,4 +1,5 @@
 import sys
+import os
 from collections.abc import Callable
 
 from dotfiles_api.context.environment import EnvironmentContext
@@ -46,7 +47,9 @@ class SetupService:
         self._selected_profiles, self._selected_packages = selected_profiles, selected_packages
         self._interactive = interactive
 
-    def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False) -> None:
+    def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False, change_shell: bool = False, theme_name: str | None = None) -> None:
+        if os.geteuid() == 0:
+            raise RuntimeError("Run setup as a normal user, not root")
         selected_optional_packages: list[str] = []
         if self._interactive and not self._exec.dry_run and not sys.stdin.isatty():
             raise RuntimeError("Interactive setup requires a terminal")
@@ -59,6 +62,7 @@ class SetupService:
         if self._selected_profiles and "desktop" not in desktop_profile.selected_profiles:
             raise ValueError("setup requires a desktop profile; use install --profile for isolated/headless profiles")
 
+        self._linker.preflight(self._env.dotfiles_dir, self._env.home_dir)
         if isinstance(self._install_service, InstallService):
             self._install_service.install_profile(desktop_profile, setup=True)
         else:
@@ -70,8 +74,11 @@ class SetupService:
                 self._services.setup_services(enable_ssh_server=True)
             else:
                 self._services.setup_services()
-            self._user.setup_user(setup_github=setup_github)
-            self._theme_service.apply_theme("shade-raid")
+            if change_shell:
+                self._user.setup_user(setup_github=setup_github, change_shell=True)
+            else:
+                self._user.setup_user(setup_github=setup_github)
+            self._theme_service.apply_theme(theme_name or self._theme_service.get_active_theme() or "shade-raid")
             self._extras.setup_extras()
         except BaseException:
             try:

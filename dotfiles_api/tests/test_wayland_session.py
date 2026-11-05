@@ -36,10 +36,8 @@ class TestWaylandSession(unittest.TestCase):
         self.assertNotIn("--all", commands[0])
         self.assertIn("PATH", commands[0])
         self.assertEqual(commands[1], ["systemctl", "--user", "daemon-reload"])
-        units = commands[2]
-        self.assertEqual(units[:3], ["systemctl", "--user", "start"])
         for name in ("waybar", "swaync", "walker", "swayosd", "elephant"):
-            self.assertIn(f"shade-raid-{name}.service", units)
+            self.assertIn(["systemctl", "--user", "start", f"shade-raid-{name}.service"], commands)
         self.assertEqual(commands[-1], ["systemctl", "--user", "start", "xdg-desktop-portal.service"])
         self.assertFalse(any("kill" in arg or "restart" == arg for cmd in commands for arg in cmd))
 

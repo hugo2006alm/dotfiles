@@ -33,6 +33,8 @@ class ThemePlanner:
                     self.registry.validate_content(generator.name, path, artifact.content)
                 else:
                     ArtifactValidator().validate(path, artifact.content)
+                if path.exists() and not path.is_file():
+                    raise ValueError(f"Generated destination is not a regular file: {path}")
                 original = path.read_bytes() if path.exists() else None
                 link = str(path.readlink()) if path.is_symlink() else None
                 items.append(PlannedArtifact(generator.name, artifact, path, original, link))
