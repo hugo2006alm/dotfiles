@@ -2,6 +2,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from dotfiles_api.context.execution import ExecutionContext
@@ -163,6 +164,24 @@ class TestHomeLayout(unittest.TestCase):
             self.assertEqual(installed.read_text(), "personal")
             installed.write_text("new personal")
             self.assertEqual(old.read_text(), "personal")
+
+    @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
+    def test_interrupted_seed_copy_leaves_no_partial_personal_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            home.mkdir()
+            (root / "home/.config").mkdir(parents=True)
+            seed = root / "seeds/.config/preferences"
+            seed.parent.mkdir(parents=True)
+            seed.write_text("default")
+            def fail(source, out):
+                out.write(b"partial")
+                raise OSError("disk full")
+            with patch("dotfiles_api.infrastructure.linker.shutil.copyfileobj", fail):
+                with self.assertRaisesRegex(OSError, "disk full"):
+                    StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            self.assertFalse((home / ".config/preferences").exists())
+            self.assertEqual(list((home / ".config").glob(".shade-raid-seed-*")), [])
 
     def test_failure_retains_data_written_during_unfolding(self):
         with tempfile.TemporaryDirectory() as temp:
