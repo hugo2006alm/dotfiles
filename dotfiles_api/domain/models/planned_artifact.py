@@ -13,4 +13,4 @@ class PlannedArtifact:
 
     @property
     def changed(self) -> bool:
-        return self.original != self.artifact.content.encode("utf-8")
+        return self.original_link is not None or self.original != self.artifact.content.encode("utf-8")

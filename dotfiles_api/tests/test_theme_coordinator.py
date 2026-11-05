@@ -294,6 +294,31 @@ class TestThemeCoordinator(unittest.TestCase):
         journal = next((self.env.state_dir / "transactions").glob("*/manifest.json"))
         self.assertEqual((journal.parent / "backups/0").read_bytes(), b"original")
 
+    def test_fifo_destination_is_rejected_without_reading(self):
+        self.first.unlink()
+        os.mkfifo(self.first)
+        read = Path.read_bytes
+        def guarded(path):
+            if path == self.first:
+                self.fail('planner attempted to read a FIFO')
+            return read(path)
+        with patch.object(Path, 'read_bytes', guarded):
+            with self.assertRaisesRegex(ValueError, 'regular'):
+                self.apply(self.coordinator())
+
+    def test_same_content_symlink_is_not_treated_as_unchanged(self):
+        external = self.env.home_dir / 'personal.conf'
+        external.write_text('changed')
+        self.first.unlink()
+        self.first.symlink_to(external)
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        self.assertFalse(self.first.is_symlink())
+        self.assertEqual(external.read_text(), 'changed')
+        coordinator.rollback()
+        self.assertTrue(self.first.is_symlink())
+        self.assertEqual(self.first.resolve(), external)
+
     def test_atomic_writer_replaces_symlink_without_overwriting_its_target(self):
         external = self.env.home_dir / "external.conf"
         external.write_text("personal")
