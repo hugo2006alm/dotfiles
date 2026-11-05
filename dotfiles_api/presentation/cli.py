@@ -81,7 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login"):
+    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions"):
         command = commands.add_parser(name, allow_abbrev=False)
         # Suppressed defaults preserve options given before the subcommand.
         command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
@@ -398,8 +398,8 @@ def main(argv: list[str] | None = None) -> None:
         run_reload_detached(getattr(args, "verbose", False))
     elif args.command == "setup":
         facade.setup(setup_github=args.github)
-    elif args.command == "setup-login":
-        LoginSetupService(exec_ctx, env).apply()
+    elif args.command in {"setup-login", "repair-login-permissions"}:
+        LoginSetupService(exec_ctx, env).apply(permissions_only=args.command == "repair-login-permissions")
     elif args.command == "action":
         if not args.action_name:
             parser.error("action_name is required for the 'action' command")
