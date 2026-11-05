@@ -468,6 +468,5 @@ class TestInfrastructureImplementations(unittest.TestCase):
         self.assertFalse(r.supports("other"))
         
         # Check command
-        expected_cmd = "sudo /usr/bin/cp /home/user/.config/greetd/regreet.css /etc/greetd/regreet.css"
-        self.assertTrue(any(expected_cmd in cmd for cmd in executor.commands))
+        self.assertEqual(executor.commands, [])
 

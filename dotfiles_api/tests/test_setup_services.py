@@ -45,7 +45,7 @@ class TestSetupServices(unittest.TestCase):
 
         self.assertTrue(any("systemctl enable NetworkManager" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("ufw enable" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("sudoers.d" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("sudoers.d" in cmd for cmd in self.executor.commands))
 
     def test_user_setup_service(self) -> None:
         from dotfiles_api.application.services.user import UserSetupService

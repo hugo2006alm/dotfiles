@@ -199,3 +199,6 @@ We welcome bug reports and feature requests!
 This repository is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
 
 Copyright (c) 2026 Hugo Almeida.
+
+Login installation and legacy permission remediation are explicit interactive operations.
+See [login preflight, backups and TTY recovery](docs/login-recovery.md).

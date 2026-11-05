@@ -1,6 +1,4 @@
-import os
 import random
-import shutil
 from pathlib import Path
 from dotfiles_api.domain.contracts.action import Action
 from dotfiles_api.context.execution import ExecutionContext
@@ -60,31 +58,3 @@ class WallpaperAction(Action):
             cache_dir.mkdir(parents=True, exist_ok=True)
             last_wp_file.write_text(str(selected_wall))
 
-        target_bg = Path("/etc/greetd/regreet-background.jpg")
-        target_dir = target_bg.parent
-        is_writable = False
-        try:
-            if target_bg.exists() and os.access(target_bg, os.W_OK):
-                is_writable = True
-            elif not target_bg.exists() and target_dir.exists() and os.access(target_dir, os.W_OK):
-                is_writable = True
-        except Exception:
-            pass
-
-        if is_writable:
-            if shutil.which("convert"):
-                self._exec.execute([
-                    "convert", str(selected_wall),
-                    "-filter", "Gaussian",
-                    "-blur", "0x20",
-                    "-modulate", "70",
-                    str(target_bg)
-                ])
-            else:
-                if self._exec.dry_run:
-                    print(f"[DRY-RUN] Would copy {selected_wall} to {target_bg}")
-                else:
-                    try:
-                        shutil.copy(str(selected_wall), str(target_bg))
-                    except Exception:
-                        pass

@@ -7,6 +7,7 @@ from unittest.mock import patch
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.models.profile import Profile
+from dotfiles_api.domain.contracts import CommandResult
 from dotfiles_api.application.facade import DotfilesFacade
 
 
@@ -76,6 +77,14 @@ class TestDotfilesFacade(unittest.TestCase):
 
 
 class TestCliToggle(unittest.TestCase):
+    def setUp(self):
+        background = patch("subprocess.Popen")
+        background.start()
+        self.addCleanup(background.stop)
+        executor = patch("dotfiles_api.presentation.cli.SystemCommandExecutor")
+        executor.start().return_value.execute.return_value = CommandResult("", "", 0)
+        self.addCleanup(executor.stop)
+
     def _theme_home(self) -> tempfile.TemporaryDirectory:
         temp_dir = tempfile.TemporaryDirectory()
         themes_dir = Path(temp_dir.name) / ".config" / "themes"
@@ -119,6 +128,14 @@ class TestCliToggle(unittest.TestCase):
 
 
 class TestCliCommands(unittest.TestCase):
+    def setUp(self):
+        background = patch("subprocess.Popen")
+        background.start()
+        self.addCleanup(background.stop)
+        executor = patch("dotfiles_api.presentation.cli.SystemCommandExecutor")
+        executor.start().return_value.execute.return_value = CommandResult("", "", 0)
+        self.addCleanup(executor.stop)
+
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.DotfilesFacade")
     def test_cli_setup(self, mock_facade_class, mock_parse_args):

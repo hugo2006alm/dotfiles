@@ -8,9 +8,7 @@ class ReGreetReloadable(EventReloadable):
         self._env = env
 
     def reload(self) -> None:
-        src = self._env.home_dir / ".config" / "greetd" / "regreet.css"
-        dst = "/etc/greetd/regreet.css"
-        self._exec.execute(["sudo", "/usr/bin/cp", str(src), dst])
+        print("Login theme prepared. Run dotfiles setup-login in a terminal to update greetd.")
 
     def supports(self, generator_name: str) -> bool:
         return generator_name in ["regreet", "greetd"]

@@ -1,4 +1,6 @@
 from pathlib import Path
+from contextlib import nullcontext
+from dotfiles_api.infrastructure.login_lock import login_inputs_lock
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.domain.contracts.linker import Linker
@@ -39,7 +41,8 @@ class DotfilesFacade:
         self._install_service.install_profile(profile)
 
     def apply_theme(self, theme_name: str) -> None:
-        self._theme_service.apply_theme(theme_name)
+        with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+            self._theme_service.apply_theme(theme_name)
 
     def link(self) -> None:
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
@@ -49,7 +52,8 @@ class DotfilesFacade:
 
     def setup(self, setup_github: bool) -> None:
         if self._setup_service:
-            self._setup_service.run_setup(setup_github)
+            with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+                self._setup_service.run_setup(setup_github)
 
     def apply_all(self, profile: Profile, theme_name: str) -> None:
         self.apply_profile(profile)
