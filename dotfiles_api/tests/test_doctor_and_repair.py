@@ -76,6 +76,107 @@ class TestDoctorAndRepair(unittest.TestCase):
                 repairs.apply(plan.id)
         actions["configure"].assert_not_called()
 
+    def test_invalid_ini_is_reported_without_crashing(self):
+        from dotfiles_api.domain.artifacts import GeneratedArtifact
+        path = self.store.resolve_path("ghostty-colors").with_suffix(".ini")
+        path.parent.mkdir(parents=True)
+        path.write_text("not an ini section\n")
+        self.store._mappings["ghostty-colors"] = path
+        generator = self.planner.generators[0]
+        with patch.object(generator, "render", return_value=[GeneratedArtifact("ghostty-colors", "[section]\na=b\n")]), \
+                patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        finding = next(item for item in report.findings if item.id == "output:ghostty-colors")
+        self.assertEqual(finding.severity, "error")
+        self.assertIn("Invalid output", finding.message)
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_doctor_fifo_output_returns_promptly(self):
+        import subprocess, sys
+        script = '''
+import os, tempfile
+from pathlib import Path
+from unittest.mock import patch
+from dotfiles_api.tests.test_doctor_and_repair import TestDoctorAndRepair
+case = TestDoctorAndRepair(); case.setUp()
+try:
+    path = case.store.resolve_path("ghostty-colors")
+    path.parent.mkdir(parents=True)
+    os.mkfifo(path)
+    with patch.dict(os.environ, {}, clear=True):
+        report = case.doctor.run()
+    assert any(item.severity == "error" for item in report.findings)
+finally:
+    case.doCleanups()
+'''
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX FIFO")
+    def test_doctor_compiled_css_fifo_returns_promptly(self):
+        import subprocess, sys
+        script = '''
+import dataclasses, os
+from unittest.mock import patch
+from dotfiles_api.tests.test_doctor_and_repair import TestDoctorAndRepair
+from dotfiles_api.application.application_registry import ApplicationRegistry
+from dotfiles_api.application.planner import ThemePlanner
+from dotfiles_api.application.store import ArtifactStore
+from dotfiles_api.application.transaction import ConfigTransaction
+from dotfiles_api.domain.events import EventBus
+from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
+from dotfiles_api.infrastructure.file_writer import SystemFileWriter
+case = TestDoctorAndRepair(); case.setUp()
+try:
+    spec = dataclasses.replace(next(s for s in APPLICATIONS if s.id == "waybar"), dependencies=())
+    registry = ApplicationRegistry((spec,))
+    store = ArtifactStore(registry.artifact_paths(case.env))
+    tx = ConfigTransaction(case.env, store, SystemFileWriter())
+    case.doctor.applications = registry
+    case.doctor.planner = ThemePlanner(case.env, store, registry.generators(tx, EventBus()), registry)
+    path = store.resolve_path("waybar-style")
+    path.parent.mkdir(parents=True)
+    os.mkfifo(path)
+    with patch.dict(os.environ, {}, clear=True):
+        report = case.doctor.run()
+    assert any(item.id == "output:waybar-style" and item.severity == "error" for item in report.findings)
+finally:
+    case.doCleanups()
+'''
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_bad_stow_source_does_not_hide_later_missing_link(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "repo/home"
+            source.mkdir(parents=True)
+            (source / "a-broken").symlink_to("missing")
+            (source / "z-valid").write_text("content")
+            env = EnvironmentContext(root / "user", root / "repo", "tester")
+            doctor = DoctorService(env, self.registry, self.planner, self.doctor.theme_store,
+                                   self.query, inventory=lambda: set())
+            findings = []
+            doctor._links(findings)
+            self.assertTrue(any(item.severity == "unknown" and "a-broken" in item.id for item in findings))
+            self.assertTrue(any(item.severity == "error" and "z-valid" in item.id for item in findings))
+
+    def test_repair_rechecks_next_operation_after_prior_action(self):
+        from dotfiles_api.domain.models.diagnostic import Diagnostic
+        from dotfiles_api.domain.models.diagnostic_report import DiagnosticReport
+        stable = DiagnosticReport((Diagnostic("link:a", "error", "missing", ("link",), evidence="old"),
+                                   Diagnostic("output:a", "error", "stale", ("configure",), evidence="old")))
+        changed = DiagnosticReport((stable.findings[0], Diagnostic("output:a", "error", "personal edit", ("configure",), evidence="new")))
+        doctor = Mock()
+        doctor.run.side_effect = [stable, stable, stable, changed]
+        actions = {"link": Mock(), "configure": Mock()}
+        repair = RepairService(doctor, actions)
+        with contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(ValueError, "changed"):
+                repair.apply(repair.plan().id)
+        actions["link"].assert_called_once()
+        actions["configure"].assert_not_called()
+
     def test_privileged_fixes_are_never_executed(self):
         self.doctor.login_dir.mkdir(parents=True)
         path = self.doctor.login_dir / "regreet.toml"

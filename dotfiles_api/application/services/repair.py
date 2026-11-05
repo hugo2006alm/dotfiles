@@ -22,5 +22,11 @@ class RepairService:
             if item.privileged or name not in self.SAFE or name not in self.actions:
                 print(f"Manual repair required: {item.message}")
                 continue
+            # Earlier steps or another process may change the next operation's inputs.
+            current = self.doctor.run()
+            expected = tuple(finding for finding in plan.report.findings if finding.repair == item.repair)
+            actual = tuple(finding for finding in current.findings if finding.repair == item.repair)
+            if actual != expected:
+                raise ValueError(f"Repair preconditions changed for {name}; review a new repair plan")
             self.actions[name](args)
         return self.doctor.run()

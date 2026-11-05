@@ -10,6 +10,7 @@ from dotfiles_api.application.validation import ArtifactValidator
 from dotfiles_api.domain.models.diagnostic import Diagnostic
 from dotfiles_api.domain.models.diagnostic_report import DiagnosticReport
 from dotfiles_api.infrastructure.package_inventory import PackageInventory
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 
 
 class DoctorService:
@@ -121,7 +122,8 @@ class DoctorService:
                     path = self.planner.store.resolve_path(style.output, name)
                     self.env.validate_output_path(path)
                     expected = ThemeStyler.source_digest(self.env, style, rendered)
-                    content = path.read_text() if path.exists() else ""
+                    raw = read_regular_file(path)
+                    content = raw.decode("utf-8") if raw is not None else ""
                     ArtifactValidator().validate(path, content)
                     parts = content.split("\n", 2)
                     current = (len(parts) == 3 and parts[0] == f"/* shade-raid-source: {expected} */"
@@ -135,15 +137,18 @@ class DoctorService:
 
     def _links(self, findings):
         for source in sorted(self.env.source_home.rglob("*")):
-            if source.is_dir():
-                continue
-            target = self.env.home_dir / source.relative_to(self.env.source_home)
-            if target.is_symlink() and target.resolve() == source.resolve():
-                continue
-            missing = not target.exists()
-            findings.append(Diagnostic("link:" + str(target), "error" if missing else "warning",
-                ("Missing Stow link: " if missing else "Personal/other source overrides Stow: ") + str(target),
-                ("link",) if missing else (), evidence=str(source.stat().st_mtime_ns) + str(target.readlink() if target.is_symlink() else "")))
+            try:
+                if source.is_dir():
+                    continue
+                target = self.env.home_dir / source.relative_to(self.env.source_home)
+                if target.is_symlink() and target.resolve() == source.resolve() and source.exists():
+                    continue
+                missing = not target.exists()
+                findings.append(Diagnostic("link:" + str(target), "error" if missing else "warning",
+                    ("Missing Stow link: " if missing else "Personal/other source overrides Stow: ") + str(target),
+                    ("link",) if missing else (), evidence=str(source.stat().st_mtime_ns) + str(target.readlink() if target.is_symlink() else "")))
+            except (OSError, ValueError) as error:
+                findings.append(Diagnostic("link:" + str(source), "unknown", f"Cannot inspect Stow entry {source}: {error}"))
 
     def _permissions(self, findings):
         for name in ("commands.jsonl", "installation.json", "active-theme"):

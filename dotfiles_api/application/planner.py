@@ -3,6 +3,7 @@ from dotfiles_api.application.store import ArtifactStore
 from dotfiles_api.domain.models.planned_artifact import PlannedArtifact
 from dotfiles_api.domain.models.theme_plan import ThemePlan
 from dotfiles_api.application.validation import ArtifactValidator
+from dotfiles_api.infrastructure.safe_file import read_regular_file
 
 
 class ThemePlanner:
@@ -33,7 +34,7 @@ class ThemePlanner:
                     self.registry.validate_content(generator.name, path, artifact.content)
                 else:
                     ArtifactValidator().validate(path, artifact.content)
-                original = path.read_bytes() if path.exists() else None
+                original = read_regular_file(path)
                 link = str(path.readlink()) if path.is_symlink() else None
                 items.append(PlannedArtifact(generator.name, artifact, path, original, link))
         return ThemePlan(theme_name, tuple(items))
