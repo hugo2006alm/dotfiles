@@ -150,7 +150,7 @@ class TestCliCommands(unittest.TestCase):
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.DotfilesFacade")
     def test_cli_setup(self, mock_facade_class, mock_parse_args):
-        mock_parse_args.return_value = argparse.Namespace(command="setup", dry_run=False, theme="shade-raid", github=True)
+        mock_parse_args.return_value = argparse.Namespace(command="setup", dry_run=False, theme=None, github=True)
         mock_facade = mock_facade_class.return_value
 
         from dotfiles_api.presentation.cli import main

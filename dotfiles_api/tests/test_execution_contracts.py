@@ -66,7 +66,6 @@ class TestExecutionContracts(unittest.TestCase):
         with contextlib.ExitStack() as stack:
             facade = stack.enter_context(patch("dotfiles_api.presentation.cli.DotfilesFacade"))
             stack.enter_context(patch("dotfiles_api.presentation.cli.ActionService"))
-            stack.enter_context(patch("dotfiles_api.presentation.cli.detect_graphics_packages", return_value=[]))
             stack.enter_context(patch("dotfiles_api.presentation.cli.open", mock_open(), create=True))
             stack.enter_context(patch("fcntl.flock"))
             stack.enter_context(patch("os.remove"))

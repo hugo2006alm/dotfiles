@@ -76,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = CommandParser(description="Modular Dotfiles API CLI Manager", allow_abbrev=False)
     parser.set_defaults(github=False)
     parser.add_argument("--dry-run", action="store_true", help="Log commands instead of running them")
-    parser.add_argument("--theme", default="shade-raid", help="The name of the theme to apply")
+    parser.add_argument("--theme", default=None, help="The name of the theme to apply")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -84,7 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name, allow_abbrev=False)
         # Suppressed defaults preserve options given before the subcommand.
         command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
-        if name in {"configure", "apply-all"}:
+        if name in {"configure", "apply-all", "setup"}:
             command.add_argument("--theme", default=argparse.SUPPRESS)
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
         if name == "setup":
@@ -100,6 +100,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command in {"configure", "apply-all"} and args.theme is None:
+        args.theme = "shade-raid"
     if args.command == "setup" and os.geteuid() == 0:
         raise RuntimeError("Run setup as a normal user, not root")
 
@@ -398,10 +400,12 @@ def main(argv: list[str] | None = None) -> None:
         release_lock_fn()
         facade.reload()
     elif args.command == "setup":
+        setup_options = {"setup_github": args.github, "enable_ssh_server": getattr(args, "ssh_server", False)}
         if getattr(args, "change_shell", False):
-            facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False), change_shell=True)
-        else:
-            facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False))
+            setup_options["change_shell"] = True
+        if args.theme is not None:
+            setup_options["theme_name"] = args.theme
+        facade.setup(**setup_options)
     elif args.command in {"setup-login", "repair-login-permissions"}:
         LoginSetupService(exec_ctx, env).apply(permissions_only=args.command == "repair-login-permissions")
     elif args.command == "action":

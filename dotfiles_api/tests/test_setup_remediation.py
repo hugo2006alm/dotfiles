@@ -151,3 +151,20 @@ class TestSetupRemediation(unittest.TestCase):
             command.write_text('#!/bin/sh\nprintf "%s\\n" core extra multilib\n')
             result = subprocess.run(['bash', str(root / 'scripts/check-desktop-prerequisites.sh')], env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_setup_accepts_explicit_theme_and_preserves_default_when_omitted(self):
+        from dotfiles_api.presentation.cli import build_parser
+        parser = build_parser()
+        self.assertIsNone(parser.parse_args(['setup']).theme)
+        self.assertEqual(parser.parse_args(['setup', '--theme', 'dark']).theme, 'dark')
+        self.assertEqual(parser.parse_args(['--theme', 'dark', 'setup']).theme, 'dark')
+        from dotfiles_api.application.services.setup import SetupService
+        with tempfile.TemporaryDirectory() as temp:
+            env = EnvironmentContext(Path(temp), Path(temp) / 'repo', 'tester')
+            theme = Mock()
+            theme.get_active_theme.return_value = 'current'
+            service = SetupService(env, ExecutionContext(False, Mock()), Mock(), Mock(), theme,
+                                   Mock(), Mock(), Mock(), graphics_package_detector=lambda: [])
+            with patch('os.geteuid', return_value=1000), patch('sys.stdin.isatty', return_value=False):
+                service.run_setup(theme_name='dark')
+            theme.apply_theme.assert_called_once_with('dark')
