@@ -17,7 +17,9 @@ class InstallService:
             self._env.validate_output_path(path)
             if path.exists():
                 previous = json.loads(path.read_text(encoding="utf-8"))
-                for key in ("profiles", "packages", "optional_packages"):
+                if previous.get("version", 1) not in (1, 2):
+                    raise ValueError("Unsupported installation selection version")
+                for key in ("profiles", "packages", "optional_packages", "requested_profiles", "explicit_packages"):
                     if not isinstance(previous.get(key, []), list) or not all(isinstance(v, str) for v in previous.get(key, [])):
                         raise ValueError(f"Invalid installation selection: {key}")
         plan = self._planner.build(profile, dry_run=dry_run)
@@ -28,9 +30,29 @@ class InstallService:
         for source_id, packages in plan.groups:
             self._sources[source_id].install(list(packages))
         if path:
-            selection = {"version": 1}
-            for key, values in (("profiles", profile.selected_profiles), ("packages", profile.get_packages()),
-                                ("optional_packages", profile.optional_packages)):
-                selection[key] = list(dict.fromkeys([*previous.get(key, []), *values]))
+            # Version 1 stored resolved historical packages as if they were choices.
+            # Only profile choices and explicitly selected extras are durable intent.
+            requested = previous.get("requested_profiles", previous.get("profiles", []))
+            explicit = previous.get("explicit_packages", previous.get("optional_packages", []))
+            requested = list(dict.fromkeys([*requested, *(profile.requested_profiles or profile.selected_profiles)]))
+            explicit = list(dict.fromkeys([*explicit, *profile.optional_packages]))
+            selection = {"version": 2, "requested_profiles": requested, "explicit_packages": explicit,
+                         "profiles": requested, "optional_packages": explicit,
+                         "packages": profile.get_packages(), "package_status": "complete",
+                         "desktop_configuration_status": previous.get("desktop_configuration_status", "not_recorded"),
+                         "session_status": previous.get("session_status", "not_checked")}
             SystemFileWriter().write(path, json.dumps(selection, indent=2) + "\n")
         return plan
+
+    def record_setup_status(self, status):
+        if status not in {"in_progress", "failed", "complete"}:
+            raise ValueError(f"Invalid setup status: {status}")
+        if not self._env or (self._exec and self._exec.dry_run):
+            return
+        path = self._env.state_dir / "installation.json"
+        self._env.validate_output_path(path)
+        if not path.is_file():
+            raise RuntimeError("Package installation status missing; cannot record setup")
+        state = json.loads(path.read_text(encoding="utf-8"))
+        state["desktop_configuration_status"] = status
+        SystemFileWriter().write(path, json.dumps(state, indent=2) + "\n")

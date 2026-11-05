@@ -94,6 +94,7 @@ class TestSoftwareProfiles(unittest.TestCase):
         from dotfiles_api.infrastructure.package_inventory import PackageInventory
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
+            (root / "ALPM_DB_VERSION").write_text("9\n")
             (root / "git-1-1").mkdir()
             (root / "git-1-1/desc").write_text("%NAME%\ngit\n\n%VERSION%\n1-1\n")
             self.assertEqual(PackageInventory(root).names(), {"git"})

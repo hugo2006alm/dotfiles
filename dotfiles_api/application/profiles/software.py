@@ -38,7 +38,8 @@ class SoftwareProfileResolver:
                 visit(dependency)
             visiting.remove(name)
             ordered.append(name)
-        for name in names or ["desktop"]:
+        requested = ["desktop"] if names is None else list(names)
+        for name in requested:
             visit(name)
         features = [Feature(spec.id, list(spec.packages), list(spec.capabilities))
                     for spec in self.applications if set(spec.profiles) & set(ordered)]
@@ -47,4 +48,4 @@ class SoftwareProfileResolver:
         selected = tuple(dict.fromkeys(optional_packages or []))
         if selected:
             features.append(Feature("optional", list(selected), []))
-        return Profile("+".join(names or ["desktop"]), features, tuple(ordered), selected)
+        return Profile("+".join(requested), features, tuple(ordered), selected, tuple(dict.fromkeys(requested)))

@@ -72,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--profile", dest="profiles", action="append", help="Composable software profile (repeatable)")
             command.add_argument("--package", dest="packages", action="append", help="Additional package (repeatable)")
         if name == "setup":
+            command.add_argument("--interactive", action="store_true", help="Select optional packages interactively")
             command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
             command.add_argument("--ssh-server", action="store_true", help="Enable incoming SSH and open its firewall rule")
         if name == "action":
@@ -141,7 +142,8 @@ def main(argv: list[str] | None = None) -> None:
     profile_resolver = DesktopProfileResolver()
     profiles = getattr(args, "profiles", None)
     packages = getattr(args, "packages", None)
-    desktop_profile = profile_resolver.resolve_profiles(profiles, packages) if profiles or packages else profile_resolver.resolve()
+    isolated = args.command == "install" and packages and not profiles
+    desktop_profile = profile_resolver.resolve_profiles([] if isolated else profiles, packages) if profiles or packages else profile_resolver.resolve()
 
     services_setup_svc = ServicesSetupService(exec_ctx, env)
     user_setup_svc = UserSetupService(exec_ctx, env)
@@ -158,6 +160,7 @@ def main(argv: list[str] | None = None) -> None:
         profile_resolver=profile_resolver,
         selected_profiles=profiles,
         selected_packages=packages,
+        interactive=getattr(args, "interactive", False),
     )
 
     facade = DotfilesFacade(

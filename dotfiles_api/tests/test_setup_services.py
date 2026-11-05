@@ -95,6 +95,7 @@ class TestSetupServices(unittest.TestCase):
             user_service=mock_user,
             extras_service=mock_extras,
             optional_package_selector=mock_selector,
+            interactive=True,
             graphics_package_detector=lambda: ["mesa", "vulkan-intel"],
         )
 
