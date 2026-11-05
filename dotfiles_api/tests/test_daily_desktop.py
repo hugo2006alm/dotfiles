@@ -2,6 +2,9 @@ import contextlib
 import io
 import json
 import re
+import os
+import shutil
+import subprocess
 import tempfile
 import unittest
 import shutil
@@ -29,6 +32,43 @@ class TestDailyDesktop(unittest.TestCase):
         rules = (ROOT / "home/.config/hypr/windowrules.lua").read_text()
         self.assertIn("monitor_w * 0.7", rules)
         self.assertIn("monitor_h * 0.7", rules)
+
+    @unittest.skipUnless(shutil.which('lua'), 'Requires Lua')
+    def test_expanded_keybind_loops_are_unique_and_actions_exist(self):
+        from dotfiles_api.application.services.action import ActionService
+        from dotfiles_api.presentation.cli import main
+        script = r'''
+local function stub() return 'dispatcher' end
+hl = {
+  dsp = { exec_cmd = function(cmd) return cmd end,
+          window = {close=stub, fullscreen=stub, move=stub, resize=stub, float=stub, pseudo=stub, drag=stub},
+          exit=stub, focus=stub },
+  bind = function(key, action) print(key .. '\t' .. tostring(action)) end
+}
+dofile(arg[1])
+'''
+        result = subprocess.run(['lua', '-', str(ROOT / 'home/.config/hypr/keybinds.lua')],
+                                input=script, capture_output=True, text=True, timeout=10, check=True)
+        bindings = [line.split('\t', 1) for line in result.stdout.splitlines()]
+        keys = [key for key, _ in bindings]
+        self.assertEqual(len(keys), len(set(keys)), 'expanded keybinds must not conflict')
+        for key in ('SUPER + 1', 'SUPER + SHIFT + 0', 'SUPER + KP_End', 'SUPER + SHIFT + KP_Insert'):
+            self.assertIn(key, keys)
+        registered = set()
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {'DOTFILES_DIR': str(ROOT)}, clear=True), \
+                patch('pathlib.Path.home', return_value=Path(temp)), \
+                patch.object(ActionService, 'register', autospec=True, side_effect=lambda _, name, action: registered.add(name)), \
+                patch.object(ActionService, 'run_action'):
+            main(['--dry-run', 'action', 'screenshot'])
+        from dotfiles_api.infrastructure.application_catalog import APPLICATIONS
+        launchable = {spec.id for spec in APPLICATIONS if spec.launch}
+        for key, command in bindings:
+            launch = re.match(r"dotfiles action launch ([a-z0-9-]+)", command)
+            if launch:
+                self.assertIn(launch.group(1), launchable, f"{key} refers to unavailable launcher")
+            match = re.match(r'dotfiles action ([a-z0-9-]+)', command)
+            if match:
+                self.assertIn(match.group(1), registered, f'{key} refers to unregistered action')
 
     def test_media_targets_a_playing_player_before_a_paused_player(self):
         executor = MockCommandExecutor()
