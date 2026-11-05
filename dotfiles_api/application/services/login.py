@@ -1,74 +1,47 @@
+import json
+import subprocess
 import sys
-import tempfile
-import tomllib
 import uuid
 from pathlib import Path
 
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
+from dotfiles_api.infrastructure.login_installation import LoginInstallation
+from dotfiles_api.infrastructure.login_lock import login_inputs_lock
+from dotfiles_api.infrastructure.login_preflight import LoginPreflight
 
 
 class LoginSetupService:
-    """Explicit installation of root-owned login files with a recovery snapshot."""
+    """Explicit interactive login installation, separate from ordinary theme refresh."""
 
-    def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
-        self._exec = exec_ctx
-        self._env = env
+    def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext, *, preflight=None, run=None, installer_preflight=None):
+        self._exec, self._env = exec_ctx, env
+        self._preflight = preflight or LoginPreflight(env)
+        self._run = run or subprocess.run
+        self._installer_preflight = installer_preflight or LoginInstallation(self._preflight.root).preflight
 
-    def apply(self) -> Path | None:
+    def apply(self, permissions_only=False) -> Path | None:
         if not self._exec.dry_run and not sys.stdin.isatty():
-            raise RuntimeError("Login setup requires an interactive terminal; run dotfiles setup-login yourself.")
-
-        source = self._env.home_dir / ".config" / "greetd"
-        files = {name: (source / name).read_text() for name in
-                 ("hyprland-greet.conf", "regreet.toml", "regreet.css")}
-        tomllib.loads(files["regreet.toml"])
-        if any(not content.strip() for content in files.values()):
-            raise ValueError("Login configuration is empty; run dotfiles configure first.")
-        files["config.toml"] = '''[terminal]
-vt = 1
-
-[default_session]
-command = "Hyprland --config /etc/greetd/hyprland-greet.conf"
-user = "greeter"
-'''
-        tomllib.loads(files["config.toml"])
+            raise RuntimeError('Login changes require an interactive terminal; run this command yourself.')
+        # Reject predictable input errors before creating even the unprivileged lock.
+        payload = self._preflight.build(permissions_only=permissions_only)
+        self._installer_preflight(payload)
         if self._exec.dry_run:
-            print("[DRY-RUN] Back up /etc/greetd and managed sudoers; install root:root 0644 login files; enable greetd.")
-            return None
-
-        backup_root = Path("/var/backups/shade-raid")
-        backup = backup_root / uuid.uuid4().hex
-        self._exec.execute(["sudo", "install", "-d", "-o", "root", "-g", "root",
-                            "-m", "0700", str(backup_root), str(backup)])
-        snapshot = '''set -eu
-backup=$1
-if [ -e /etc/greetd ] || [ -L /etc/greetd ]; then
-    cp -a -- /etc/greetd "$backup/greetd"
-else
-    touch "$backup/greetd.absent"
-fi
-for name in shade-raid plymouth_sync regreet-theme; do
-    path=/etc/sudoers.d/$name
-    if [ -e "$path" ] || [ -L "$path" ]; then
-        cp -a -- "$path" "$backup/sudoers.$name"
-    fi
-done
-'''
-        self._exec.execute(["sudo", "sh", "-c", snapshot, "shade-raid-backup", str(backup)])
-        print(f"Login backup: {backup}")
-        self._exec.execute(["sudo", "install", "-d", "-o", "root", "-g", "root",
-                            "-m", "0755", "/etc/greetd"])
-        with tempfile.TemporaryDirectory(prefix="shade-raid-login-") as temp:
-            for name, content in files.items():
-                staged = Path(temp) / name
-                staged.write_text(content)
-                staged.chmod(0o600)
-                self._exec.execute(["sudo", "install", "-T", "-o", "root", "-g", "root",
-                                    "-m", "0644", str(staged), str(Path("/etc/greetd") / name)])
-        self._exec.execute(["sudo", "rm", "-f", "--", "/etc/sudoers.d/shade-raid",
-                            "/etc/sudoers.d/plymouth_sync", "/etc/sudoers.d/regreet-theme"])
-        self._exec.execute(["sudo", "visudo", "-c"])
-        self._exec.execute(["sudo", "systemctl", "enable", "greetd"])
-        print("Login files installed. Keep a TTY open and verify login before rebooting.")
-        return backup
+            operation = 'secure existing login permissions' if permissions_only else 'install validated login snapshot'
+            print(f'[DRY-RUN] Would back up and {operation}; preserve custom sudoers and display-manager enablement.')
+            return
+        with login_inputs_lock(self._env.home_dir):
+            payload = self._preflight.build(permissions_only=permissions_only)
+            self._installer_preflight(payload)
+            payload['backup_id'] = uuid.uuid4().hex
+            # Pass immutable source text and JSON, never a user-writable helper or staging path to root.
+            folder = Path(__file__).resolve().parents[2] / 'infrastructure'
+            preflight_code = (folder / 'login_preflight.py').read_text(encoding='utf-8-sig')
+            installer_code = (folder / 'login_installation.py').read_text(encoding='utf-8-sig')
+            installer_code = installer_code.replace('from dotfiles_api.infrastructure.login_preflight import LoginPreflight\n', '')
+            result = self._run(['sudo', '/usr/bin/python3', '-I', '-c', preflight_code + '\n' + installer_code,
+                                 json.dumps(payload)])
+            if result.returncode:
+                raise RuntimeError(f'Login operation failed ({result.returncode}); inspect the printed backup/recovery status.')
+        print('Keep a recovery TTY open. Review docs/login-recovery.md before manually enabling greetd.')
+        return Path('/var/backups/shade-raid') / ('login-' + payload['backup_id'])

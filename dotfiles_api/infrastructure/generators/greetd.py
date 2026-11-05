@@ -12,13 +12,9 @@ class GreetdGenerator(BaseGenerator):
     def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
         is_dark = "dark" in theme_name
         is_dark_str = "true" if is_dark else "false"
-        bg_file = "/etc/greetd/regreet-background.jpg"
+        # Use the compositor/GTK fallback; no external image dependency.
 
-        content = f"""[background]
-path = "{bg_file}"
-fit = "Cover"
-
-[GTK]
+        content = f"""[GTK]
 application_prefer_dark_theme = {is_dark_str}
 """
 
