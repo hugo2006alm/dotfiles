@@ -5,3 +5,4 @@ class CommandResult:
     stdout: str
     stderr: str
     returncode: int
+    output_captured: bool = True

@@ -1,13 +1,16 @@
 import threading
 import fcntl
 import os
+import sys
 from dotfiles_api.domain.contracts.reloadable import Reloadable, EventReloadable
 from dotfiles_api.domain.events import ConfigGeneratedEvent, ReloadRequestedEvent
 
 class ReloadService:
-    def __init__(self, reloadables: list[Reloadable], verbose: bool = False) -> None:
+    def __init__(self, reloadables: list[Reloadable], verbose: bool = False,
+                 optional_reloadables: list[Reloadable] | None = None) -> None:
         self._reloadables = reloadables
         self._verbose = verbose
+        self._optional = {id(item) for item in optional_reloadables or []}
         self._event_reloadables = [
             r for r in reloadables if isinstance(r, EventReloadable)
         ]
@@ -27,14 +30,7 @@ class ReloadService:
 
         # 2. Acquire thread lock
         if not t_lock.acquire(blocking=False):
-            try:
-                with open(pending_file, "w") as pf:
-                    pf.write("1")
-            except Exception:
-                pass
-            if self._verbose:
-                print(f"[VERBOSE] Reload for {name} is already running in this process. Queued.")
-            return
+            raise RuntimeError(f"Refresh for {name} is already running; retry after it finishes")
 
         # 3. Acquire process file lock
         f = None
@@ -42,17 +38,10 @@ class ReloadService:
             f = open(lock_file, "w")
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            try:
-                with open(pending_file, "w") as pf:
-                    pf.write("1")
-            except Exception:
-                pass
-            if self._verbose:
-                print(f"[VERBOSE] Reload for {name} is already running in another process. Queued.")
             t_lock.release()
             if f:
                 f.close()
-            return
+            raise RuntimeError(f"Refresh for {name} is already running; retry after it finishes") from None
         except Exception:
             # Fallback in case of disk permission issues
             pass
@@ -84,30 +73,32 @@ class ReloadService:
                 pass
             t_lock.release()
 
-    def reload_all(self) -> list[threading.Thread]:
-        if self._verbose:
-            print(f"[VERBOSE] Reloading all {len(self._reloadables)} reloadables in parallel threads")
-        threads = []
-        for reloadable in self._reloadables:
+    def _reload(self, reloadables: list[Reloadable]) -> None:
+        errors = []
+        for reloadable in reloadables:
+            name = reloadable.__class__.__name__
             if self._verbose:
-                print(f"[VERBOSE] Spawning reload thread for: {reloadable.__class__.__name__}")
-            t = threading.Thread(target=self._safe_reload, args=(reloadable,))
-            t.start()
-            threads.append(t)
-        return threads
+                print(f"[VERBOSE] Reloading: {name}")
+            try:
+                self._safe_reload(reloadable)
+            except Exception as error:
+                if id(reloadable) in self._optional:
+                    print(f"[OPTIONAL] Refresh failed for {name}: {error}", file=sys.stderr)
+                else:
+                    errors.append((name, error))
+        if errors:
+            summary = "; ".join(f"{name}: {error}" for name, error in errors)
+            raise RuntimeError(f"{len(errors)} required refreshes failed: {summary}")
 
-    def handle_config_generated(self, event: ConfigGeneratedEvent) -> list[threading.Thread]:
+    def reload_all(self) -> None:
+        if self._verbose:
+            print(f"[VERBOSE] Reloading all {len(self._reloadables)} reloadables synchronously")
+        self._reload(self._reloadables)
+
+    def handle_config_generated(self, event: ConfigGeneratedEvent) -> None:
         if self._verbose:
             print(f"[VERBOSE] Received ConfigGeneratedEvent for generator: {event.generator_name}")
-        threads = []
-        for r in self._event_reloadables:
-            if r.supports(event.generator_name):
-                if self._verbose:
-                    print(f"[VERBOSE] Spawning reload thread for: {r.__class__.__name__}")
-                t = threading.Thread(target=self._safe_reload, args=(r,))
-                t.start()
-                threads.append(t)
-        return threads
+        self._reload([r for r in self._event_reloadables if r.supports(event.generator_name)])
 
     def handle_reload_requested(self, event: ReloadRequestedEvent) -> None:
         self.reload_all()
