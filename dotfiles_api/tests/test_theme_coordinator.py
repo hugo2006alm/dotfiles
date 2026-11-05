@@ -53,6 +53,30 @@ class TestThemeCoordinator(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             return coordinator.apply(Mock(), "shade-raid-dark", **kwargs)
 
+    def test_offline_refresh_is_persisted_and_retried_in_session(self):
+        from dotfiles_api.application.services.reload import ReloadService
+        from dotfiles_api.domain.contracts.reloadable import EventReloadable
+        class Handler(EventReloadable):
+            def __init__(self):
+                self.count = 0
+            def supports(self, name):
+                return name == 'example'
+            def reload(self):
+                self.count += 1
+        handler = Handler()
+        pending = self.env.state_dir / 'pending-refresh'
+        reloads = ReloadService([handler], runtime_dir=self.env.runtime_dir,
+                                pending_path=pending, output_guard=self.env.validate_output_path)
+        with patch.dict(os.environ, {}, clear=True):
+            reloads.reload_changed({'example'})
+        self.assertEqual(handler.count, 0)
+        self.assertTrue(pending.is_file())
+        self.assertEqual(pending.stat().st_mode & 0o777, 0o600)
+        with patch.dict(os.environ, {'WAYLAND_DISPLAY': 'wayland-test'}, clear=True):
+            reloads.reload_all()
+        self.assertEqual(handler.count, 1)
+        self.assertFalse(pending.exists())
+
     def test_all_generation_finishes_before_any_write_or_active_state_change(self):
         broken = Mock()
         broken.transaction = self.transaction
@@ -161,6 +185,50 @@ class TestThemeCoordinator(unittest.TestCase):
         self.assertEqual(self.first.read_text(), "external edit")
         self.assertFalse(self.second.exists())
 
+    def test_failed_partial_rollback_can_be_retried_without_overwriting_edits(self):
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        restore = SystemFileWriter.write_bytes
+        def fail_first(writer, path, content):
+            if path == self.first and content == b"original":
+                raise OSError("injected restore failure")
+            return restore(writer, path, content)
+        with patch.object(SystemFileWriter, "write_bytes", fail_first):
+            with self.assertRaisesRegex(RuntimeError, "injected restore failure"):
+                coordinator.rollback()
+        self.assertFalse(self.second.exists())
+        self.assertEqual(self.first.read_text(), "changed")
+        journal = next((self.env.state_dir / "transactions").glob("*/manifest.json"))
+        manifest = json.loads(journal.read_text())
+        self.assertEqual(manifest["status"], "rolling_back")
+        states = {record["artifact_id"]: record.get("recovery") for record in manifest["files"]}
+        self.assertEqual(states["first"], "restoring")
+        self.assertEqual(states["second"], "restored")
+        self.first.write_text("new personal edit")
+        with self.assertRaisesRegex(RuntimeError, "changed"):
+            coordinator.rollback()
+        self.assertEqual(self.first.read_text(), "new personal edit")
+        self.first.write_text("changed")
+        coordinator.rollback()
+        self.assertEqual(self.first.read_text(), "original")
+        self.assertFalse(self.second.exists())
+
+    def test_legacy_journal_is_recoverable_and_future_version_is_rejected(self):
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        journal = next((self.env.state_dir / 'transactions').glob('*/manifest.json'))
+        manifest = json.loads(journal.read_text())
+        self.assertEqual(manifest['version'], 1)
+        manifest['version'] = 99
+        journal.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, 'version'):
+            coordinator.rollback()
+        self.assertEqual(self.first.read_text(), 'changed')
+        manifest.pop('version')
+        journal.write_text(json.dumps(manifest))
+        coordinator.rollback()
+        self.assertEqual(self.first.read_text(), 'original')
+
     def test_manual_rollback_dry_run_is_read_only(self):
         coordinator = self.coordinator()
         self.apply(coordinator)
@@ -230,6 +298,31 @@ class TestThemeCoordinator(unittest.TestCase):
                 self.apply(coordinator)
         journal = next((self.env.state_dir / "transactions").glob("*/manifest.json"))
         self.assertEqual((journal.parent / "backups/0").read_bytes(), b"original")
+
+    def test_fifo_destination_is_rejected_without_reading(self):
+        self.first.unlink()
+        os.mkfifo(self.first)
+        read = Path.read_bytes
+        def guarded(path):
+            if path == self.first:
+                self.fail('planner attempted to read a FIFO')
+            return read(path)
+        with patch.object(Path, 'read_bytes', guarded):
+            with self.assertRaisesRegex(ValueError, 'regular'):
+                self.apply(self.coordinator())
+
+    def test_same_content_symlink_is_not_treated_as_unchanged(self):
+        external = self.env.home_dir / 'personal.conf'
+        external.write_text('changed')
+        self.first.unlink()
+        self.first.symlink_to(external)
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        self.assertFalse(self.first.is_symlink())
+        self.assertEqual(external.read_text(), 'changed')
+        coordinator.rollback()
+        self.assertTrue(self.first.is_symlink())
+        self.assertEqual(self.first.resolve(), external)
 
     def test_atomic_writer_replaces_symlink_without_overwriting_its_target(self):
         external = self.env.home_dir / "external.conf"

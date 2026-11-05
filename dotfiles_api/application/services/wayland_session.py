@@ -34,10 +34,23 @@ class WaylandSessionService:
 
     def start(self):
         external_agent = self._prepare_environment()
-        self.execution.execute(["systemctl", "--user", "daemon-reload"], step="session:units")
-        units = [spec.user_unit for spec in self.applications.specs if spec.user_unit] if self.applications else []
-        if external_agent:
-            units = [unit for unit in units if unit != "shade-raid-ssh-agent.service"]
-        if units:
-            self.execution.execute(["systemctl", "--user", "start", *units], step="session:start")
-        self._start_portal()
+        failures = []
+        try:
+            self.execution.execute(["systemctl", "--user", "daemon-reload"], step="session:units")
+        except Exception as error:
+            failures.append(f"daemon-reload: {error}")
+        else:
+            units = [spec.user_unit for spec in self.applications.specs if spec.user_unit] if self.applications else []
+            if external_agent:
+                units = [unit for unit in units if unit != "shade-raid-ssh-agent.service"]
+            for unit in units:
+                try:
+                    self.execution.execute(["systemctl", "--user", "start", unit], step=f"session:start:{unit}")
+                except Exception as error:
+                    failures.append(f"{unit}: {error}")
+        try:
+            self._start_portal()
+        except Exception as error:
+            failures.append(f"xdg-desktop-portal.service: {error}")
+        if failures:
+            raise RuntimeError("Wayland session startup failed: " + "; ".join(failures))

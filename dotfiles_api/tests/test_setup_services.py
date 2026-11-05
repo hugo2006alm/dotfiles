@@ -44,7 +44,7 @@ class TestSetupServices(unittest.TestCase):
         svc.setup_services()
 
         self.assertTrue(any("systemctl enable NetworkManager" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("ufw enable" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("ufw" in cmd for cmd in self.executor.commands))
         self.assertFalse(any("sudoers.d" in cmd for cmd in self.executor.commands))
 
     def test_user_setup_service(self) -> None:
@@ -52,7 +52,7 @@ class TestSetupServices(unittest.TestCase):
         svc = UserSetupService(self.exec_ctx, self.env)
 
         svc.setup_user(setup_github=False)
-        self.assertTrue(any("chsh -s /usr/bin/fish" in cmd for cmd in self.executor.commands))
+        self.assertFalse(any("chsh" in cmd for cmd in self.executor.commands))
         self.assertTrue(any("fc-cache" in cmd for cmd in self.executor.commands))
         self.assertFalse(any("rate-mirrors --protocol https arch" in cmd for cmd in self.executor.commands))
         self.assertFalse(any("reflector" in cmd for cmd in self.executor.commands))
@@ -79,6 +79,7 @@ class TestSetupServices(unittest.TestCase):
         mock_install_service = MagicMock()
         mock_linker = MagicMock()
         mock_theme_service = MagicMock()
+        mock_theme_service.get_active_theme.return_value = "shade-raid"
         mock_services = MagicMock()
         mock_user = MagicMock()
         mock_extras = MagicMock()
@@ -95,10 +96,11 @@ class TestSetupServices(unittest.TestCase):
             user_service=mock_user,
             extras_service=mock_extras,
             optional_package_selector=mock_selector,
+            interactive=True,
             graphics_package_detector=lambda: ["mesa", "vulkan-intel"],
         )
 
-        with patch("sys.stdin.isatty", return_value=True):
+        with patch("sys.stdin.isatty", return_value=True), patch("os.geteuid", return_value=1000):
             svc.run_setup(setup_github=True)
 
         mock_selector.select.assert_called_once()

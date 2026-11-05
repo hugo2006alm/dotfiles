@@ -7,6 +7,7 @@ class Profile:
     features: list[Feature]
     selected_profiles: tuple[str, ...] = ()
     optional_packages: tuple[str, ...] = ()
+    requested_profiles: tuple[str, ...] = ()
 
     def get_packages(self) -> list[str]:
         seen = set()

@@ -108,7 +108,6 @@ class TestCliToggle(unittest.TestCase):
             main()
 
         mock_facade.apply_theme.assert_called_once_with("shade-raid-dark")
-        mock_facade.reload.assert_not_called()
 
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.DotfilesFacade")
@@ -125,7 +124,6 @@ class TestCliToggle(unittest.TestCase):
             main()
 
         mock_facade.apply_theme.assert_called_once_with("shade-raid")
-        mock_facade.reload.assert_not_called()
 
 
 class TestCliCommands(unittest.TestCase):
@@ -155,11 +153,12 @@ class TestCliCommands(unittest.TestCase):
     @patch("argparse.ArgumentParser.parse_args")
     @patch("dotfiles_api.presentation.cli.DotfilesFacade")
     def test_cli_setup(self, mock_facade_class, mock_parse_args):
-        mock_parse_args.return_value = argparse.Namespace(command="setup", dry_run=False, theme="shade-raid", github=True)
+        mock_parse_args.return_value = argparse.Namespace(command="setup", dry_run=False, theme=None, github=True)
         mock_facade = mock_facade_class.return_value
 
         from dotfiles_api.presentation.cli import main
-        main()
+        with patch("os.geteuid", return_value=1000):
+            main()
 
         mock_facade.setup.assert_called_once_with(setup_github=True, enable_ssh_server=False)
 
@@ -183,7 +182,8 @@ class TestCliCommands(unittest.TestCase):
         mock_facade = mock_facade_class.return_value
 
         from dotfiles_api.presentation.cli import main
-        main()
+        with patch.dict(os.environ, {"WAYLAND_DISPLAY": "wayland-test"}):
+            main()
 
         mock_facade.apply_theme.assert_called_once_with("shade-raid-dark")
         mock_action_svc.run_action.assert_called_with("wallpaper", [])

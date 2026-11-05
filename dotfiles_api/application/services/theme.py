@@ -16,6 +16,9 @@ class ThemeService:
         self._coordinator = coordinator
         self._on_applied = on_applied
 
+    def get_active_theme(self) -> str:
+        return self._store.get_active_theme()
+
     def apply_theme(self, theme_name: str):
         tokens = self._loader.load(theme_name)
         if self._coordinator is not None:
