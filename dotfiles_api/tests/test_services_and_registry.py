@@ -188,11 +188,19 @@ class TestThemeService(unittest.TestCase):
         self.assertEqual(events[0].tokens.colors.colors["bg"], "#111")
 
 class TestReloadService(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.runtime = Path(temp.name)
+
+    def service(self, **kwargs):
+        return ReloadService(runtime_dir=self.runtime, **kwargs)
+
     def test_reload_all(self):
         # Arrange
         r1 = MockReloadable()
         r2 = MockReloadable2()
-        reload_svc = ReloadService(reloadables=[r1, r2])
+        reload_svc = self.service(reloadables=[r1, r2])
 
         # Act
         self.assertIsNone(reload_svc.reload_all())
@@ -204,7 +212,7 @@ class TestReloadService(unittest.TestCase):
     def test_reload_on_event(self):
         # Arrange
         r = MockEventReloadable("waybar")
-        reload_svc = ReloadService(reloadables=[r])
+        reload_svc = self.service(reloadables=[r])
 
         # Act
         self.assertIsNone(reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar")))
@@ -217,7 +225,7 @@ class TestReloadService(unittest.TestCase):
         r_waybar = MockEventReloadable("waybar")
         r_swaync = MockEventReloadable("swaync")
         r_portal = MockReloadable() # not an EventReloadable
-        reload_svc = ReloadService(reloadables=[r_waybar, r_swaync, r_portal])
+        reload_svc = self.service(reloadables=[r_waybar, r_swaync, r_portal])
 
         # Act
         self.assertIsNone(reload_svc.handle_config_generated(ConfigGeneratedEvent(generator_name="waybar")))
@@ -230,7 +238,7 @@ class TestReloadService(unittest.TestCase):
     @unittest.mock.patch("builtins.print")
     def test_reload_service_verbose(self, mock_print):
         r = MockEventReloadable("waybar")
-        reload_svc = ReloadService(reloadables=[r], verbose=True)
+        reload_svc = self.service(reloadables=[r], verbose=True)
         
         self.assertIsNone(reload_svc.reload_all())
             

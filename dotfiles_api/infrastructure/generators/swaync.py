@@ -9,8 +9,9 @@ from dotfiles_api.application.transaction import ConfigTransaction
 from dotfiles_api.domain.events import EventBus
 
 class SwayncGenerator(BaseGenerator):
-    def __init__(self, name: str = "swaync", transaction: ConfigTransaction = None, event_bus: EventBus = None) -> None:
+    def __init__(self, name: str = "swaync", transaction: ConfigTransaction = None, event_bus: EventBus = None, preview_theme: str | None = None) -> None:
         super().__init__(name, transaction, event_bus)
+        self.preview_theme = preview_theme
 
     def render(self, tokens: DesignTokens, theme_name: str) -> list[GeneratedArtifact]:
         env = self.transaction.env if (self.transaction and self.transaction.env) else None
@@ -76,9 +77,9 @@ class SwayncGenerator(BaseGenerator):
 
         # 3. Read active preview theme name
         preview_theme = theme_name
-        preview_theme_path = env.runtime_dir / "preview-theme"
+        preview_theme_path = env.preview_file
         if not self.transaction or not self.transaction.theme_name:
-            preview_theme_path = env.runtime_dir / "preview-theme"
+            preview_theme_path = env.preview_file
         else:
             preview_theme_path = None
         if preview_theme_path is not None and preview_theme_path.is_file():
@@ -88,6 +89,9 @@ class SwayncGenerator(BaseGenerator):
                     preview_theme = pt
             except Exception:
                 pass
+
+        if self.preview_theme in themes:
+            preview_theme = self.preview_theme
 
         # Dots indicator
         dots = []

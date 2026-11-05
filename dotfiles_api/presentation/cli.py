@@ -2,6 +2,8 @@ import argparse
 import sys
 import os
 import getpass
+from contextlib import nullcontext
+from dotfiles_api.presentation.argument_parser import CommandParser
 from pathlib import Path
 
 from dotfiles_api.presentation.argument_parser import CommandParser
@@ -49,6 +51,8 @@ from dotfiles_api.application.loader import ThemeLoader
 from dotfiles_api.application.store import ArtifactStore
 from dotfiles_api.application.transaction import ConfigTransaction
 from dotfiles_api.application.planner import ThemePlanner
+from dotfiles_api.application.theme_coordinator import ThemeCoordinator
+from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.theme import ThemeService
 from dotfiles_api.application.services.reload import ReloadService
@@ -81,7 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions"):
+    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions", "rollback"):
         command = commands.add_parser(name, allow_abbrev=False)
         # Suppressed defaults preserve options given before the subcommand.
         command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
@@ -130,11 +134,14 @@ def main(argv: list[str] | None = None) -> None:
     executor = SystemCommandExecutor()
     exec_ctx = ExecutionContext(dry_run=args.dry_run, executor=executor,
                                 verbose=getattr(args, "verbose", False),
-                                log_path=env.state_dir / "commands.jsonl")
+                                log_path=env.state_dir / "commands.jsonl",
+                                output_guard=env.validate_output_path)
 
     package_registry = PackageRegistry()
 
     artifact_paths = {
+        "active-theme": env.state_dir / "active-theme",
+        "theme-preview": env.preview_file,
         "hyprland-colors": env.home_dir / ".config" / "hypr" / "colors.lua",
         "hyprland-style": env.home_dir / ".config" / "hypr" / "style.lua",
         "hyprland-colors-conf": env.home_dir / ".config" / "hypr" / "colors.conf",
@@ -206,9 +213,8 @@ def main(argv: list[str] | None = None) -> None:
     theme_loader = ThemeLoader(env=env)
     event_bus = EventBus()
 
-    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False), dry_run=args.dry_run)
-    if args.command not in ["toggle", "configure", "apply-all"]:
-        event_bus.subscribe(ConfigGeneratedEvent, reload_svc.handle_config_generated)
+    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False), dry_run=args.dry_run, runtime_dir=env.runtime_dir,
+                               pending_path=env.state_dir / "pending-refresh", output_guard=env.validate_output_path)
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
 
@@ -229,11 +235,11 @@ def main(argv: list[str] | None = None) -> None:
         PlymouthGenerator(name="plymouth", transaction=tx, event_bus=event_bus),
     ]
 
-    theme_svc = ThemeService(theme_loader, theme_store, event_bus,
-                             planner=ThemePlanner(env, artifact_store, generators), dry_run=args.dry_run)
-
-    for gen in generators:
-        event_bus.subscribe(ThemeChangedEvent, gen.handle_theme_changed)
+    planner = ThemePlanner(env, artifact_store, generators)
+    coordinator = ThemeCoordinator(env, planner, tx)
+    theme_svc = ThemeService(theme_loader, theme_store, event_bus, planner=planner,
+                             dry_run=args.dry_run, coordinator=coordinator,
+                             on_applied=reload_svc.reload_changed)
 
     profile_resolver = DesktopProfileResolver()
     desktop_profile = profile_resolver.resolve()
@@ -282,128 +288,51 @@ def main(argv: list[str] | None = None) -> None:
     action_svc.register("media-next", CommandAction(exec_ctx, [["playerctl", "next"]]))
     action_svc.register("media-prev", CommandAction(exec_ctx, [["playerctl", "previous"]]))
 
-    release_lock_fn = lambda: None
-    if not args.dry_run and args.command in ["toggle", "configure", "apply-all", "install"]:
-        import fcntl
-        env.validate_output_path(env.runtime_dir / "configure.lock")
-        env.runtime_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    def apply_theme(name):
+        plan = facade.apply_theme(name)
+        if not args.dry_run and os.environ.get("WAYLAND_DISPLAY") and (plan is None or plan.changed_generators):
+            action_svc.run_action("wallpaper", [])
 
-        lock_file_path = str(env.runtime_dir / "configure.lock")
-        try:
-            global _lock_file
-            _lock_file = open(lock_file_path, "w")
-            fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            if args.command == "toggle":
-                try:
-                    with open(str(env.runtime_dir / "toggle.clicks"), "w") as f:
-                        f.write("1")
-                except Exception:
-                    pass
-
-            def release_lock():
-                try:
-                    global _lock_file
-                    _lock_file.close()
-                    if os.path.exists(lock_file_path):
-                        os.remove(lock_file_path)
-                except Exception:
-                    pass
-                try:
-                    if os.path.exists(str(env.runtime_dir / "toggle.clicks")):
-                        os.remove(str(env.runtime_dir / "toggle.clicks"))
-                except Exception:
-                    pass
-
-            release_lock_fn = release_lock
-            import atexit
-
-            atexit.register(release_lock)
-        except BlockingIOError:
-            if args.command == "toggle":
-                clicks_path = str(env.runtime_dir / "toggle.clicks")
-                clicks = 1
-                if os.path.exists(clicks_path):
-                    try:
-                        with open(clicks_path, "r") as f:
-                            clicks = int(f.read().strip())
-                    except Exception:
-                        clicks = 1
-                clicks += 1
-                try:
-                    with open(clicks_path, "w") as f:
-                        f.write(str(clicks))
-                except Exception:
-                    pass
-                sys.exit(0)
-            else:
-                print("Another dotfiles configuration process is already running. Exiting.")
-                sys.exit(0)
-
-    if args.command == "install":
-        facade.apply_profile(desktop_profile)
-        release_lock_fn()
-    elif args.command == "link":
-        facade.link()
-    elif args.command == "configure":
-        facade.apply_theme(args.theme)
-        action_svc.run_action("wallpaper", [])
-        release_lock_fn()
-        facade.reload()
-    elif args.command == "reload":
-        facade.reload()
-    elif args.command == "apply-all":
-        facade.apply_profile(desktop_profile)
-        facade.link()
-        facade.apply_theme(args.theme)
-        action_svc.run_action("wallpaper", [])
-        release_lock_fn()
-        facade.reload()
-    elif args.command == "toggle":
-        toggles_performed = 0
-        while True:
+    def dispatch():
+        if args.command == "install":
+            facade.apply_profile(desktop_profile)
+        elif args.command == "link":
+            facade.link()
+        elif args.command == "configure":
+            apply_theme(args.theme)
+        elif args.command == "reload":
+            facade.reload()
+        elif args.command == "apply-all":
+            facade.apply_profile(desktop_profile)
+            facade.link()
+            apply_theme(args.theme)
+        elif args.command == "toggle":
             active = theme_store.get_active_theme()
-            if active.endswith("-dark"):
-                next_theme = active[:-5]
-            else:
-                next_theme = active + "-dark"
-
-            next_theme_dir = env.home_dir / ".config" / "themes" / next_theme
-            if not next_theme_dir.is_dir() and not (env.source_home / ".config/themes" / next_theme).is_dir():
-                print(f"Theme counterpart '{next_theme}' does not exist. Cannot toggle.")
-                release_lock_fn()
-                sys.exit(1)
-
+            next_theme = active[:-5] if active.endswith("-dark") else active + "-dark"
             print(f"Toggling theme from {active} to {next_theme}")
-            facade.apply_theme(next_theme)
-            toggles_performed += 1
+            apply_theme(next_theme)
+        elif args.command == "rollback":
+            facade.rollback()
+            if not args.dry_run and os.environ.get("WAYLAND_DISPLAY"):
+                action_svc.run_action("wallpaper", [])
+        elif args.command == "setup":
+            options = {"setup_github": args.github, "enable_ssh_server": getattr(args, "ssh_server", False)}
+            if getattr(args, "change_shell", False):
+                options["change_shell"] = True
+            if args.theme is not None:
+                options["theme_name"] = args.theme
+            facade.setup(**options)
+        elif args.command in {"setup-login", "repair-login-permissions"}:
+            LoginSetupService(exec_ctx, env).apply(permissions_only=args.command == "repair-login-permissions")
+        elif args.command == "action":
+            action_svc.run_action(args.action_name, args.action_args or [])
 
-            clicks_path = str(env.runtime_dir / "toggle.clicks")
-            total_clicks = 1
-            if os.path.exists(clicks_path):
-                try:
-                    with open(clicks_path, "r") as f:
-                        total_clicks = int(f.read().strip())
-                except Exception:
-                    total_clicks = 1
-
-            if (toggles_performed % 2) == (total_clicks % 2):
-                break
-        action_svc.run_action("wallpaper", [])
-        release_lock_fn()
-        facade.reload()
-    elif args.command == "setup":
-        setup_options = {"setup_github": args.github, "enable_ssh_server": getattr(args, "ssh_server", False)}
-        if getattr(args, "change_shell", False):
-            setup_options["change_shell"] = True
-        if args.theme is not None:
-            setup_options["theme_name"] = args.theme
-        facade.setup(**setup_options)
-    elif args.command in {"setup-login", "repair-login-permissions"}:
-        LoginSetupService(exec_ctx, env).apply(permissions_only=args.command == "repair-login-permissions")
-    elif args.command == "action":
-        if not args.action_name:
-            parser.error("action_name is required for the 'action' command")
-        action_svc.run_action(args.action_name, args.action_args or [])
+    mutating = args.command in {"configure", "toggle", "apply-all", "install", "setup", "link", "rollback"}
+    if not args.dry_run and mutating:
+        env.validate_output_path(env.lock_dir / "configure.lock")
+    lock = RuntimeLock(env.lock_dir / "configure.lock") if mutating and not args.dry_run else nullcontext()
+    with lock:
+        dispatch()
 
 
 if __name__ == "__main__":

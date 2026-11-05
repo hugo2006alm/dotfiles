@@ -1,113 +1,49 @@
-from pathlib import Path
 from dotfiles_api.domain.contracts.action import Action
-from dotfiles_api.context.execution import ExecutionContext
-from dotfiles_api.context.environment import EnvironmentContext
+from dotfiles_api.domain.artifacts import GeneratedArtifact
+from dotfiles_api.application.loader import ThemeLoader
+from dotfiles_api.application.preview_transaction import preview_transaction, restore_preview
+from dotfiles_api.application.validation import ArtifactValidator
 from dotfiles_api.infrastructure.file_store import FileThemeStore
+from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
+from dotfiles_api.infrastructure.runtime_lock import RuntimeLock
+
 
 class PreviewAction(Action):
-    def __init__(self, exec_ctx: ExecutionContext, env: EnvironmentContext) -> None:
-        self._exec = exec_ctx
-        self._env = env
+    def __init__(self, exec_ctx, env):
+        self._exec, self._env = exec_ctx, env
 
-    def execute(self, args: list[str]) -> None:
-        if not args:
-            return
-        direction = args[0]  # "next" or "prev"
-        
-        # 1. Scan installed themes
-        themes_dir = self._env.home_dir / ".config" / "themes"
-        if not themes_dir.is_dir():
-            return
-            
-        themes = []
-        for item in themes_dir.iterdir():
-            if item.is_dir() and (item / "colors.toml").is_file():
-                themes.append(item.name)
-        
+    def execute(self, args):
+        if len(args) != 1 or args[0] not in {"next", "prev"}:
+            raise ValueError("Preview requires next or prev")
+        themes_dir = self._env.home_dir / ".config/themes"
+        themes = sorted(item.name for item in themes_dir.iterdir()
+                        if item.is_dir() and (item / "colors.toml").is_file()) if themes_dir.is_dir() else []
         if not themes:
             return
-        themes.sort()
-        
-        # 2. Get current preview theme
-        preview_theme_path = self._env.runtime_dir / "preview-theme"
-        current_preview = None
-        if preview_theme_path.is_file():
-            try:
-                current_preview = preview_theme_path.read_text().strip()
-            except Exception:
-                pass
-                
-        # Fallback to active theme if preview theme is invalid or not in list
-        if not current_preview or current_preview not in themes:
-            current_preview = FileThemeStore(self._env).get_active_theme()
-            if not current_preview or current_preview not in themes:
-                current_preview = themes[0]
-                
-        # 3. Increment / decrement with wrapping
-        try:
-            curr_idx = themes.index(current_preview)
-        except ValueError:
-            curr_idx = 0
-            
-        if direction == "next":
-            next_idx = (curr_idx + 1) % len(themes)
-        elif direction == "prev":
-            next_idx = (curr_idx - 1) % len(themes)
-        else:
-            return
-            
-        next_theme = themes[next_idx]
         if self._exec.dry_run:
-            print(f"[DRY-RUN] Would preview theme {next_theme} and refresh SwayNC")
+            print("[DRY-RUN] Would preview the next/previous theme and refresh SwayNC")
             return
-        
-        # 4. Write back preview theme
-        try:
-            preview_theme_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            preview_theme_path.write_text(next_theme)
-        except Exception as exc:
-            self._exec.execute(["notify-send", "Theme Preview Error", str(exc)])
-            
-        # 5. Regenerate swaync config/style with active theme tokens and preview state.
-        try:
-            from dotfiles_api.infrastructure.generators.swaync import SwayncGenerator
-            from dotfiles_api.application.loader import ThemeLoader
-            from dotfiles_api.application.store import ArtifactStore
-            from dotfiles_api.application.transaction import ConfigTransaction
-            from dotfiles_api.infrastructure.file_writer import SystemFileWriter
-            
-            loader = ThemeLoader(self._env)
-            active_theme = current_preview
-            stored_active = FileThemeStore(self._env).get_active_theme()
-            if stored_active in themes:
-                active_theme = stored_active
-            tokens = loader.load(active_theme)
-            
-            tx = ConfigTransaction(
-                env=self._env,
-                store=ArtifactStore({}),
-                writer=SystemFileWriter(),
-                dry_run=self._exec.dry_run
-            )
-            gen = SwayncGenerator(transaction=tx)
-            artifacts = gen.render(tokens, active_theme)
-            
-            dest_dir = self._env.home_dir / ".config" / "swaync"
-            if not self._exec.dry_run:
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                
-            for art in artifacts:
-                if art.artifact_id == "swaync-config":
-                    dest_file = dest_dir / "config.json"
-                elif art.artifact_id == "swaync-style":
-                    dest_file = dest_dir / "style.css"
-                else:
-                    continue
-                if not self._exec.dry_run:
-                    dest_file.write_text(art.content, encoding="utf-8")
-        except Exception:
-            pass
-            
-        # 6. Reload swaync config & style in-place
-        self._exec.execute(["swaync-client", "-R"])
-        self._exec.execute(["swaync-client", "-rs"])
+        with RuntimeLock(self._env.lock_dir / "configure.lock"):
+            preview = self._env.preview_file
+            current = preview.read_text().strip() if preview.is_file() else ""
+            active = FileThemeStore(self._env).get_active_theme()
+            current = current if current in themes else active if active in themes else themes[0]
+            selected = themes[(themes.index(current) + (1 if args[0] == "next" else -1)) % len(themes)]
+            # Roll back the preceding overlay first, including any interrupted preview.
+            restore_preview(self._env)
+            active = active if active in themes else themes[0]
+            tokens = ThemeLoader(self._env).load(active)
+            tx = preview_transaction(self._env)
+            tx.theme_name = active
+            tx.generators = ["swaync"]
+            artifacts = SwayncGenerator(transaction=tx, preview_theme=selected).render(tokens, active)
+            artifacts.append(GeneratedArtifact("theme-preview", selected))
+            for artifact in artifacts:
+                path = tx._store.resolve_path(artifact.artifact_id, theme_name=active)
+                self._env.validate_output_path(path)
+                ArtifactValidator().validate(path, artifact.content)
+            with tx:
+                for artifact in artifacts:
+                    tx.write_artifact(artifact)
+        self._exec.execute(["swaync-client", "-R"], step="preview:reload-config")
+        self._exec.execute(["swaync-client", "-rs"], step="preview:reload-style")

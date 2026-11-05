@@ -42,7 +42,7 @@ jobs:
     container: archlinux:base
     steps:
       - name: Install Arch test tools
-        run: pacman -Syu --noconfirm --needed python python-pip git sudo fish shellcheck stow
+        run: pacman -Syu --noconfirm --needed python python-pip git sudo fish shellcheck stow sassc
       - uses: actions/checkout@v4
       - name: Run regressions and disposable login installation
         env:

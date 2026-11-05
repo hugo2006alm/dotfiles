@@ -9,7 +9,8 @@ class PlannedArtifact:
     artifact: GeneratedArtifact
     path: Path
     original: bytes | None
+    original_link: str | None = None
 
     @property
     def changed(self) -> bool:
-        return self.original != self.artifact.content.encode("utf-8")
+        return self.original_link is not None or self.original != self.artifact.content.encode("utf-8")

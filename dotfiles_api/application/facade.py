@@ -34,9 +34,13 @@ class DotfilesFacade:
     def apply_profile(self, profile: Profile) -> None:
         self._install_service.install_profile(profile)
 
-    def apply_theme(self, theme_name: str) -> None:
+    def apply_theme(self, theme_name: str):
         with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
-            self._theme_service.apply_theme(theme_name)
+            return self._theme_service.apply_theme(theme_name)
+
+    def rollback(self):
+        with nullcontext() if self._exec.dry_run else login_inputs_lock(self._env.home_dir):
+            return self._theme_service.rollback()
 
     def link(self) -> None:
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)

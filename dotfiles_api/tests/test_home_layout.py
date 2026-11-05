@@ -21,6 +21,18 @@ class TestHomeLayout(unittest.TestCase):
         self.assertFalse((package / ".config/greetd/regreet.css").exists())
         self.assertFalse((package / "dotfiles_api").exists())
 
+    def test_dry_run_rejects_missing_home_package_without_writing(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            root.mkdir()
+            home.mkdir()
+            executor = Mock()
+            with self.assertRaisesRegex(ValueError, "package"):
+                StowLinker(ExecutionContext(True, executor)).link(root, home)
+            executor.execute.assert_not_called()
+            self.assertEqual(list(home.iterdir()), [])
+
     @unittest.skipUnless(shutil.which("stow"), "GNU Stow integration requires stow")
     def test_stow_links_files_without_folding_or_installing_metadata(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -231,6 +243,47 @@ class TestHomeLayout(unittest.TestCase):
         source = (ROOT / "dotfiles_api/presentation/cli.py").read_text()
         self.assertFalse('env.dotfiles_dir / "plymouth-shade-raid"' in source,
                          "Plymouth output must live outside the repository")
+
+    def test_command_logs_cannot_write_through_legacy_local_fold(self):
+        from unittest.mock import Mock
+        from dotfiles_api.context.environment import EnvironmentContext
+        self.assertIn("output_guard", ExecutionContext.__dataclass_fields__)
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            (root / ".local").mkdir(parents=True)
+            home.mkdir()
+            (home / ".local").symlink_to(root / ".local")
+            env = EnvironmentContext(home, root, "tester")
+            executor = Mock()
+            from dotfiles_api.domain.contracts import CommandResult
+            executor.execute.return_value = CommandResult("", "", 0)
+            context = ExecutionContext(False, executor, log_path=env.state_dir / "commands.jsonl",
+                                       output_guard=env.validate_output_path)
+            context.execute(["notify-send", "example"])
+            executor.execute.assert_called_once()
+            self.assertFalse((root / ".local/state").exists())
+
+    def test_failed_migration_retains_new_diagnostics_before_restoring_fold(self):
+        from dotfiles_api.infrastructure.home_migration import HomeMigration
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / "repo", Path(temp) / "user"
+            (root / "home/.local/bin").mkdir(parents=True)
+            (root / "home/.local/bin/command").write_text("new")
+            (root / ".local/bin").mkdir(parents=True)
+            (root / ".local/bin/personal").write_text("keep")
+            home.mkdir()
+            (home / ".local").symlink_to(root / ".local")
+            migration = HomeMigration(root, home)
+            with self.assertRaisesRegex(RuntimeError, "failure"):
+                with migration:
+                    log = home / ".local/state/diagnostic.log"
+                    log.parent.mkdir(parents=True)
+                    log.write_text("failure details")
+                    raise RuntimeError("failure")
+            self.assertTrue((home / ".local").is_symlink())
+            retained = migration.backup / "failed-contents/.local/state/diagnostic.log"
+            self.assertTrue(retained.is_file(), "Failed migration must retain its diagnostics")
+            self.assertEqual(retained.read_text(), "failure details")
 
     def test_legacy_generated_file_has_a_recoverable_fallback_after_layout_move(self):
         with tempfile.TemporaryDirectory() as temp:

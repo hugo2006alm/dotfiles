@@ -213,7 +213,7 @@ class TestGenerators(unittest.TestCase):
             (themes_dir / "shade-raid" / "colors.toml").write_text('background = "#F4EFE4"\n')
             (themes_dir / "ember" / "colors.toml").write_text('background = "#111111"\naccent = "#AA3300"\n')
             (themes_dir / "current").write_text("shade-raid")
-            preview_path = env.runtime_dir / "preview-theme"
+            preview_path = env.preview_file
             preview_path.parent.mkdir(parents=True)
             old_preview = preview_path.read_text() if preview_path.exists() else None
             preview_path.write_text("ember")

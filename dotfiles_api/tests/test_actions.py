@@ -151,7 +151,7 @@ class TestActions(unittest.TestCase):
         (theme_b / "colors.toml").write_text("")
         (themes_dir / "current").write_text("theme-a")
 
-        preview_temp = self.env.runtime_dir / "preview-theme"
+        preview_temp = self.env.preview_file
         if preview_temp.exists():
             preview_temp.unlink()
 
