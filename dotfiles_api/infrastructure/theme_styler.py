@@ -26,12 +26,14 @@ class ThemeStyler:
 
     @staticmethod
     def source_digest(env, style, rendered):
-        source = env.source_home / style.source
-        inputs = {str(path.relative_to(source.parent)): hashlib.sha256(path.read_bytes()).hexdigest()
-                  for path in source.parent.rglob("*.scss") if path.is_file()}
+        snapshot = ThemeStyler(env, None, None, None)._source_snapshot()
+        inputs = {"source:" + name: digest.hex() for name, digest in snapshot.items()}
+        inputs["stylesheet"] = style.source
+        mappings = dict(style.input_paths)
         for artifact_id in style.inputs:
             item = rendered[artifact_id]
-            inputs[item.path.name] = hashlib.sha256(item.artifact.content.encode()).hexdigest()
+            name = mappings.get(artifact_id, item.path.name)
+            inputs["generated:" + artifact_id + ":" + name] = hashlib.sha256(item.artifact.content.encode()).hexdigest()
         return hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
 
     def _source_snapshot(self):
