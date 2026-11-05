@@ -168,3 +168,24 @@ class TestSetupRemediation(unittest.TestCase):
             with patch('os.geteuid', return_value=1000), patch('sys.stdin.isatty', return_value=False):
                 service.run_setup(theme_name='dark')
             theme.apply_theme.assert_called_once_with('dark')
+
+    @unittest.skipUnless(__import__('shutil').which('stow'), 'Requires GNU Stow')
+    def test_legacy_root_stow_only_links_explicit_content(self):
+        from dotfiles_api.infrastructure.linker import StowLinker
+        from dotfiles_api.infrastructure.executor import SystemCommandExecutor
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / 'checkout', Path(temp) / 'home'
+            root.mkdir()
+            home.mkdir()
+            for path in ('.config/app/config', '.local/bin/tool', 'wallpapers/test.jpg',
+                         '.github/workflows/ci.yml', 'setup.py', 'unknown-future-secret'):
+                destination = root / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(path)
+            StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(root, home)
+            self.assertTrue((home / '.config/app/config').is_file())
+            self.assertTrue((home / '.local/bin/tool').is_file())
+            self.assertTrue((home / 'wallpapers/test.jpg').is_file())
+            self.assertFalse((home / '.github').exists())
+            self.assertFalse((home / 'setup.py').exists())
+            self.assertFalse((home / 'unknown-future-secret').exists())

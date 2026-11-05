@@ -279,7 +279,8 @@ class TestInfrastructureImplementations(unittest.TestCase):
 
         # Assert
         self.assertEqual(len(executor.commands), 1)
-        self.assertEqual(executor.commands[0], "stow -d /src -t /dest .")
+        self.assertTrue(executor.commands[0].startswith("stow --ignore="))
+        self.assertTrue(executor.commands[0].endswith(" -d /src -t /dest ."))
 
     def test_waybar_reloadable(self):
         # Arrange
