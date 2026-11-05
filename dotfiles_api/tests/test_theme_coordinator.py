@@ -204,6 +204,11 @@ class TestThemeCoordinator(unittest.TestCase):
         states = {record["artifact_id"]: record.get("recovery") for record in manifest["files"]}
         self.assertEqual(states["first"], "restoring")
         self.assertEqual(states["second"], "restored")
+        self.first.write_text("new personal edit")
+        with self.assertRaisesRegex(RuntimeError, "changed"):
+            coordinator.rollback()
+        self.assertEqual(self.first.read_text(), "new personal edit")
+        self.first.write_text("changed")
         coordinator.rollback()
         self.assertEqual(self.first.read_text(), "original")
         self.assertFalse(self.second.exists())
