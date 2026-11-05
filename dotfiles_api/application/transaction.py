@@ -13,8 +13,11 @@ from dotfiles_api.infrastructure.file_writer import SystemFileWriter
 class ConfigTransaction:
     """Stage one batch, then replace files individually with a recovery journal."""
 
-    def __init__(self, env, store, writer, dry_run: bool = False) -> None:
+    def __init__(self, env, store, writer, dry_run: bool = False, journal_namespace: str = "transactions") -> None:
         self._env, self._store, self._writer = env, store, writer
+        if journal_namespace not in {"transactions", "preview-transactions"}:
+            raise ValueError("Invalid transaction namespace")
+        self._namespace = journal_namespace
         self._dry_run = dry_run
         self.theme_name = ""
         self.generators = []
@@ -48,7 +51,7 @@ class ConfigTransaction:
     def _commit(self):
         if not self._pending:
             return
-        journal = self._env.state_dir / "transactions" / uuid.uuid4().hex
+        journal = self._env.state_dir / self._namespace / uuid.uuid4().hex
         self._env.validate_output_path(journal / "manifest.json")
         records, parents = [], set()
         for path, artifact in self._pending.items():
@@ -146,9 +149,9 @@ class ConfigTransaction:
         if failures:
             raise RuntimeError("; ".join(failures))
 
-    def rollback_latest(self, dry_run: bool = False):
+    def rollback_latest(self, dry_run: bool = False, projected=None):
         candidates = []
-        for path in (self._env.state_dir / "transactions").glob("*/manifest.json"):
+        for path in (self._env.state_dir / self._namespace).glob("*/manifest.json"):
             if path.is_symlink():
                 raise ValueError(f"Unsafe recovery manifest: {path}")
             manifest = json.loads(path.read_text())
@@ -159,12 +162,16 @@ class ConfigTransaction:
         _, journal, manifest = max(candidates, key=lambda item: item[0])
         for record in self._validated_records(journal, manifest):
             path = Path(record["path"])
-            if record["artifact_id"] == "theme-preview":
-                continue
             may_be_original = manifest["status"] == "prepared" or (manifest["status"] == "rolling_back" and record.get("recovery") in {"restoring", "restored"})
-            if may_be_original and path.is_symlink() and os.readlink(path) == record["link"]:
+            state = (projected or {}).get(str(path))
+            if state is None:
+                is_link = path.is_symlink()
+                link = os.readlink(path) if is_link else None
+                digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() and not is_link else None
+            else:
+                is_link, link, digest = state
+            if may_be_original and is_link and link == record["link"]:
                 continue
-            digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
             expected = {record["after_digest"]}
             if may_be_original:
                 backup = journal / "backups" / record["backup"]
@@ -172,7 +179,7 @@ class ConfigTransaction:
                     expected.add(hashlib.sha256(backup.read_bytes()).hexdigest())
                 elif not record["exists"]:
                     expected.add(None)
-            if path.is_symlink() or digest not in expected:
+            if is_link or digest not in expected:
                 raise RuntimeError(f"Generated destination changed since application: {path}")
         if dry_run:
             print(f"[DRY-RUN] Would restore {len(manifest['files'])} files from {journal}")
