@@ -68,13 +68,13 @@ class TestExecutionFailures(unittest.TestCase):
     def test_unavailable_package_source_is_an_error(self):
         source = Mock()
         source.is_available.return_value = False
-        installer = InstallService(None, None, PackageRegistry({}), {"pacman": source})
+        installer = InstallService(None, None, PackageRegistry({}), {"pacman": source}, inventory=lambda: set())
         with self.assertRaisesRegex(RuntimeError, "pacman"):
             installer.install_profile(Profile("example", [Feature("test", ["git"], [])]))
         source.install.assert_not_called()
 
     def test_missing_source_is_an_error(self):
-        installer = InstallService(None, None, PackageRegistry({}), {})
+        installer = InstallService(None, None, PackageRegistry({}), {}, inventory=lambda: set())
         with self.assertRaisesRegex(RuntimeError, "pacman"):
             installer.install_profile(Profile("example", [Feature("test", ["git"], [])]))
 

@@ -26,6 +26,11 @@ def snapshot(root):
 
 
 class TestDryRunSafety(unittest.TestCase):
+    def setUp(self):
+        inventory = patch("dotfiles_api.infrastructure.package_inventory.PackageInventory.names", return_value=set())
+        inventory.start()
+        self.addCleanup(inventory.stop)
+
     def test_theme_plan_lists_paths_actions_and_deferred_checks(self):
         from dotfiles_api.domain.artifacts import GeneratedArtifact
         from dotfiles_api.domain.models.planned_artifact import PlannedArtifact

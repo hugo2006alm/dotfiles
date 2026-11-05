@@ -1,44 +1,91 @@
-from dotfiles_api.context.environment import EnvironmentContext
-from dotfiles_api.context.execution import ExecutionContext
-from dotfiles_api.application.registry import PackageRegistry
-from dotfiles_api.domain.contracts.package_source import PackageSource
-from dotfiles_api.domain.models.profile import Profile
+import json
+import stat
+from dotfiles_api.application.installation_planner import InstallationPlanner
+from dotfiles_api.infrastructure.file_writer import SystemFileWriter
+from dotfiles_api.infrastructure.package_inventory import PackageInventory
 from dotfiles_api.application.installation_error import InstallationError
 
-class InstallService:
-    def __init__(
-        self,
-        env: EnvironmentContext | None,
-        exec_ctx: ExecutionContext | None,
-        registry: PackageRegistry,
-        sources: dict[str, PackageSource]
-    ) -> None:
-        self._env = env
-        self._exec = exec_ctx
-        self._registry = registry
-        self._sources = sources
 
-    def install_profile(self, profile: Profile) -> None:
-        packages = profile.get_packages()
-        
-        grouped: dict[str, list[str]] = {}
-        for package in packages:
-            source_id = self._registry.resolve_source(package)
-            if source_id not in grouped:
-                grouped[source_id] = []
-            grouped[source_id].append(package)
-            
-        for source_id, pkgs in grouped.items():
-            if source_id not in self._sources:
-                raise RuntimeError(f"Source preflight failed; no installation commands attempted. Package source '{source_id}' is not configured: {', '.join(pkgs)}")
-            source = self._sources[source_id]
-            if not (self._exec and self._exec.dry_run) and not source.is_available():
-                raise RuntimeError(f"Source preflight failed; no installation commands attempted. Package source '{source_id}' is unavailable: {', '.join(pkgs)}")
-        # Check every source before installing any group.
+class InstallService:
+    def __init__(self, env, exec_ctx, registry, sources, inventory=None):
+        self._env, self._exec, self._registry, self._sources = env, exec_ctx, registry, sources
+        self._planner = InstallationPlanner(registry, sources, inventory or PackageInventory().names)
+
+    def install_profile(self, profile, *, setup=False):
+        dry_run = bool(self._exec and self._exec.dry_run)
+        previous, path = {}, None
+        if self._env and not dry_run:
+            path = self._env.state_dir / "installation.json"
+            self._env.validate_output_path(path)
+            if path.exists() or path.is_symlink():
+                if not stat.S_ISREG(path.lstat().st_mode):
+                    raise ValueError(f"Unsafe installation state file: {path}")
+                previous = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(previous, dict):
+                    raise ValueError("Invalid installation state: expected an object")
+                if previous.get("version", 1) not in (1, 2):
+                    raise ValueError("Unsupported installation selection version")
+                for key in ("profiles", "packages", "optional_packages", "requested_profiles", "explicit_packages"):
+                    if not isinstance(previous.get(key, []), list) or not all(isinstance(v, str) for v in previous.get(key, [])):
+                        raise ValueError(f"Invalid installation selection: {key}")
+        plan = self._planner.build(profile, dry_run=dry_run)
+        plan.describe(deferred=dry_run)
+        if dry_run:
+            print("No changes applied.")
+            return plan
+        # Record setup start after successful preflight and before external effects.
+        # A process killed mid-install remains visibly in_progress on next run.
+        if path and setup:
+            started = dict(previous)
+            started.setdefault("version", 1)
+            started["package_status"] = "in_progress"
+            started["desktop_configuration_status"] = "in_progress"
+            started.setdefault("session_status", "not_checked")
+            SystemFileWriter().write(path, json.dumps(started, indent=2) + "\n")
         completed = []
-        for source_id, pkgs in grouped.items():
-            try:
-                self._sources[source_id].install(pkgs)
-            except Exception as error:
-                raise InstallationError(tuple(completed), source_id) from error
-            completed.append((source_id, tuple(pkgs)))
+        try:
+            for source_id, packages in plan.groups:
+                try:
+                    self._sources[source_id].install(list(packages))
+                except Exception as error:
+                    raise InstallationError(tuple(completed), source_id) from error
+                completed.append((source_id, tuple(packages)))
+        except BaseException:
+            if path and setup:
+                try:
+                    started["package_status"] = "failed_or_partial"
+                    started["desktop_configuration_status"] = "failed"
+                    SystemFileWriter().write(path, json.dumps(started, indent=2) + "\n")
+                except Exception as error:
+                    import sys
+                    print(f"Could not record interrupted setup: {error}", file=sys.stderr)
+            raise
+        if path:
+            # Version 1 stored resolved historical packages as if they were choices.
+            # Only profile choices and explicitly selected extras are durable intent.
+            requested = previous.get("requested_profiles", previous.get("profiles", []))
+            explicit = previous.get("explicit_packages", previous.get("optional_packages", []))
+            requested = list(dict.fromkeys([*requested, *(profile.requested_profiles or profile.selected_profiles)]))
+            explicit = list(dict.fromkeys([*explicit, *profile.optional_packages]))
+            selection = {"version": 2, "requested_profiles": requested, "explicit_packages": explicit,
+                         "profiles": requested, "optional_packages": explicit,
+                         "packages": profile.get_packages(), "package_status": "complete",
+                         "desktop_configuration_status": "in_progress" if setup else previous.get("desktop_configuration_status", "not_recorded"),
+                         "session_status": previous.get("session_status", "not_checked")}
+            SystemFileWriter().write(path, json.dumps(selection, indent=2) + "\n")
+        return plan
+
+    def record_setup_status(self, status):
+        if status not in {"in_progress", "failed", "complete"}:
+            raise ValueError(f"Invalid setup status: {status}")
+        if not self._env or (self._exec and self._exec.dry_run):
+            return
+        path = self._env.state_dir / "installation.json"
+        self._env.validate_output_path(path)
+        if not path.exists() and not path.is_symlink():
+            raise RuntimeError("Package installation status missing; cannot record setup")
+        if not stat.S_ISREG(path.lstat().st_mode):
+            raise ValueError(f"Unsafe installation state file: {path}")
+        state = json.loads(path.read_text(encoding="utf-8"))
+        state["desktop_configuration_status"] = status
+        SystemFileWriter().write(path, json.dumps(state, indent=2) + "\n")

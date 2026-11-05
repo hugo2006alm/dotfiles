@@ -98,11 +98,11 @@ class ApplicationRegistry:
                 (spec.required or not spec.runtime_executables or
                  any(shutil.which(name) for name in spec.runtime_executables))]
 
-    def installation_specs(self, profiles, selected_packages=()):
+    def installation_specs(self, profiles, selected_packages=(), include_profile_optional=False):
         """Return selected applications and their installation dependencies."""
         selected = set(selected_packages)
         seeds = [spec.id for spec in self.specs
-                 if (spec.required and set(spec.profiles).intersection(profiles))
+                 if ((spec.required or include_profile_optional) and set(spec.profiles).intersection(profiles))
                  or (selected and selected.intersection(spec.packages))]
         ordered, seen = [], set()
         def visit(name):

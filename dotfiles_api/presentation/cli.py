@@ -70,7 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
         if name in {"configure", "apply-all", "setup"}:
             command.add_argument("--theme", default=argparse.SUPPRESS)
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
+        if name in {"install", "apply-all", "setup"}:
+            command.add_argument("--profile", dest="profiles", action="append", help="Composable software profile (repeatable)")
+            command.add_argument("--package", dest="packages", action="append", help="Additional package (repeatable)")
         if name == "setup":
+            command.add_argument("--interactive", action="store_true", help="Select optional packages interactively")
             command.add_argument("--change-shell", action="store_true", help="Explicitly set Fish as login shell")
             command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
             command.add_argument("--ssh-server", action="store_true", help="Enable the SSH server; configure firewall access separately")
@@ -154,7 +158,10 @@ def main(argv: list[str] | None = None) -> None:
                              on_applied=reload_svc.reload_changed)
 
     profile_resolver = DesktopProfileResolver()
-    desktop_profile = profile_resolver.resolve()
+    profiles = getattr(args, "profiles", None)
+    packages = getattr(args, "packages", None)
+    isolated = args.command == "install" and packages and not profiles
+    desktop_profile = profile_resolver.resolve_profiles([] if isolated else profiles, packages) if profiles or packages else profile_resolver.resolve()
 
     services_setup_svc = ServicesSetupService(exec_ctx, env)
     user_setup_svc = UserSetupService(exec_ctx, env)
@@ -169,6 +176,9 @@ def main(argv: list[str] | None = None) -> None:
         user_service=user_setup_svc,
         extras_service=extras_setup_svc,
         profile_resolver=profile_resolver,
+        selected_profiles=profiles,
+        selected_packages=packages,
+        interactive=getattr(args, "interactive", False),
     )
 
     facade = DotfilesFacade(
