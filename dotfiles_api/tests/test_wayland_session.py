@@ -28,6 +28,44 @@ class TestWaylandSession(unittest.TestCase):
     def commands(self):
         return [call.args[0] for call in self.executor.execute.call_args_list]
 
+    def test_pending_offline_refresh_runs_once_after_session_start(self):
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.application.services.reload import ReloadService
+        from dotfiles_api.infrastructure.actions.session import SessionAction
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / 'repo', 'tester')
+            pending = env.state_dir / 'pending-refresh'
+            pending.parent.mkdir(parents=True)
+            pending.write_text('refresh required\n')
+            session, wallpaper, handler = Mock(), Mock(), Mock()
+            reloads = ReloadService([handler], runtime_dir=env.runtime_dir,
+                                    pending_path=pending, output_guard=env.validate_output_path)
+            action = SessionAction(session, env, reloads, wallpaper)
+            with patch.dict(os.environ, SESSION, clear=True):
+                action.execute([])
+                action.execute([])
+            self.assertEqual(session.start.call_count, 2)
+            wallpaper.execute.assert_called_once_with([])
+            handler.reload.assert_called_once_with()
+            self.assertFalse(pending.exists())
+
+    def test_failed_wallpaper_keeps_pending_refresh_for_retry(self):
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.infrastructure.actions.session import SessionAction
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            env = EnvironmentContext(home, home / 'repo', 'tester')
+            pending = env.state_dir / 'pending-refresh'
+            pending.parent.mkdir(parents=True)
+            pending.write_text('refresh required\n')
+            wallpaper, reloads = Mock(), Mock()
+            wallpaper.execute.side_effect = RuntimeError('wallpaper failed')
+            with self.assertRaisesRegex(RuntimeError, 'wallpaper failed'):
+                SessionAction(Mock(), env, reloads, wallpaper).execute([])
+            self.assertTrue(pending.exists())
+            reloads.reload_all.assert_not_called()
+
     def test_environment_import_precedes_idempotent_service_start(self):
         with patch.dict(os.environ, SESSION, clear=True):
             self.service.start()

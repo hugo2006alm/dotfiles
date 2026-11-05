@@ -210,7 +210,7 @@ def main(argv: list[str] | None = None) -> None:
 
     action_svc = ActionService()
     session = WaylandSessionService(exec_ctx, applications)
-    action_svc.register("session", SessionAction(session))
+    action_svc.register("session", SessionAction(session, env, reload_svc, WallpaperAction(exec_ctx, env), dry_run=args.dry_run))
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
     action_svc.register("record", RecorderAction(exec_ctx, env))
     action_svc.register("portal", PortalAction(exec_ctx, session))
