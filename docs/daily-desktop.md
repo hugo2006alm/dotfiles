@@ -5,8 +5,8 @@ Firefox, Chrome or Spotify, and its MPRIS widget can show browser playback. Medi
 actions inspect available MPRIS players, prefer a currently playing one, and fall
 back to an available paused/stopped player. The Pause key pauses; Play toggles.
 
-Volume and brightness keys apply exactly one change: SwayOSD when installed,
-otherwise wpctl/brightnessctl. The old double volume/mute change is removed.
+Volume and brightness keys apply exactly one change: SwayOSD when its managed
+service is active, otherwise wpctl/brightnessctl. The old double volume/mute change is removed.
 
 ## Shortcuts
 
@@ -31,18 +31,20 @@ The launcher has a separate ChatGPT desktop entry. Codex's unofficial package is
 correctly labelled as Codex, rather than ChatGPT.
 
 Elephant's clipboard provider owns history storage for text/images; the duplicate
-cliphist watcher is removed. The editor reads clipboard text into a mode-0600
-runtime file. Clipboard content never appears in command logs. A shell inside the
-editor terminal copies saved content and removes the temporary file on exit. If
-the terminal is killed before its shell can clean up, private runtime files may
-remain until logout; do not put secrets in persistent clipboard history.
+cliphist watcher is removed. The editor accepts plain-text MIME and uses an
+anonymous Linux memory file with mode 0600. It runs Neovim without user config/plugins or ShaDa and disables swap, backup and
+undo files; the buffer disappears when its last descriptor closes, including when
+the action is killed. Clipboard content is not recorded in command logs. The
+history provider may still persist entries separately; review its configuration.
+Actual Neovim/Ghostty interoperability requires the live smoke test below.
 
 Screenshots use unique filenames and pass paths with spaces as separate arguments.
 Capture failure prevents clipboard/success notification. Recorder state includes
 the owned process's UID and start time, so reused/stale PIDs cannot stop unrelated
 processes. Startup errors are reported from a private runtime log, and a failure
-to save recorder state terminates its child. Stop requests report finalization,
-rather than claiming the file is already saved. Existing manually started
+to save recorder state terminates its child. Startup waits for a nonempty output, while stop uses a pidfd and waits for
+process exit before asking the user to verify the output. A nonempty file is not
+proof of a playable recording. Existing manually started
 recorders are not killed. Dry-run creates no capture files or processes.
 
 One foreground SSH agent runs in `shade-raid-ssh-agent.service`, with a private

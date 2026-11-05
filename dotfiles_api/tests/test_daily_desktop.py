@@ -90,8 +90,7 @@ class TestDailyDesktop(unittest.TestCase):
                 ClipboardAction(ExecutionContext(True, executor), env, edit=True).execute([])
             self.assertEqual(list(Path(temp).iterdir()), [])
             ClipboardAction(ExecutionContext(False, executor), env, edit=True).execute([])
-            content = next(env.runtime_dir.glob("clipboard-*.txt"))
-            self.assertEqual(content.stat().st_mode & 0o777, 0o600)
+            self.assertFalse(env.runtime_dir.exists())
             self.assertNotIn("sensitive clipboard text", "\n".join(executor.commands))
 
     def test_recorder_never_signals_an_unrelated_pid(self):
@@ -106,7 +105,7 @@ class TestDailyDesktop(unittest.TestCase):
             with patch.object(action, "_identity", return_value="different"), \
                     patch("subprocess.Popen") as process:
                 process.return_value.wait.return_value = 1
-                with self.assertRaisesRegex(RuntimeError, "Recorder exited"):
+                with self.assertRaisesRegex(RuntimeError, "Previous recorder is no longer active"):
                     action.execute([])
             self.assertFalse(any(command.startswith("kill ") for command in executor.commands))
             self.assertFalse(action._pid_file.exists())
@@ -118,7 +117,7 @@ class TestDailyDesktop(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             env = EnvironmentContext(Path(temp), ROOT, "tester")
             action = RecorderAction(ExecutionContext(False, MockCommandExecutor()), env)
-            with patch("subprocess.Popen") as process, patch.object(action, "_identity", return_value="owned"), \
+            with patch("subprocess.Popen") as process, patch.object(action, "_identity", return_value="owned"), patch.object(action, "_wait_ready"), \
                     patch("dotfiles_api.infrastructure.actions.recorder.SystemFileWriter.write", side_effect=OSError("disk full")):
                 process.return_value.pid = 12345
                 process.return_value.wait.side_effect = subprocess.TimeoutExpired("wf-recorder", 0.2)

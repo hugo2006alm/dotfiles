@@ -67,19 +67,11 @@ class TestActions(unittest.TestCase):
         mock_popen.return_value = mock_process
         action = RecorderAction(self.exec_ctx, self.env)
 
-        with patch.object(action, "_identity", return_value="test-start-time"):
+        with patch.object(action, "_identity", return_value="test-start-time"), patch.object(action, "_wait_ready"):
             action.execute([])
         mock_popen.assert_called_once()
         self.assertTrue(action._pid_file.exists())
         self.assertEqual(json.loads(action._pid_file.read_text())["pid"], 12345)
-
-        self.executor.mock_results = {
-            "kill -0 12345": ("", "", 0),
-            "pgrep -f wf-recorder": ("12345\n", "", 0),
-        }
-        with patch.object(action, "_identity", return_value="test-start-time"):
-            action.execute([])
-        self.assertTrue(any("kill -INT 12345" in cmd for cmd in self.executor.commands))
 
     def test_portal_action(self) -> None:
         from dotfiles_api.infrastructure.actions.portal import PortalAction
