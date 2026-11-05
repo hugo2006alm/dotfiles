@@ -11,6 +11,11 @@ text/plain=nvim.desktop
 text/html=shade-raid-browser.desktop
 x-scheme-handler/http=shade-raid-browser.desktop
 x-scheme-handler/https=shade-raid-browser.desktop
+x-scheme-handler/discord=vesktop.desktop
+x-scheme-handler/antigravity=antigravity.desktop
+x-scheme-handler/about=zen.desktop
+x-scheme-handler/unknown=zen.desktop
+x-scheme-handler/chrome=zen.desktop
 application/x-extension-htm=shade-raid-browser.desktop
 application/x-extension-html=shade-raid-browser.desktop
 application/x-extension-shtml=shade-raid-browser.desktop
@@ -19,6 +24,9 @@ application/x-extension-xhtml=shade-raid-browser.desktop
 application/x-extension-xht=shade-raid-browser.desktop
 
 [Added Associations]
+x-scheme-handler/discord=vesktop.desktop;
+x-scheme-handler/antigravity=antigravity.desktop;
+x-scheme-handler/chrome=zen.desktop;
 x-scheme-handler/http=shade-raid-browser.desktop;
 x-scheme-handler/https=shade-raid-browser.desktop;
 text/html=shade-raid-browser.desktop;

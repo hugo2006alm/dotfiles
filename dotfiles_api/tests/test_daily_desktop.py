@@ -70,6 +70,15 @@ dofile(arg[1])
             if match:
                 self.assertIn(match.group(1), registered, f'{key} refers to unregistered action')
 
+    def test_default_mime_seeds_preserve_legacy_deep_link_handlers(self):
+        import configparser
+        parser = configparser.ConfigParser(interpolation=None)
+        parser.read(ROOT / 'seeds/.config/mimeapps.list')
+        defaults = parser['Default Applications']
+        self.assertEqual(defaults['x-scheme-handler/discord'], 'vesktop.desktop')
+        self.assertEqual(defaults['x-scheme-handler/antigravity'], 'antigravity.desktop')
+        self.assertEqual(defaults['x-scheme-handler/https'], 'shade-raid-browser.desktop')
+
     def test_media_targets_a_playing_player_before_a_paused_player(self):
         executor = MockCommandExecutor()
         executor.mock_results = {"playerctl -l": ("spotify\nfirefox\n", "", 0),
