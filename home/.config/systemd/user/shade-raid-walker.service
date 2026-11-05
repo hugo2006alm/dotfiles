@@ -13,6 +13,7 @@ StartLimitBurst=5
 [Service]
 Type=simple
 ExecCondition=/usr/bin/test -x /usr/bin/walker
+ExecStartPre=%h/.local/bin/shade-raid-wait-elephant
 ExecStart=/usr/bin/walker --gapplication-service
 Restart=on-failure
 RestartSec=1
