@@ -46,7 +46,7 @@ class SetupService:
         if os.geteuid() == 0:
             raise RuntimeError("Run setup as a normal user, not root")
         selected_optional_packages: list[str] = []
-        if sys.stdin.isatty():
+        if sys.stdin.isatty() and not self._exec.dry_run:
             selected_optional_packages = self._optional_package_selector.select(OPTIONAL_PACKAGES)
 
         desktop_profile = self._profile_resolver.resolve(selected_optional_packages)

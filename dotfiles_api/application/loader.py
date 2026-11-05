@@ -11,7 +11,11 @@ class ThemeLoader:
         self._env = env
 
     def load(self, theme_name: str) -> DesignTokens:
+        if not theme_name or theme_name in {".", ".."} or "/" in theme_name or "\\" in theme_name:
+            raise ValueError(f"Invalid theme name: {theme_name!r}")
         theme_path = self._env.home_dir / ".config" / "themes" / theme_name / "colors.toml"
+        if not theme_path.exists():
+            theme_path = self._env.source_home / ".config/themes" / theme_name / "colors.toml"
         if not theme_path.exists():
             raise FileNotFoundError(f"Theme file '{theme_path}' does not exist.")
             
@@ -19,6 +23,8 @@ class ThemeLoader:
             colors_data = tomllib.load(f)
             
         style_path = self._env.home_dir / ".config" / "themes" / "style.toml"
+        if not style_path.exists():
+            style_path = self._env.source_home / ".config/themes/style.toml"
         metrics_data = {}
         typography_data = {}
         

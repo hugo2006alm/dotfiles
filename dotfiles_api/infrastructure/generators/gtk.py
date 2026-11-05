@@ -1,5 +1,3 @@
-import subprocess
-import shutil
 from dotfiles_api.domain.tokens import DesignTokens
 from dotfiles_api.domain.artifacts import GeneratedArtifact
 from dotfiles_api.infrastructure.generators.base import BaseGenerator
@@ -84,22 +82,6 @@ button.suggested-action:hover {{
   background-color: {accent_hover};
 }}
 """
-
-        folder_color = tokens.colors.colors.get("papirus_folder_color")
-        if not folder_color:
-            accent_val = tokens.colors.colors.get("accent", "")
-            if accent_val in ["#D94F2B", "#E8623E", "#B33E20"]:
-                folder_color = "orange"
-            elif accent_val in ["#6B8E23", "#556B2F"]:
-                folder_color = "green"
-            else:
-                folder_color = "grey"
-
-        if shutil.which("papirus-folders"):
-            try:
-                subprocess.Popen(["papirus-folders", "-C", folder_color], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except Exception:
-                pass
 
         return [
             GeneratedArtifact(artifact_id="gtk3-settings", content=settings_ini),

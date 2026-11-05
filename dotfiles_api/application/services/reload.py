@@ -7,9 +7,10 @@ from dotfiles_api.domain.events import ConfigGeneratedEvent, ReloadRequestedEven
 
 class ReloadService:
     def __init__(self, reloadables: list[Reloadable], verbose: bool = False,
-                 optional_reloadables: list[Reloadable] | None = None) -> None:
+                 optional_reloadables: list[Reloadable] | None = None, dry_run: bool = False) -> None:
         self._reloadables = reloadables
         self._verbose = verbose
+        self._dry_run = dry_run
         self._optional = {id(item) for item in optional_reloadables or []}
         self._event_reloadables = [
             r for r in reloadables if isinstance(r, EventReloadable)
@@ -74,6 +75,9 @@ class ReloadService:
             t_lock.release()
 
     def _reload(self, reloadables: list[Reloadable]) -> None:
+        if self._dry_run:
+            print(f"[DRY-RUN] Would refresh {len(reloadables)} application handlers")
+            return
         errors = []
         for reloadable in reloadables:
             name = reloadable.__class__.__name__
