@@ -4,6 +4,7 @@ import os
 import getpass
 from pathlib import Path
 
+from dotfiles_api.presentation.argument_parser import CommandParser
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.infrastructure.executor import SystemCommandExecutor
@@ -73,22 +74,24 @@ from dotfiles_api.infrastructure.actions.preview import PreviewAction
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Modular Dotfiles API CLI Manager")
+    parser = CommandParser(description="Modular Dotfiles API CLI Manager", allow_abbrev=False)
     parser.set_defaults(github=False)
     parser.add_argument("--dry-run", action="store_true", help="Log commands instead of running them")
-    parser.add_argument("--theme", default="shade-raid", help="The name of the theme to apply")
+    parser.add_argument("--theme", default=None, help="The name of the theme to apply")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument("--github", action="store_true", help="Run GitHub authentication login during setup")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login"):
-        command = commands.add_parser(name)
+    for name in ("install", "link", "configure", "reload", "apply-all", "toggle", "action", "setup", "setup-login", "repair-login-permissions"):
+        command = commands.add_parser(name, allow_abbrev=False)
         # Suppressed defaults preserve options given before the subcommand.
         command.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
-        command.add_argument("--theme", default=argparse.SUPPRESS)
+        if name in {"configure", "apply-all", "setup"}:
+            command.add_argument("--theme", default=argparse.SUPPRESS)
         command.add_argument("--verbose", "-v", action="store_true", default=argparse.SUPPRESS)
         if name == "setup":
+            command.add_argument("--change-shell", action="store_true", help="Explicitly set Fish as login shell")
             command.add_argument("--github", action="store_true", default=argparse.SUPPRESS)
-            command.add_argument("--ssh-server", action="store_true", help="Enable incoming SSH and open its firewall rule")
+            command.add_argument("--ssh-server", action="store_true", help="Enable the SSH server; configure firewall access separately")
         if name == "action":
             command.add_argument("action_name")
             command.add_argument("action_args", nargs=argparse.REMAINDER)
@@ -98,6 +101,20 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command in {"configure", "apply-all"} and args.theme is None:
+        args.theme = "shade-raid"
+    if args.command == "setup" and os.geteuid() == 0:
+        raise RuntimeError("Run setup as a normal user, not root")
+
+    for variable in ("DOTFILES_DIR", "XDG_STATE_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR"):
+        value = os.environ.get(variable)
+        if value and not Path(value).is_absolute():
+            raise ValueError(f"{variable} must be an absolute path")
+        if value and Path(value).exists() and not Path(value).is_dir():
+            raise ValueError(f"{variable} must name a directory")
+    explicit_root = os.environ.get("DOTFILES_DIR")
+    if explicit_root and not (Path(explicit_root) / "dotfiles_api" / "presentation" / "cli.py").is_file():
+        raise ValueError("DOTFILES_DIR must point to a complete dotfiles checkout")
 
     home_dir = Path.home()
     dotfiles_dir = Path(os.environ.get("DOTFILES_DIR", Path(__file__).resolve().parents[2]))
@@ -246,25 +263,6 @@ def main(argv: list[str] | None = None) -> None:
         setup_service=setup_svc,
     )
 
-    def run_reload_detached(verbose: bool = False) -> None:
-        if exec_ctx.dry_run:
-            print("[DRY-RUN] Would update wallpaper and reload desktop applications")
-            return
-        import subprocess
-
-        cmd = [sys.executable, "-m", "dotfiles_api.presentation.cli", "reload"]
-        if verbose:
-            cmd.append("--verbose")
-        try:
-            subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-        except Exception:
-            pass
-
     action_svc = ActionService()
     action_svc.register("screenshot", ScreenshotAction(exec_ctx))
     action_svc.register("record", RecorderAction(exec_ctx, env))
@@ -350,7 +348,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "reload":
         facade.reload()
     elif args.command == "apply-all":
@@ -359,7 +357,7 @@ def main(argv: list[str] | None = None) -> None:
         facade.apply_theme(args.theme)
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "toggle":
         toggles_performed = 0
         while True:
@@ -392,11 +390,16 @@ def main(argv: list[str] | None = None) -> None:
                 break
         action_svc.run_action("wallpaper", [])
         release_lock_fn()
-        run_reload_detached(getattr(args, "verbose", False))
+        facade.reload()
     elif args.command == "setup":
-        facade.setup(setup_github=args.github, enable_ssh_server=getattr(args, "ssh_server", False))
-    elif args.command == "setup-login":
-        LoginSetupService(exec_ctx, env).apply()
+        setup_options = {"setup_github": args.github, "enable_ssh_server": getattr(args, "ssh_server", False)}
+        if getattr(args, "change_shell", False):
+            setup_options["change_shell"] = True
+        if args.theme is not None:
+            setup_options["theme_name"] = args.theme
+        facade.setup(**setup_options)
+    elif args.command in {"setup-login", "repair-login-permissions"}:
+        LoginSetupService(exec_ctx, env).apply(permissions_only=args.command == "repair-login-permissions")
     elif args.command == "action":
         if not args.action_name:
             parser.error("action_name is required for the 'action' command")

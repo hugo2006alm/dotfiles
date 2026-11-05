@@ -1,3 +1,6 @@
+import os
+import shutil
+import tempfile
 from pathlib import Path
 from dotfiles_api.domain.contracts.linker import Linker
 from dotfiles_api.context.execution import ExecutionContext
@@ -15,3 +18,31 @@ class StowLinker(Linker):
             return
         with HomeMigration(source_dir, target_dir):
             self._exec.execute(args, step="link:stow")
+            self._install_seeds(source_dir, target_dir)
+
+    def _install_seeds(self, source: Path, target: Path) -> None:
+        seeds = source / "seeds"
+        if not seeds.is_dir():
+            return
+        for item in sorted(seeds.rglob("*")):
+            if not item.is_file() or item.is_symlink():
+                continue
+            destination = target / item.relative_to(seeds)
+            if destination.exists() or destination.is_symlink():
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if destination.parent.resolve().is_relative_to(source.resolve()):
+                raise ValueError(f"Unsafe seed destination: {destination}")
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=destination.parent, prefix=".shade-raid-seed-", delete=False) as out:
+                    temporary = Path(out.name)
+                    with item.open("rb") as source_file:
+                        shutil.copyfileobj(source_file, out)
+                try:
+                    os.link(temporary, destination, follow_symlinks=False)
+                except FileExistsError:
+                    pass
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)

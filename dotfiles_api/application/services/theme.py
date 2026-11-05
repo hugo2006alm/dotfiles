@@ -12,6 +12,9 @@ class ThemeService:
         self._planner = planner
         self._dry_run = dry_run
 
+    def get_active_theme(self) -> str:
+        return self._store.get_active_theme()
+
     def apply_theme(self, theme_name: str):
         tokens = self._loader.load(theme_name)
         plan = self._planner.build(tokens, theme_name) if self._planner else None
