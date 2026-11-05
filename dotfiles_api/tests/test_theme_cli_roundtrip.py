@@ -37,6 +37,7 @@ class TestThemeCliRoundtrip(unittest.TestCase):
                 self.assertEqual(executor.call_count, calls, "Unchanged theme should not refresh applications or wallpaper")
                 main(["configure", "--theme", "shade-raid-dark"])
                 self.assertNotEqual((home / ".config/ghostty/colors.conf").read_bytes(), light)
+                main(["action", "preview", "next"])
                 before_preview = snapshot(home)
                 main(["rollback", "--dry-run"])
                 self.assertEqual(snapshot(home), before_preview)
