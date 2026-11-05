@@ -3,32 +3,29 @@
 hl.on("hyprland.start", function()
     -- Core services
     hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("sh -c 'waybar >/dev/null 2>&1 &'")
-    hl.exec_cmd("swaync")
-    hl.exec_cmd("elephant")
-    hl.exec_cmd("walker --gapplication-service")
+    -- Import environment first, then start persistent apps through user systemd.
+    -- Hyprland owns hyprland-session.target and its graphical-session lifetime.
+    hl.exec_cmd("dotfiles action session")
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("hyprsunset")
     hl.exec_cmd("hypridle")
-    hl.exec_cmd("swayosd-server --style $HOME/.config/swayosd/style.css")
     
-    -- DBus environment
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE")
     
     -- Initialize gsettings theme/scheme on startup to match active theme
     hl.exec_cmd([=[sh -c '
-        THEME=$(cat "$HOME/.config/themes/current" 2>/dev/null || echo shade-raid)
-        if [[ "$THEME" == *-dark ]]; then
+        THEME=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/shade-raid/active-theme" 2>/dev/null || cat "$HOME/.config/themes/current" 2>/dev/null || echo shade-raid)
+        case "$THEME" in *-dark)
             gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
             gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
             gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
-        else
+        ;;
+        *)
             gsettings set org.gnome.desktop.interface color-scheme "prefer-light"
             gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
             gsettings set org.gnome.desktop.interface icon-theme "Papirus-Light"
-        fi
+        ;;
+        esac
     ']=])
     
     -- Wallpaper: poll socket until daemon is ready, then restore last wallpaper
@@ -48,8 +45,6 @@ hl.on("hyprland.start", function()
     -- Keyring (auto-unlocks on autologin sessions)
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
     
-    -- Start xdg-desktop-portal (must run in Hyprland session context via dedicated script)
-    hl.exec_cmd("$HOME/.config/hypr/scripts/portal.sh &")
 
     -- Load personal autostart if present
     local personal_path = os.getenv("HOME") .. "/.config/hypr/autostart-personal.lua"

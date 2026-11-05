@@ -1,6 +1,6 @@
 from dotfiles_api.infrastructure.reloadables.waybar import WaybarReloadable
 from dotfiles_api.infrastructure.reloadables.swaync import SwayNCReloadable
-from dotfiles_api.infrastructure.reloadables.portal import XDGPortalReloadable
+from dotfiles_api.infrastructure.reloadables.user_service import UserServiceReloadable
 from dotfiles_api.infrastructure.reloadables.gsettings import GsettingsReloadable
 from dotfiles_api.infrastructure.reloadables.ghostty import GhosttyReloadable
 from dotfiles_api.infrastructure.reloadables.walker import WalkerReloadable
@@ -33,7 +33,7 @@ def _reload(cls):
 
 
 APPLICATIONS = (
-    ApplicationSpec('hyprland', packages=('hyprland', 'xdg-desktop-portal-hyprland', 'xdg-desktop-portal-gtk', 'hypridle', 'hyprsunset', 'hyprpicker', 'hyprshot', 'awww'), capabilities=('compositor',),
+    ApplicationSpec('hyprland', packages=('hyprland', 'hypridle', 'hyprsunset', 'hyprpicker', 'hyprshot', 'awww'), capabilities=('compositor',),
         generator=HyprlandGenerator,
         outputs=(
             OutputSpec('hyprland-colors', '.config/hypr/colors.lua'),
@@ -44,6 +44,7 @@ APPLICATIONS = (
         reload_factory=_reload(HyprlandReloadable), reload_strategy="application",
     ),
     ApplicationSpec('waybar', packages=('waybar', 'sassc', 'jq'), capabilities=('status-bar',),
+        user_unit="shade-raid-waybar.service",
         generator=WaybarGenerator,
         dependencies=("hyprland",),
         outputs=(
@@ -52,7 +53,7 @@ APPLICATIONS = (
             OutputSpec('waybar-style', '.config/waybar/style.css'),
         ),
         stylesheets=(StylesheetSpec('.config/waybar/style.scss', 'waybar-style', ('waybar-colors', 'waybar-variables')),),
-        reload_factory=_reload(WaybarReloadable), reload_strategy="application",
+        reload_factory=_reload(WaybarReloadable), reload_strategy="systemd-user-reload",
     ),
     ApplicationSpec('ghostty', packages=('ghostty',), capabilities=('terminal',),
         generator=GhosttyGenerator,
@@ -62,6 +63,7 @@ APPLICATIONS = (
         reload_factory=_reload(GhosttyReloadable), reload_strategy="application",
     ),
     ApplicationSpec('swaync', packages=('swaync', 'libnotify'), capabilities=('notification-center',),
+        user_unit="shade-raid-swaync.service",
         generator=SwayncGenerator,
         dependencies=("hyprland",),
         outputs=(
@@ -71,6 +73,9 @@ APPLICATIONS = (
         reload_factory=_reload(SwayNCReloadable), reload_strategy="application",
     ),
     ApplicationSpec('swayosd', packages=('swayosd',), capabilities=(),
+        user_unit="shade-raid-swayosd.service",
+        reload_factory=lambda execution, env, store, loader: UserServiceReloadable(execution, "swayosd", "shade-raid-swayosd.service"),
+        reload_strategy="systemd-user-restart",
         generator=SwayosdGenerator,
         dependencies=("hyprland",),
         outputs=(
@@ -87,17 +92,18 @@ APPLICATIONS = (
         ),
         reload_factory=_reload(BtopReloadable), reload_strategy="application",
     ),
-    ApplicationSpec('walker', packages=('walker-bin', 'elephant-all'), capabilities=('launcher',),
-        package_sources=(('walker-bin', 'yay'), ('elephant-all', 'yay')),
+    ApplicationSpec('walker', packages=('walker-bin',), capabilities=('launcher',),
+        user_unit="shade-raid-walker.service",
+        package_sources=(('walker-bin', 'yay'),),
         generator=WalkerGenerator,
-        dependencies=("hyprland",),
+        dependencies=("hyprland", "elephant"),
         outputs=(
             OutputSpec('walker-colors', '.config/walker/themes/{theme_name}/_colors.scss'),
             OutputSpec('walker-config', '.config/walker/config.toml'),
             OutputSpec('walker-style', '.config/walker/themes/{theme_name}/style.css'),
         ),
         stylesheets=(StylesheetSpec('.config/walker/themes/style.scss', 'walker-style', ('walker-colors',)),),
-        reload_factory=_reload(WalkerReloadable), reload_strategy="application",
+        reload_factory=_reload(WalkerReloadable), reload_strategy="systemd-user-restart",
     ),
     ApplicationSpec('wlogout', packages=('wlogout',), capabilities=(),
         package_sources=(('wlogout', 'yay'),),
@@ -182,7 +188,10 @@ APPLICATIONS = (
     ),
     ApplicationSpec('keyring', packages=('gnome-keyring', 'seahorse'), capabilities=('keyring',),
     ),
-    ApplicationSpec('portal', packages=(), capabilities=(),
-        reload_factory=_reload(XDGPortalReloadable), reload_strategy="application",
+    ApplicationSpec('elephant', packages=('elephant-all',), package_sources=(("elephant-all", "yay"),),
+        user_unit="shade-raid-elephant.service", dependencies=("hyprland",),
+    ),
+    ApplicationSpec('portal', packages=('xdg-desktop-portal', 'xdg-desktop-portal-hyprland', 'xdg-desktop-portal-gtk'),
+        capabilities=(), dependencies=("hyprland",),
     ),
 )

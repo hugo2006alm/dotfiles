@@ -13,7 +13,7 @@ class ApplicationRegistry:
         self._by_id = {spec.id: spec for spec in specs}
         if len(self._by_id) != len(specs):
             raise ValueError("Duplicate application IDs")
-        visited, visiting, output_ids, paths = set(), set(), set(), set()
+        visited, visiting, output_ids, paths, units = set(), set(), set(), set(), set()
 
         def visit(name):
             if name not in self._by_id:

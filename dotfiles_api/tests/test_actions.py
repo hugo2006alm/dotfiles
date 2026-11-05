@@ -91,9 +91,10 @@ class TestActions(unittest.TestCase):
     def test_portal_action(self) -> None:
         from dotfiles_api.infrastructure.actions.portal import PortalAction
         action = PortalAction(self.exec_ctx)
-        action.execute([])
-        self.assertTrue(any("killall" in cmd for cmd in self.executor.commands))
-        self.assertTrue(any("xdg-desktop-portal-hyprland" in cmd for cmd in self.executor.commands))
+        with patch.dict("os.environ", {"WAYLAND_DISPLAY": "wayland-1", "XDG_CURRENT_DESKTOP": "Hyprland"}):
+            action.execute([])
+        self.assertFalse(any("kill" in cmd for cmd in self.executor.commands))
+        self.assertEqual(self.executor.commands[-1], "systemctl --user start xdg-desktop-portal.service")
 
     def test_drawer_action(self) -> None:
         self.executor.mock_results = {

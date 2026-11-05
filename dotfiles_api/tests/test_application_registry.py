@@ -126,3 +126,11 @@ class TestApplicationRegistry(unittest.TestCase):
             with self.subTest(style=style), self.assertRaises(ValueError):
                 ApplicationRegistry((ApplicationSpec("a", outputs=(OutputSpec("scss", "colors.scss"),
                     OutputSpec("css", "style.css")), stylesheets=(style,)),))
+
+    def test_rejects_unsafe_or_duplicate_user_units(self):
+        for unit in ("../other.service", "-other.service", "other.target"):
+            with self.subTest(unit=unit), self.assertRaises(ValueError):
+                ApplicationRegistry((ApplicationSpec("a", user_unit=unit),))
+        with self.assertRaises(ValueError):
+            ApplicationRegistry((ApplicationSpec("a", user_unit="same.service"),
+                                 ApplicationSpec("b", user_unit="same.service")))
