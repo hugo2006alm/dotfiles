@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Shade Raid Browser
+Comment=Open an installed browser
+Exec=dotfiles action browser %U
+TryExec=dotfiles
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;

@@ -21,7 +21,7 @@ PACKAGE_SOURCES: dict[str, str] = {
 
 OPTIONAL_PACKAGES: list[dict[str, object]] = [
     # Personal desktop apps
-    {"package": "codex-app-unofficial", "label": "ChatGPT Desktop (unofficial Linux build)", "category": "Apps", "source": "yay"},
+    {"package": "codex-app-unofficial", "label": "Codex Desktop (unofficial Linux build)", "category": "Apps", "source": "yay"},
     {"package": "spotify", "label": "Spotify", "category": "Apps", "source": "yay"},
     {"package": "spicetify-cli", "label": "Spicetify CLI (Spotify customization)", "category": "Apps", "source": "yay"},
     {"package": "vesktop-bin", "label": "Vesktop (Discord client)", "category": "Apps", "source": "yay"},

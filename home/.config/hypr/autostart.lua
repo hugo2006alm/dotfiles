@@ -1,5 +1,12 @@
 -- Autostart Configuration
 
+-- Shared agent socket for compositor children and D-Bus activation; preserve an
+-- agent supplied by a session manager. The unit starts one foreground agent.
+local runtime = os.getenv("XDG_RUNTIME_DIR")
+if runtime and not os.getenv("SSH_AUTH_SOCK") then
+    hl.env("SSH_AUTH_SOCK", runtime .. "/shade-raid-ssh/agent.socket")
+end
+
 hl.on("hyprland.start", function()
     -- Core services
     hl.exec_cmd("awww-daemon")
@@ -7,7 +14,7 @@ hl.on("hyprland.start", function()
     -- Hyprland owns hyprland-session.target and its graphical-session lifetime.
     hl.exec_cmd("dotfiles action session")
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
-    hl.exec_cmd("wl-paste --watch cliphist store")
+    -- Elephant's clipboard provider owns persistent history (text and images).
     hl.exec_cmd("hyprsunset")
     hl.exec_cmd("hypridle")
     

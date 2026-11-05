@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ChatGPT
+Comment=Open ChatGPT in your browser
+Exec=dotfiles action chatgpt
+TryExec=dotfiles
+Icon=web-browser
+Terminal=false
+Categories=Network;Office;

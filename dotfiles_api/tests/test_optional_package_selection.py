@@ -63,7 +63,7 @@ class TestOptionalPackageSelection(unittest.TestCase):
             option for option in OPTIONAL_PACKAGES
             if option["package"] == "codex-app-unofficial"
         )
-        self.assertIn("ChatGPT", str(chatgpt_option["label"]))
+        self.assertIn("Codex", str(chatgpt_option["label"]))
 
     def test_selected_optional_packages_are_added_to_profile(self) -> None:
         profile = build_desktop_profile(["docker", "obs-studio", "android-studio"])
