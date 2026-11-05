@@ -34,7 +34,7 @@ class TestLoginRecovery(unittest.TestCase):
         (self.root / 'etc/systemd/system').mkdir(parents=True)
         (self.root / 'run/lock').mkdir(parents=True)
         (self.root / 'var/backups').mkdir(parents=True)
-        self.preflight = LoginPreflight(self.env, root=self.root, which=lambda _: sys.executable,
+        self.preflight = LoginPreflight(self.env, root=self.root, which=lambda _: "/usr/bin/true",
                                        greeter_lookup=lambda _: SimpleNamespace(pw_uid=42))
 
     def install(self, **kwargs):
@@ -79,7 +79,7 @@ class TestLoginRecovery(unittest.TestCase):
         self.preflight.which = lambda _: None
         with self.assertRaisesRegex(ValueError, 'binary'):
             self.preflight.build()
-        self.preflight.which = lambda _: sys.executable
+        self.preflight.which = lambda _: "/usr/bin/true"
         self.preflight.greeter_lookup = Mock(side_effect=KeyError('greeter'))
         with self.assertRaisesRegex(ValueError, 'greeter'):
             self.preflight.build()
