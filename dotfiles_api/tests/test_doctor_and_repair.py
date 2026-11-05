@@ -57,6 +57,17 @@ class TestDoctorAndRepair(unittest.TestCase):
         self.assertEqual(report.exit_code, 1)
         self.assertFalse(any("start" in call.args[0] for call in self.query.call_args_list))
 
+    def test_unavailable_package_inventory_is_reported_unknown(self):
+        def unavailable():
+            raise RuntimeError('fake unavailable pacman database')
+        self.doctor.inventory = unavailable
+        with patch.dict(os.environ, {}, clear=True):
+            report = self.doctor.run()
+        finding = next(item for item in report.findings if item.id == 'packages')
+        self.assertEqual(finding.severity, 'unknown')
+        self.assertIn('unavailable', finding.message)
+        self.assertFalse(any(item.id.startswith('package:') for item in report.findings))
+
     def test_service_queries_are_read_only_and_failed_service_has_a_plan(self):
         def query(command):
             return CommandResult("inactive", "", 3) if command[0] == "systemctl" else CommandResult("", "", 0)

@@ -74,7 +74,7 @@ class DoctorService:
                 findings.append(Diagnostic("package:" + package, "error" if missing else "ok",
                     ("Missing selected package: " if missing else "Installed package: ") + package,
                     tuple(install) if missing else (), privileged=missing))
-        except OSError as error:
+        except (OSError, RuntimeError) as error:
             findings.append(Diagnostic("packages", "unknown", f"Cannot inspect package inventory: {error}"))
         self._outputs(findings, active_specs)
         if "desktop" in active_profiles:
