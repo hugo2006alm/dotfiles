@@ -208,6 +208,22 @@ class TestThemeCoordinator(unittest.TestCase):
         self.assertEqual(self.first.read_text(), "original")
         self.assertFalse(self.second.exists())
 
+    def test_legacy_journal_is_recoverable_and_future_version_is_rejected(self):
+        coordinator = self.coordinator()
+        self.apply(coordinator)
+        journal = next((self.env.state_dir / 'transactions').glob('*/manifest.json'))
+        manifest = json.loads(journal.read_text())
+        self.assertEqual(manifest['version'], 1)
+        manifest['version'] = 99
+        journal.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, 'version'):
+            coordinator.rollback()
+        self.assertEqual(self.first.read_text(), 'changed')
+        manifest.pop('version')
+        journal.write_text(json.dumps(manifest))
+        coordinator.rollback()
+        self.assertEqual(self.first.read_text(), 'original')
+
     def test_manual_rollback_dry_run_is_read_only(self):
         coordinator = self.coordinator()
         self.apply(coordinator)

@@ -75,7 +75,7 @@ class ConfigTransaction:
                 backup = journal / "backups" / record["backup"]
                 SystemFileWriter().write_bytes(backup, path.read_bytes())
             SystemFileWriter().write(journal / "staging" / record["backup"], artifact.content)
-        manifest = {"created_ns": time.time_ns(), "theme": self.theme_name, "status": "prepared",
+        manifest = {"version": 1, "created_ns": time.time_ns(), "theme": self.theme_name, "status": "prepared",
                     "generators": self.generators, "files": records, "parents": sorted(parents)}
         self._save_manifest(journal, manifest)
         self.last_journal = journal
@@ -95,6 +95,8 @@ class ConfigTransaction:
         print(f"Theme recovery journal: {journal}")
 
     def _validated_records(self, journal, manifest):
+        if manifest.get("version", 0) not in (0, 1):
+            raise ValueError(f"Unsupported recovery journal version: {journal}")
         records = manifest["files"]
         for index, record in enumerate(records):
             expected = self._store.resolve_path(record["artifact_id"], theme_name=manifest["theme"]).absolute()
