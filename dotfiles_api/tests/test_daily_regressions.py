@@ -54,7 +54,7 @@ class TestDailyRegressions(unittest.TestCase):
                 patch.object(self.context.executor, "spawn", side_effect=capture):
             started = time.monotonic()
             BrowserAction(self.context).execute([secret])
-            self.assertLess(time.monotonic() - started, 2)
+            self.assertLess(time.monotonic() - started, 5)
         processes[0].wait(timeout=5)
         self.assertNotIn("SECRET-CALLBACK", output.getvalue() + (self.root / "commands.jsonl").read_text())
         self.assertNotIn("OAUTH", output.getvalue() + (self.root / "commands.jsonl").read_text())

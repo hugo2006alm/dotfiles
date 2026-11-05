@@ -117,7 +117,7 @@ class TestSSHAgentSelection(unittest.TestCase):
 local head=assert(src:match("^(.-)%-%- General settings"))
 dofile=function() return {} end
 hl={env=function(k,v) if k=="SSH_AUTH_SOCK" then print(v) end end}
-assert(load(head))()
+assert((loadstring or load)(head))()
 '''
         with tempfile.TemporaryDirectory() as temp:
             helper = Path(temp) / 'ssh-add'

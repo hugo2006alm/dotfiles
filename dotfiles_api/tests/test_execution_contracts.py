@@ -64,6 +64,7 @@ class TestExecutionContracts(unittest.TestCase):
     def test_cli_configure_observes_required_refresh_failure(self):
         from dotfiles_api.presentation.cli import main
         with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {"WAYLAND_DISPLAY": ""}))
             facade = stack.enter_context(patch("dotfiles_api.presentation.cli.DotfilesFacade"))
             stack.enter_context(patch("dotfiles_api.presentation.cli.ActionService"))
             stack.enter_context(patch("dotfiles_api.presentation.cli.open", mock_open(), create=True))
