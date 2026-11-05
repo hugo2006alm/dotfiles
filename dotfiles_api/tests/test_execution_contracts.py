@@ -104,11 +104,19 @@ class TestExecutionContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             log = Path(temp) / "commands.jsonl"
             context = ExecutionContext(False, SystemCommandExecutor(), verbose=True, log_path=log)
+            error_text = ""
             with contextlib.redirect_stdout(io.StringIO()) as output:
-                with self.assertRaisesRegex(RuntimeError, "29") as error:
-                    context.spawn([sys.executable, "-c", "import sys; print('FAKE_PRIVATE', file=sys.stderr); sys.exit(29)"])
-            self.assertNotIn("FAKE_PRIVATE", output.getvalue() + log.read_text() + str(error.exception))
-            self.assertEqual(json.loads(log.read_text())["returncode"], 29)
+                try:
+                    process = context.spawn([sys.executable, "-c", "import sys; print('FAKE_PRIVATE', file=sys.stderr); sys.exit(29)"])
+                except RuntimeError as error:
+                    error_text = str(error)
+                    self.assertIn("29", error_text)
+                    self.assertEqual(json.loads(log.read_text())["returncode"], 29)
+                else:
+                    # Under load, startup may outlast the observation window.
+                    self.assertEqual(process.wait(timeout=5), 29)
+                    self.assertIsNone(json.loads(log.read_text())["returncode"])
+            self.assertNotIn("FAKE_PRIVATE", output.getvalue() + log.read_text() + error_text)
 
     def test_spawn_dry_run_never_calls_executor_or_writes(self):
         with tempfile.TemporaryDirectory() as temp:

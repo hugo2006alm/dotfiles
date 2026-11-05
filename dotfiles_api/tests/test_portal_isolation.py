@@ -76,8 +76,13 @@ class TestPortalIsolation(unittest.TestCase):
     def test_managed_fish_aliases_use_systemd_only(self):
         root = Path(__file__).resolve().parents[2]
         aliases = (root / "home/.config/fish/config.fish").read_text().splitlines()
-        for name in ("waybar", "swaync", "walker"):
+        for name in ("waybar", "walker"):
             line = next(line for line in aliases if line.startswith(f"alias reload-{name}="))
-            self.assertIn(f"systemctl --user restart shade-raid-{name}.service", line)
+            self.assertIn("systemctl --user", line)
+            self.assertIn(f"shade-raid-{name}.service", line)
             self.assertNotIn("pkill", line)
             self.assertNotIn("hyprctl", line)
+        line = next(line for line in aliases if line.startswith("alias reload-swaync="))
+        self.assertIn("swaync-client -R", line)
+        self.assertIn("swaync-client -rs", line)
+        self.assertNotIn("pkill", line)
