@@ -26,6 +26,11 @@ def snapshot(root):
 
 
 class TestDryRunSafety(unittest.TestCase):
+    def setUp(self):
+        inventory = patch("dotfiles_api.infrastructure.package_inventory.PackageInventory.names", return_value=set())
+        inventory.start()
+        self.addCleanup(inventory.stop)
+
     def test_papirus_folder_update_is_an_explicit_reload_effect(self):
         import inspect
         from dotfiles_api.infrastructure.reloadables.gsettings import GsettingsReloadable

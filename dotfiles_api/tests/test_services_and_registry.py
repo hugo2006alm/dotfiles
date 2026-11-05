@@ -147,7 +147,8 @@ class TestInstallService(unittest.TestCase):
             env=None,
             exec_ctx=None,
             registry=registry,
-            sources=sources
+            sources=sources,
+            inventory=lambda: set()
         )
 
         f1 = Feature(name="launcher", packages=["walker"], capabilities=[])
