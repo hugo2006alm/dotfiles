@@ -1,5 +1,6 @@
 import contextlib
 import io
+import os
 import shutil
 import subprocess
 import tempfile
@@ -73,6 +74,20 @@ class TestStylePipeline(unittest.TestCase):
             for artifact_id, content in css.items():
                 self.assertEqual(self.store.resolve_path(artifact_id, "shade-raid").read_bytes(), content)
         self.assertEqual(snapshot(ROOT / "home"), source)
+
+    @unittest.skipUnless(shutil.which("sassc"), "Requires real sassc")
+    def test_compiled_css_fifo_destination_is_rejected_without_reading(self):
+        target = self.store.resolve_path('waybar-style', 'shade-raid')
+        target.parent.mkdir(parents=True)
+        os.mkfifo(target)
+        read = Path.read_bytes
+        def guarded(path):
+            if path == target:
+                self.fail('attempted to read FIFO')
+            return read(path)
+        with patch.object(Path, 'read_bytes', guarded), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(ValueError, 'regular'):
+                self.coordinator(SystemCommandExecutor()).apply(ThemeLoader(self.env).load('shade-raid'), 'shade-raid')
 
     def nested_fixture(self, root):
         from dotfiles_api.domain.models.application_spec import ApplicationSpec

@@ -74,6 +74,8 @@ class ThemeStyler:
                 path = self.store.resolve_path(style.output, plan.theme_name)
                 self.env.validate_output_path(path)
                 ArtifactValidator().validate(path, content)
+                if path.exists() and not path.is_file():
+                    raise ValueError(f"Stylesheet destination is not a regular file: {path}")
                 original = path.read_bytes() if path.exists() else None
                 link = str(path.readlink()) if path.is_symlink() else None
                 items.append(PlannedArtifact(spec.id, GeneratedArtifact(style.output, content), path, original, link))

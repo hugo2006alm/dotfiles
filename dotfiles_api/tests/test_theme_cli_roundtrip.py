@@ -65,8 +65,11 @@ class TestThemeCliRoundtrip(unittest.TestCase):
             StowLinker(ExecutionContext(False, SystemCommandExecutor())).link(ROOT, home)
             variables = {"DOTFILES_DIR": str(ROOT), "XDG_STATE_HOME": str(home / ".state"),
                          "XDG_RUNTIME_DIR": str(home / ".runtime")}
+            real_execute = SystemCommandExecutor().execute
+            def execute(args, cwd=None):
+                return real_execute(args, cwd) if args[0] == "sassc" else CommandResult("", "", 0)
             with patch.dict(os.environ, variables), patch("pathlib.Path.home", return_value=home), \
-                    patch.object(SystemCommandExecutor, "execute", return_value=CommandResult("", "", 0)), \
+                    patch.object(SystemCommandExecutor, "execute", side_effect=execute), \
                     contextlib.redirect_stdout(io.StringIO()):
                 main(["configure", "--theme", "shade-raid"])
                 light = (home / ".config/swaync/config.json").read_bytes()
