@@ -26,6 +26,22 @@ def snapshot(root):
 
 
 class TestDryRunSafety(unittest.TestCase):
+    def test_theme_plan_lists_paths_actions_and_deferred_checks(self):
+        from dotfiles_api.domain.artifacts import GeneratedArtifact
+        from dotfiles_api.domain.models.planned_artifact import PlannedArtifact
+        from dotfiles_api.domain.models.theme_plan import ThemePlan
+        plan = ThemePlan('test', (
+            PlannedArtifact('app', GeneratedArtifact('a', 'new'), Path('/home/user/new'), None),
+            PlannedArtifact('app', GeneratedArtifact('b', 'new'), Path('/home/user/change'), b'old'),
+            PlannedArtifact('app', GeneratedArtifact('c', 'same'), Path('/home/user/keep'), b'same'),
+        ))
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            plan.describe()
+        text = output.getvalue()
+        for expected in ('CREATE /home/user/new', 'UPDATE /home/user/change', 'KEEP /home/user/keep',
+                         'app', 'deferred'):
+            self.assertIn(expected, text)
+
     def test_papirus_folder_update_is_an_explicit_reload_effect(self):
         import inspect
         from dotfiles_api.infrastructure.reloadables.gsettings import GsettingsReloadable

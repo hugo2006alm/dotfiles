@@ -17,5 +17,10 @@ class ThemePlan:
         print(f"PLAN: theme {self.theme_name}")
         print(f"  Generate {len(self.artifacts)} artifacts")
         print(f"  Update {changed} files; keep {len(self.artifacts) - changed} unchanged")
-        print("  Reload affected applications after successful application")
+        for item in self.artifacts:
+            operation = "CREATE" if item.original is None else "UPDATE" if item.changed else "KEEP"
+            print(f"  {operation} {item.path} [{item.generator}]")
+        if self.changed_generators:
+            print("  Refresh after commit: " + ", ".join(sorted(self.changed_generators)))
+        print("  Runtime availability and application-level validation deferred until execution")
         print("  Skip privileged greetd installation (explicit setup-login required)")
