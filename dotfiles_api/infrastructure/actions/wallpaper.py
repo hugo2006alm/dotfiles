@@ -57,4 +57,3 @@ class WallpaperAction(Action):
         if not self._exec.dry_run:
             cache_dir.mkdir(parents=True, exist_ok=True)
             last_wp_file.write_text(str(selected_wall))
-

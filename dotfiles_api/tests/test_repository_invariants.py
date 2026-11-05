@@ -14,7 +14,7 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertNotIn("package_mapping = {", source)
         self.assertNotIn("Feature(name=\"compositor\"", source)
         self.assertIn("PackageRegistry()", source)
-        self.assertIn("build_desktop_profile", source)
+        self.assertIn("DesktopProfileResolver", source)
 
     def test_global_reload_includes_xdg_portals(self) -> None:
         source = (ROOT / "dotfiles_api" / "presentation" / "cli.py").read_text()
@@ -30,7 +30,7 @@ class TestRepositoryInvariants(unittest.TestCase):
         self.assertIn("dotfiles action drawer", autostart)
 
     def test_bootstrap_does_not_create_partial_upgrade_state(self) -> None:
-        install = (ROOT / ".config" / "install" / "install.sh").read_text()
+        install = (ROOT / "scripts" / "bootstrap.sh").read_text()
 
         self.assertNotIn("pacman -Sy --noconfirm", install)
         self.assertIn("pacman -Syu --noconfirm", install)

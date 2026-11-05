@@ -52,6 +52,16 @@ class TestLoginSecurity(unittest.TestCase):
                 LoginSetupService(self.ctx, self.env).apply()
         self.executor.execute.assert_not_called()
 
+    def test_optional_spotify_customization_never_makes_system_apps_world_writable(self):
+        from dotfiles_api.application.services.extras import ExtrasSetupService
+
+        prefs = self.home / ".config/spotify/prefs"
+        prefs.parent.mkdir(parents=True)
+        prefs.write_text("prefs")
+        with patch("shutil.which", return_value="/usr/bin/spotify"), patch("os.access", return_value=False):
+            ExtrasSetupService(self.ctx, self.env).setup_extras()
+        self.executor.execute.assert_not_called()
+
     def test_login_validates_all_inputs_before_privileged_changes(self):
         from dotfiles_api.application.services.login import LoginSetupService
 

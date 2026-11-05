@@ -1,10 +1,13 @@
 name: Lint & Syntax Checks
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main, "codex/shade-raid-v2-*" ]
   pull_request:
-    branches: [ main, "codex/shade-raid-v2-*" ]
+    branches: [ main, 'codex/shade-raid-v2*' ]
 
 jobs:
   lint:
@@ -33,3 +36,28 @@ jobs:
       - name: Check Lua Syntax
         run: |
           find . -name "*.lua" -exec luac -p {} +
+
+  arch-regressions:
+    runs-on: ubuntu-latest
+    container: archlinux:base
+    steps:
+      - name: Install Arch test tools
+        run: pacman -Syu --noconfirm --needed python python-pip git sudo fish shellcheck
+      - uses: actions/checkout@v4
+      - name: Run regressions and disposable login installation
+        env:
+          SHADE_RAID_DISPOSABLE_ARCH: "1"
+        run: python -m unittest discover -s dotfiles_api/tests
+      - name: Validate bootstrap and Fish
+        run: |
+          shellcheck scripts/*.sh .config/install/install.sh
+          fish -n .config/fish/config.fish
+      - name: Install isolated CLI twice
+        shell: bash
+        run: |
+          export HOME="$(mktemp -d)"
+          export XDG_DATA_HOME="$HOME/.local/share"
+          bash scripts/install-cli.sh
+          "$HOME/.local/bin/dotfiles" --help
+          bash scripts/install-cli.sh
+          "$HOME/.local/bin/dotfiles" --help

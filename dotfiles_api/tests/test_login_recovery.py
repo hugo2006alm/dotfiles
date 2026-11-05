@@ -305,7 +305,7 @@ class TestLoginRecovery(unittest.TestCase):
             events.append('released')
         theme, setup = Mock(), Mock()
         theme.apply_theme.side_effect = lambda _: events.append('theme')
-        setup.run_setup.side_effect = lambda _: events.append('setup')
+        setup.run_setup.side_effect = lambda *args, **kwargs: events.append('setup')
         facade = DotfilesFacade(self.env, ExecutionContext(False, Mock()), Mock(), theme,
                                 Mock(), Mock(), setup)
         with patch('dotfiles_api.application.facade.login_inputs_lock', side_effect=tracked):

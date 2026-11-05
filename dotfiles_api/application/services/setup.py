@@ -1,11 +1,12 @@
 import sys
+import os
 from collections.abc import Callable
 
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.application.hardware import detect_graphics_packages
 from dotfiles_api.application.package_catalog import OPTIONAL_PACKAGES
-from dotfiles_api.application.profiles.desktop import build_desktop_profile
+from dotfiles_api.application.profiles.resolver import DesktopProfileResolver
 from dotfiles_api.application.services.install import InstallService
 from dotfiles_api.application.services.optional_packages import OptionalPackageSelectionService
 from dotfiles_api.domain.contracts.linker import Linker
@@ -28,6 +29,7 @@ class SetupService:
         extras_service: ExtrasSetupService,
         optional_package_selector: OptionalPackageSelectionService | None = None,
         graphics_package_detector: Callable[[], list[str]] = detect_graphics_packages,
+        profile_resolver: DesktopProfileResolver | None = None,
     ) -> None:
         self._env = env
         self._exec = exec_ctx
@@ -38,22 +40,26 @@ class SetupService:
         self._user = user_service
         self._extras = extras_service
         self._optional_package_selector = optional_package_selector or OptionalPackageSelectionService()
-        self._graphics_package_detector = graphics_package_detector
+        self._profile_resolver = profile_resolver or DesktopProfileResolver(graphics_package_detector)
 
-    def run_setup(self, setup_github: bool = False) -> None:
+    def run_setup(self, setup_github: bool = False, enable_ssh_server: bool = False, change_shell: bool = False, theme_name: str | None = None) -> None:
+        if os.geteuid() == 0:
+            raise RuntimeError("Run setup as a normal user, not root")
         selected_optional_packages: list[str] = []
         if sys.stdin.isatty():
             selected_optional_packages = self._optional_package_selector.select(OPTIONAL_PACKAGES)
 
-        graphics_packages = self._graphics_package_detector()
-        desktop_profile = build_desktop_profile(
-            optional_packages=selected_optional_packages,
-            graphics_packages=graphics_packages,
-        )
+        desktop_profile = self._profile_resolver.resolve(selected_optional_packages)
 
         self._install_service.install_profile(desktop_profile)
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
-        self._services.setup_services()
-        self._user.setup_user(setup_github=setup_github)
-        self._theme_service.apply_theme("shade-raid")
+        if enable_ssh_server:
+            self._services.setup_services(enable_ssh_server=True)
+        else:
+            self._services.setup_services()
+        if change_shell:
+            self._user.setup_user(setup_github=setup_github, change_shell=True)
+        else:
+            self._user.setup_user(setup_github=setup_github)
+        self._theme_service.apply_theme(theme_name or self._theme_service.get_active_theme() or "shade-raid")
         self._extras.setup_extras()

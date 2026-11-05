@@ -7,5 +7,5 @@ class StowLinker(Linker):
         self._exec = exec_ctx
 
     def link(self, source_dir: Path, target_dir: Path) -> None:
-        args = ["stow", "-d", str(source_dir), "-t", str(target_dir), "."]
+        args = ["stow", "--ignore=^(?!\\.config(?:/|$)|\\.local(?:/|$)|wallpapers(?:/|$)).*", "-d", str(source_dir), "-t", str(target_dir), "."]
         self._exec.execute(args, step="link:stow")

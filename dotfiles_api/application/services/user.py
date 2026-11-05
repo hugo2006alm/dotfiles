@@ -1,4 +1,5 @@
 import os
+import pwd
 import shutil
 from pathlib import Path
 from dotfiles_api.context.execution import ExecutionContext
@@ -10,7 +11,7 @@ class UserSetupService:
         self._exec = exec_ctx
         self._env = env
 
-    def setup_user(self, setup_github: bool = False) -> None:
+    def setup_user(self, setup_github: bool = False, change_shell: bool = False) -> None:
         name_res = self._exec.query(["git", "config", "--global", "user.name"])
         email_res = self._exec.query(["git", "config", "--global", "user.email"])
 
@@ -30,28 +31,13 @@ class UserSetupService:
                 except (IOError, EOFError):
                     pass
 
-        self._exec.execute(["git", "config", "--global", "core.pager", "delta"])
-        self._exec.execute(["chsh", "-s", "/usr/bin/fish"])
+        pager = self._exec.query(["git", "config", "--global", "core.pager"])
+        if not pager.stdout.strip():
+            self._exec.execute(["git", "config", "--global", "core.pager", "delta"])
+        if change_shell and pwd.getpwuid(os.getuid()).pw_shell != "/usr/bin/fish":
+            self._exec.execute(["chsh", "-s", "/usr/bin/fish"])
         self._exec.execute(["xdg-user-dirs-update"])
         self._exec.execute(["fc-cache", "-fv"])
-
-        for f in [".bash_history", ".bash_logout", ".bash_profile", ".bashrc"]:
-            path = self._env.home_dir / f
-            if path.exists():
-                if self._exec.dry_run:
-                    print(f"[DRY-RUN] Would remove: {path}")
-                else:
-                    try:
-                        path.unlink()
-                    except Exception:
-                        pass
-
-        self._exec.execute([
-            "sudo", "sh", "-c",
-            "rate-mirrors --protocol https arch > /etc/pacman.d/mirrorlist"
-        ])
-
-        self._exec.execute(["mise", "install", "python@latest"])
 
         pictures_dir = self._env.home_dir / "Pictures"
         videos_dir = self._env.home_dir / "Videos"
@@ -73,16 +59,13 @@ file://{music_dir} Music
 file://{videos_dir} Videos
 file://{desktop_dir} Desktop
 """
-        if self._exec.dry_run:
+        if (gtk_dir / "bookmarks").exists():
+            print("Existing GTK bookmarks preserved.")
+        elif self._exec.dry_run:
             print(f"[DRY-RUN] Would write bookmarks at {gtk_dir / 'bookmarks'} with:\n{bookmarks_content}")
         else:
             gtk_dir.mkdir(parents=True, exist_ok=True)
             (gtk_dir / "bookmarks").write_text(bookmarks_content)
-
-        self._exec.execute([
-            "fish", "-c",
-            "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher && fisher update"
-        ])
 
         if setup_github:
             self._exec.execute(["gh", "auth", "login"])

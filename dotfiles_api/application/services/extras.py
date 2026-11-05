@@ -1,4 +1,5 @@
 import shutil
+import os
 from pathlib import Path
 from dotfiles_api.context.execution import ExecutionContext
 from dotfiles_api.context.environment import EnvironmentContext
@@ -23,13 +24,13 @@ class ExtrasSetupService:
             print(f"Spotify prefs not found at {self._prefs_path}. Launch Spotify once, then run setup again.")
             return
 
-        self._exec.execute(["sudo", "chmod", "a+wr", str(self._spotify_path)])
-        self._exec.execute(["sudo", "chmod", "-R", "a+wr", str(self._spotify_path / "Apps")])
+        apps = self._spotify_path / "Apps"
+        if not os.access(self._spotify_path, os.W_OK) or (apps.exists() and not os.access(apps, os.W_OK)):
+            print("Spotify is not user-writable; skipping optional Spicetify customization.")
+            return
 
-        self._exec.execute(["spicetify", "backup", "apply"])
-        self._exec.execute([
-            "bash", "-c",
-            "curl -fsSL https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.sh | bash"
-        ])
-        self._exec.execute(["spicetify", "refresh", "-a", "-e"])
-        self._exec.execute(["spicetify", "apply"])
+        if self._exec.optional(["spicetify", "backup", "apply"]).returncode:
+            return
+        if self._exec.optional(["spicetify", "refresh", "-a", "-e"]).returncode:
+            return
+        self._exec.optional(["spicetify", "apply"])
