@@ -20,6 +20,11 @@ from dotfiles_api.infrastructure.package_sources.yay import YaySource
 
 
 class ProfilesRemediationTests(unittest.TestCase):
+    def setUp(self):
+        uid = patch("os.geteuid", return_value=1000)
+        uid.start()
+        self.addCleanup(uid.stop)
+
     def test_legacy_resolved_packages_do_not_become_permanent_intent(self):
         with tempfile.TemporaryDirectory() as tmp:
             env = EnvironmentContext(Path(tmp), Path(tmp) / "repo", "tester")

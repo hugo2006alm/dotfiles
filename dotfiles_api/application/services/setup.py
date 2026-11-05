@@ -1,6 +1,7 @@
 import sys
 import os
 from collections.abc import Callable
+from contextlib import nullcontext
 
 from dotfiles_api.context.environment import EnvironmentContext
 from dotfiles_api.context.execution import ExecutionContext
@@ -63,27 +64,30 @@ class SetupService:
             raise ValueError("setup requires a desktop profile; use install --profile for isolated/headless profiles")
 
         self._linker.preflight(self._env.dotfiles_dir, self._env.home_dir)
-        if isinstance(self._install_service, InstallService):
-            self._install_service.install_profile(desktop_profile, setup=True)
-        else:
-            self._install_service.install_profile(desktop_profile)
-        recorder = self._install_service.record_setup_status if isinstance(self._install_service, InstallService) else lambda status: None
-        try:
-            self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
-            if enable_ssh_server:
-                self._services.setup_services(enable_ssh_server=True)
+        prepare = getattr(type(self._linker), "prepare", None)
+        migration = self._linker.prepare(self._env.dotfiles_dir, self._env.home_dir) if callable(prepare) else nullcontext()
+        with migration:
+            if isinstance(self._install_service, InstallService):
+                self._install_service.install_profile(desktop_profile, setup=True)
             else:
-                self._services.setup_services()
-            if change_shell:
-                self._user.setup_user(setup_github=setup_github, change_shell=True)
-            else:
-                self._user.setup_user(setup_github=setup_github)
-            self._theme_service.apply_theme(theme_name or self._theme_service.get_active_theme() or "shade-raid")
-            self._extras.setup_extras()
-        except BaseException:
+                self._install_service.install_profile(desktop_profile)
+            recorder = self._install_service.record_setup_status if isinstance(self._install_service, InstallService) else lambda status: None
             try:
-                recorder("failed")
-            except Exception as error:
-                print(f"Could not record failed setup: {error}", file=sys.stderr)
-            raise
-        recorder("complete")
+                self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
+                if enable_ssh_server:
+                    self._services.setup_services(enable_ssh_server=True)
+                else:
+                    self._services.setup_services()
+                if change_shell:
+                    self._user.setup_user(setup_github=setup_github, change_shell=True)
+                else:
+                    self._user.setup_user(setup_github=setup_github)
+                self._theme_service.apply_theme(theme_name or self._theme_service.get_active_theme() or "shade-raid")
+                self._extras.setup_extras()
+            except BaseException:
+                try:
+                    recorder("failed")
+                except Exception as error:
+                    print(f"Could not record failed setup: {error}", file=sys.stderr)
+                raise
+            recorder("complete")

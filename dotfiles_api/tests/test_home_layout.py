@@ -258,6 +258,78 @@ class TestHomeLayout(unittest.TestCase):
             self.assertEqual((home / '.local/personal').read_text(), 'preserve me')
             self.assertEqual((legacy / 'personal').read_text(), 'preserve me')
 
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_setup_unfolds_legacy_local_before_recording_install_state(self):
+        import os
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.services.install import InstallService
+        from dotfiles_api.application.registry import PackageRegistry
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.domain.models.profile import Profile
+        from dotfiles_api.domain.models.feature import Feature
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('keep')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            env = EnvironmentContext(home, repo, 'tester')
+            package_source = Mock()
+            package_source.is_available.return_value = package_source.contains.return_value = True
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {'pacman': package_source}, inventory=lambda: set())
+            resolver = Mock()
+            resolver.resolve.return_value = Profile('test', [Feature('test', ['fakepkg'], [])])
+            linker = StowLinker(ExecutionContext(False, SystemCommandExecutor()))
+            theme = Mock()
+            theme.get_active_theme.return_value = 'shade-raid'
+            setup = SetupService(env, ExecutionContext(False, Mock()), install, linker, theme,
+                                 Mock(), Mock(), Mock(), profile_resolver=resolver)
+            with patch('os.geteuid', return_value=1000):
+                setup.run_setup()
+            self.assertFalse((home / '.local').is_symlink())
+            self.assertEqual((home / '.local/personal').read_text(), 'keep')
+            self.assertTrue((home / '.local/state/shade-raid/installation.json').is_file())
+            self.assertFalse((legacy / 'state/shade-raid/installation.json').exists())
+
+    @unittest.skipUnless(shutil.which('stow'), 'Requires real GNU Stow')
+    def test_failed_legacy_setup_restores_fold_and_retains_status_backup(self):
+        import json
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.application.services.install import InstallService
+        from dotfiles_api.application.registry import PackageRegistry
+        from dotfiles_api.context.environment import EnvironmentContext
+        from dotfiles_api.domain.models.profile import Profile
+        from dotfiles_api.domain.models.feature import Feature
+        with tempfile.TemporaryDirectory() as temp:
+            repo, home = Path(temp) / 'repo', Path(temp) / 'user'
+            shutil.copytree(ROOT, repo, symlinks=True)
+            legacy = repo / '.local'
+            legacy.mkdir(exist_ok=True)
+            (legacy / 'personal').write_text('keep')
+            home.mkdir()
+            (home / '.local').symlink_to(legacy)
+            env = EnvironmentContext(home, repo, 'tester')
+            package_source = Mock()
+            package_source.is_available.return_value = package_source.contains.return_value = True
+            package_source.install.side_effect = KeyboardInterrupt()
+            install = InstallService(env, ExecutionContext(False, Mock()), PackageRegistry(), {'pacman': package_source}, inventory=lambda: set())
+            resolver = Mock()
+            resolver.resolve.return_value = Profile('test', [Feature('test', ['fakepkg'], [])])
+            setup = SetupService(env, ExecutionContext(False, Mock()), install,
+                StowLinker(ExecutionContext(False, SystemCommandExecutor())), Mock(), Mock(), Mock(), Mock(), profile_resolver=resolver)
+            with patch('os.geteuid', return_value=1000), self.assertRaises(KeyboardInterrupt):
+                setup.run_setup()
+            self.assertTrue((home / '.local').is_symlink())
+            self.assertEqual((legacy / 'personal').read_text(), 'keep')
+            self.assertFalse((legacy / 'state/shade-raid/installation.json').exists())
+            saved = list((home / '.shade-raid-backups').glob('*/failed-contents/.local/state/shade-raid/installation.json'))
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(json.loads(saved[0].read_text())['package_status'], 'failed_or_partial')
+
     def test_theme_output_paths_never_target_repository(self):
         source = (ROOT / "dotfiles_api/presentation/cli.py").read_text()
         self.assertFalse('env.dotfiles_dir / "plymouth-shade-raid"' in source,

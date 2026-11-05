@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from contextlib import nullcontext
 from pathlib import Path
 from dotfiles_api.domain.contracts.linker import Linker
 from dotfiles_api.context.execution import ExecutionContext
@@ -12,6 +13,9 @@ class StowLinker(Linker):
 
     def preflight(self, source_dir: Path, target_dir: Path) -> None:
         HomeMigration(source_dir, target_dir).preflight()
+
+    def prepare(self, source_dir: Path, target_dir: Path):
+        return nullcontext() if self._exec.dry_run else HomeMigration(source_dir, target_dir)
 
     def link(self, source_dir: Path, target_dir: Path) -> None:
         args = ["stow", "--no-folding", "-d", str(source_dir), "-t", str(target_dir), "home"]
