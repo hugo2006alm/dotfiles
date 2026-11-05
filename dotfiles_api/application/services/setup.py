@@ -51,6 +51,7 @@ class SetupService:
 
         desktop_profile = self._profile_resolver.resolve(selected_optional_packages)
 
+        self._linker.preflight(self._env.dotfiles_dir, self._env.home_dir)
         self._install_service.install_profile(desktop_profile)
         self._linker.link(self._env.dotfiles_dir, self._env.home_dir)
         if enable_ssh_server:

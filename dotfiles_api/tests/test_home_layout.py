@@ -203,6 +203,30 @@ class TestHomeLayout(unittest.TestCase):
             self.assertEqual(len(saved), 1)
             self.assertEqual(saved[0].read_text(), "must survive")
 
+    def test_setup_checks_legacy_conflict_before_package_install(self):
+        from unittest.mock import Mock, patch
+        from dotfiles_api.application.services.setup import SetupService
+        from dotfiles_api.context.environment import EnvironmentContext
+        with tempfile.TemporaryDirectory() as temp:
+            root, home = Path(temp) / 'repo', Path(temp) / 'user'
+            (root / 'home/.config/app').mkdir(parents=True)
+            (root / 'home/.config/app/settings').write_text('new defaults')
+            (root / '.config/app').mkdir(parents=True)
+            (root / '.config/app/settings').write_text('personal settings')
+            home.mkdir()
+            (home / '.config').symlink_to(root / '.config')
+            executor, installer = Mock(), Mock()
+            env = EnvironmentContext(home, root, 'tester')
+            linker = StowLinker(ExecutionContext(False, executor))
+            setup = SetupService(env, ExecutionContext(False, executor), installer, linker,
+                                 Mock(), Mock(), Mock(), Mock(), graphics_package_detector=lambda: [])
+            with patch('os.geteuid', return_value=1000), patch('sys.stdin.isatty', return_value=False):
+                with self.assertRaisesRegex(ValueError, 'conflicts'):
+                    setup.run_setup()
+            installer.install_profile.assert_not_called()
+            self.assertTrue((home / '.config').is_symlink())
+            self.assertEqual((home / '.config/app/settings').read_text(), 'personal settings')
+
     def test_theme_output_paths_never_target_repository(self):
         source = (ROOT / "dotfiles_api/presentation/cli.py").read_text()
         self.assertFalse('env.dotfiles_dir / "plymouth-shade-raid"' in source,

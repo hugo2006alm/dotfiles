@@ -10,6 +10,9 @@ class StowLinker(Linker):
     def __init__(self, exec_ctx: ExecutionContext) -> None:
         self._exec = exec_ctx
 
+    def preflight(self, source_dir: Path, target_dir: Path) -> None:
+        HomeMigration(source_dir, target_dir).preflight()
+
     def link(self, source_dir: Path, target_dir: Path) -> None:
         args = ["stow", "--no-folding", "-d", str(source_dir), "-t", str(target_dir), "home"]
         if self._exec.dry_run:
