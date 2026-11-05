@@ -22,6 +22,8 @@ class ThemeCoordinator:
             plan = self.styler.compile(plan)
         plan.describe()
         with RuntimeLock(self.env.lock_dir / "configure.lock"):
+            if self.styler:
+                self.styler.verify_sources(plan)
             for item in plan.artifacts:
                 current = item.path.read_bytes() if item.path.exists() else None
                 link = str(item.path.readlink()) if item.path.is_symlink() else None
