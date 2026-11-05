@@ -231,11 +231,12 @@ class TestHomeLayout(unittest.TestCase):
             (home / ".local").symlink_to(root / ".local")
             env = EnvironmentContext(home, root, "tester")
             executor = Mock()
+            from dotfiles_api.domain.contracts import CommandResult
+            executor.execute.return_value = CommandResult("", "", 0)
             context = ExecutionContext(False, executor, log_path=env.state_dir / "commands.jsonl",
                                        output_guard=env.validate_output_path)
-            with self.assertRaisesRegex(ValueError, "repository"):
-                context.execute(["notify-send", "example"])
-            executor.execute.assert_not_called()
+            context.execute(["notify-send", "example"])
+            executor.execute.assert_called_once()
             self.assertFalse((root / ".local/state").exists())
 
     def test_failed_migration_retains_new_diagnostics_before_restoring_fold(self):

@@ -71,7 +71,7 @@ class TestExecutionContracts(unittest.TestCase):
             stack.enter_context(patch("os.remove"))
             stack.enter_context(patch("atexit.register"))
             popen = stack.enter_context(patch("subprocess.Popen"))
-            facade.return_value.reload.side_effect = RuntimeError("required refresh failed")
+            facade.return_value.apply_theme.side_effect = RuntimeError("required refresh failed")
             with self.assertRaisesRegex(RuntimeError, "required refresh"):
                 main(["configure"])
             popen.assert_not_called()
@@ -79,13 +79,11 @@ class TestExecutionContracts(unittest.TestCase):
     def test_busy_cross_process_reload_is_not_reported_as_success(self):
         reloadable = Mock()
         with tempfile.TemporaryDirectory() as temp:
-            path = Path(temp) / "reload.lock"
+            path = Path(temp) / "reload-Mock.lock"
             with path.open("a") as held:
                 fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                with patch("dotfiles_api.application.services.reload.open",
-                           side_effect=lambda *args, **kwargs: path.open("a"), create=True):
-                    with self.assertRaisesRegex(RuntimeError, "required"):
-                        ReloadService([reloadable]).reload_all()
+                with self.assertRaisesRegex(RuntimeError, "required"):
+                    ReloadService([reloadable], runtime_dir=Path(temp)).reload_all()
         reloadable.reload.assert_not_called()
 
     def test_spawn_returns_while_real_child_is_alive_without_captured_pipes(self):

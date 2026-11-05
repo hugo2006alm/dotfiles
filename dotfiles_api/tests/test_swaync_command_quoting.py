@@ -29,7 +29,7 @@ class TestSwayncCommandQuoting(unittest.TestCase):
                 (directory / "colors.toml").write_text("[colors]\n")
             env = EnvironmentContext(home, Path(temporary) / "repo", "tester")
             tokens = DesignTokens(ColorTokens({}), MetricTokens({}), TypographyTokens({}))
-            preview_file = env.runtime_dir / "preview-theme"
+            preview_file = env.preview_file
             preview_file.parent.mkdir(parents=True, exist_ok=True)
             preview_file.write_text(selected)
             artifacts = SwayncGenerator(transaction=Mock(env=env, theme_name="")).render(tokens, "active")

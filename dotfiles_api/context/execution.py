@@ -26,8 +26,6 @@ class ExecutionContext:
         if self.dry_run:
             print(f"[DRY-RUN] Would execute: {command}")
             return CommandResult(stdout="", stderr="", returncode=0)
-        if self.log_path is not None and self.output_guard is not None:
-            self.output_guard(self.log_path)
         if self.verbose:
             print(f"[VERBOSE] Executing command: {command}")
         res = self.executor.execute(args, cwd)

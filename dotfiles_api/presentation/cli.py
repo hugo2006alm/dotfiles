@@ -213,7 +213,8 @@ def main(argv: list[str] | None = None) -> None:
     theme_loader = ThemeLoader(env=env)
     event_bus = EventBus()
 
-    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False), dry_run=args.dry_run, runtime_dir=env.runtime_dir)
+    reload_svc = ReloadService(reloadables=reloadables, verbose=getattr(args, "verbose", False), dry_run=args.dry_run, runtime_dir=env.runtime_dir,
+                               pending_path=env.state_dir / "pending-refresh", output_guard=env.validate_output_path)
 
     tx = ConfigTransaction(env=env, store=artifact_store, writer=file_writer, dry_run=args.dry_run)
 
@@ -289,7 +290,7 @@ def main(argv: list[str] | None = None) -> None:
 
     def apply_theme(name):
         plan = facade.apply_theme(name)
-        if not args.dry_run and (plan is None or plan.changed_generators):
+        if not args.dry_run and os.environ.get("WAYLAND_DISPLAY") and (plan is None or plan.changed_generators):
             action_svc.run_action("wallpaper", [])
 
     def dispatch():
@@ -312,7 +313,7 @@ def main(argv: list[str] | None = None) -> None:
             apply_theme(next_theme)
         elif args.command == "rollback":
             facade.rollback()
-            if not args.dry_run:
+            if not args.dry_run and os.environ.get("WAYLAND_DISPLAY"):
                 action_svc.run_action("wallpaper", [])
         elif args.command == "setup":
             options = {"setup_github": args.github, "enable_ssh_server": getattr(args, "ssh_server", False)}

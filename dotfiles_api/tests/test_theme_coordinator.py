@@ -53,6 +53,30 @@ class TestThemeCoordinator(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             return coordinator.apply(Mock(), "shade-raid-dark", **kwargs)
 
+    def test_offline_refresh_is_persisted_and_retried_in_session(self):
+        from dotfiles_api.application.services.reload import ReloadService
+        from dotfiles_api.domain.contracts.reloadable import EventReloadable
+        class Handler(EventReloadable):
+            def __init__(self):
+                self.count = 0
+            def supports(self, name):
+                return name == 'example'
+            def reload(self):
+                self.count += 1
+        handler = Handler()
+        pending = self.env.state_dir / 'pending-refresh'
+        reloads = ReloadService([handler], runtime_dir=self.env.runtime_dir,
+                                pending_path=pending, output_guard=self.env.validate_output_path)
+        with patch.dict(os.environ, {}, clear=True):
+            reloads.reload_changed({'example'})
+        self.assertEqual(handler.count, 0)
+        self.assertTrue(pending.is_file())
+        self.assertEqual(pending.stat().st_mode & 0o777, 0o600)
+        with patch.dict(os.environ, {'WAYLAND_DISPLAY': 'wayland-test'}, clear=True):
+            reloads.reload_all()
+        self.assertEqual(handler.count, 1)
+        self.assertFalse(pending.exists())
+
     def test_all_generation_finishes_before_any_write_or_active_state_change(self):
         broken = Mock()
         broken.transaction = self.transaction
