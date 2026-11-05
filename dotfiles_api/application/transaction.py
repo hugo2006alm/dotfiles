@@ -112,6 +112,8 @@ class ConfigTransaction:
         for record in reversed(records):
             path = Path(record["path"])
             try:
+                record["recovery"] = "restoring"
+                self._save_manifest(journal, manifest)
                 if not record["exists"]:
                     path.unlink(missing_ok=True)
                 elif record["link"] is not None:
@@ -127,6 +129,8 @@ class ConfigTransaction:
                     SystemFileWriter().write_bytes(path, content)
                     path.chmod(record["mode"])
                     os.utime(path, ns=(record["atime_ns"], record["mtime_ns"]))
+                record["recovery"] = "restored"
+                self._save_manifest(journal, manifest)
             except OSError as error:
                 failures.append(f"{path}: {error}")
         for value in sorted(manifest["parents"], key=lambda text: len(Path(text).parts), reverse=True):
@@ -155,13 +159,17 @@ class ConfigTransaction:
             path = Path(record["path"])
             if record["artifact_id"] == "theme-preview":
                 continue
-            if manifest["status"] in {"prepared", "rolling_back"} and path.is_symlink() and os.readlink(path) == record["link"]:
+            may_be_original = manifest["status"] == "prepared" or (manifest["status"] == "rolling_back" and record.get("recovery") in {"restoring", "restored"})
+            if may_be_original and path.is_symlink() and os.readlink(path) == record["link"]:
                 continue
             digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
             expected = {record["after_digest"]}
-            if manifest["status"] in {"prepared", "rolling_back"}:
+            if may_be_original:
                 backup = journal / "backups" / record["backup"]
-                expected.add(hashlib.sha256(backup.read_bytes()).hexdigest() if backup.is_file() else None)
+                if backup.is_file():
+                    expected.add(hashlib.sha256(backup.read_bytes()).hexdigest())
+                elif not record["exists"]:
+                    expected.add(None)
             if path.is_symlink() or digest not in expected:
                 raise RuntimeError(f"Generated destination changed since application: {path}")
         if dry_run:
